@@ -1,0 +1,10 @@
+/* Tailwind CSS Base Styles */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Import Neural Glass Styles */
+@import './styles/globals.css';
+@import './styles/animations.css';
+@import './styles/glass-effects.css';
+@import './styles/performance.css';

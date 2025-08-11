@@ -1,0 +1,138 @@
+/* GameFi Neon 2025 - HUD Glass Effects */
+
+/* ===========================================
+   🎮 CORE HUD PANELS
+   =========================================== */
+
+.glass-panel-primary {
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(0, 255, 255, 0.3);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  border-radius: 8px;
+  box-shadow:
+    0 0 20px rgba(0, 255, 255, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.glass-panel-secondary {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 0, 255, 0.3);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  border-radius: 8px;
+  box-shadow:
+    0 0 20px rgba(255, 0, 255, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.glass-panel-neural {
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(0, 255, 65, 0.3);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  border-radius: 8px;
+  box-shadow:
+    0 0 20px rgba(0, 255, 65, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+/* ===========================================
+   🎮 HUD SPECIFIC PANELS
+   =========================================== */
+
+.hud-panel {
+  background: rgba(0, 0, 0, 0.8);
+  border: 1px solid var(--neon-cyan);
+  box-shadow:
+    0 0 10px rgba(0, 255, 255, 0.4),
+    inset 0 0 10px rgba(0, 255, 255, 0.1);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  border-radius: 4px;
+}
+
+.hud-panel-health {
+  border-color: var(--neon-green);
+  box-shadow:
+    0 0 10px rgba(0, 255, 65, 0.4),
+    inset 0 0 10px rgba(0, 255, 65, 0.1);
+}
+
+.hud-panel-mana {
+  border-color: var(--neon-purple);
+  box-shadow:
+    0 0 10px rgba(138, 43, 226, 0.4),
+    inset 0 0 10px rgba(138, 43, 226, 0.1);
+}
+
+.hud-panel-energy {
+  border-color: var(--neon-orange);
+  box-shadow:
+    0 0 10px rgba(255, 149, 0, 0.4),
+    inset 0 0 10px rgba(255, 149, 0, 0.1);
+}
+
+/* ===========================================
+   🎮 GAMING GLASS EFFECT
+   =========================================== */
+
+.gaming-glass {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(0, 255, 255, 0.3);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  box-shadow:
+    0 0 20px rgba(0, 255, 255, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+/* ===========================================
+   🎮 LEGACY NEURAL CLASSES
+   =========================================== */
+
+.neural-glow-static {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(0, 255, 255, 0.3);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  box-shadow:
+    0 0 20px rgba(0, 255, 255, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+/* ===========================================
+   🎮 RESPONSIVE OPTIMIZATIONS
+   =========================================== */
+
+@media (max-width: 768px) {
+  .hud-panel,
+  .glass-panel-primary,
+  .glass-panel-secondary,
+  .glass-panel-neural,
+  .gaming-glass,
+  .neural-glow-static {
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hud-panel,
+  .glass-panel-primary,
+  .glass-panel-secondary,
+  .glass-panel-neural,
+  .gaming-glass,
+  .neural-glow-static {
+    transition: none;
+  }
+}
