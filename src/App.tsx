@@ -1,19 +1,23 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { ErrorBoundary } from './components/common';
-import { HomePage } from './pages';
+import { ErrorBoundary, ToastProvider } from './components/common';
+import { HomePage, WalletConnectPage, GamePage } from './pages';
 
 function App() {
   return (
     <ErrorBoundary>
-      <Router>
-        <div className="App">
-          <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="*" element={<HomePage />} />
-          </Routes>
-        </div>
-      </Router>
+      <ToastProvider>
+        <Router>
+          <div className="App">
+            <Routes>
+              <Route path="/" element={<HomePage />} />
+              <Route path="/wallet" element={<WalletConnectPage />} />
+              <Route path="/game" element={<GamePage />} />
+              <Route path="*" element={<HomePage />} />
+            </Routes>
+          </div>
+        </Router>
+      </ToastProvider>
     </ErrorBoundary>
   );
 }

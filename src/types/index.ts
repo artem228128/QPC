@@ -65,4 +65,45 @@ export interface WalletState {
   address: string | null;
   balance: number;
   network: string | null;
+  provider?: string; // MetaMask, Trust Wallet, etc.
+}
+
+// Smart Contract Types
+export interface ContractUserInfo {
+  id: number;
+  registrationTimestamp: number;
+  referrerId: number;
+  referrer: string;
+  referrals: number;
+  referralPayoutSum: number;
+  levelsRewardSum: number;
+  missedReferralPayoutSum: number;
+}
+
+export interface ContractLevelInfo {
+  active: boolean;
+  payouts: number;
+  maxPayouts: number;
+  activationTimes: number;
+  rewardSum: number;
+  referralPayoutSum: number;
+}
+
+export interface ContractGlobalStats {
+  members: number;
+  transactions: number;
+  turnover: number;
+}
+
+// BSC Network configuration
+export interface NetworkConfig {
+  chainId: string;
+  chainName: string;
+  nativeCurrency: {
+    name: string;
+    symbol: string;
+    decimals: number;
+  };
+  rpcUrls: string[];
+  blockExplorerUrls: string[];
 }

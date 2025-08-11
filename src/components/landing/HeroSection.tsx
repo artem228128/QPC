@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Wallet, HelpCircle } from 'lucide-react';
+import { Wallet, HelpCircle, Play } from 'lucide-react';
 import { NeuralButton } from '../neural';
 import { GlassButton } from '../glass';
 
@@ -12,6 +12,7 @@ interface HeroSectionProps {
   className?: string;
   onStartGame?: () => void;
   onEnterWithReferral?: () => void;
+  isWalletConnected?: boolean;
 }
 
 // ===========================================
@@ -22,6 +23,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
   className = '',
   onStartGame,
   onEnterWithReferral,
+  isWalletConnected = false,
 }) => {
   return (
     <section
@@ -94,8 +96,17 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                     onClick={onStartGame}
                     className="w-full font-gaming text-sm tracking-widest flex items-center justify-center"
                   >
-                    <Wallet size={18} className="mr-2" />
-                    CONNECT WALLET
+                    {isWalletConnected ? (
+                      <>
+                        <Play size={18} className="mr-2" />
+                        START GAME
+                      </>
+                    ) : (
+                      <>
+                        <Wallet size={18} className="mr-2" />
+                        CONNECT WALLET
+                      </>
+                    )}
                   </NeuralButton>
 
                   <GlassButton
@@ -175,9 +186,19 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                   onClick={onStartGame}
                   className="w-full font-gaming text-xs xs:text-sm tracking-widest flex items-center justify-center py-2 xs:py-3"
                 >
-                  <Wallet size={14} className="mr-1 xs:mr-2" />
-                  <span className="hidden xs:inline">CONNECT WALLET</span>
-                  <span className="xs:hidden">CONNECT</span>
+                  {isWalletConnected ? (
+                    <>
+                      <Play size={14} className="mr-1 xs:mr-2" />
+                      <span className="hidden xs:inline">START GAME</span>
+                      <span className="xs:hidden">PLAY</span>
+                    </>
+                  ) : (
+                    <>
+                      <Wallet size={14} className="mr-1 xs:mr-2" />
+                      <span className="hidden xs:inline">CONNECT WALLET</span>
+                      <span className="xs:hidden">CONNECT</span>
+                    </>
+                  )}
                 </NeuralButton>
                 <GlassButton
                   variant="secondary"

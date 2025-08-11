@@ -1,5 +1,6 @@
 import React, { useCallback } from 'react';
-import { LandingHeader } from '../components/layout';
+import { useNavigate } from 'react-router-dom';
+import { LandingHeader, ConnectedHeader } from '../components/layout';
 import {
   HeroSection,
   StatsPanel,
@@ -9,13 +10,40 @@ import {
 } from '../components/landing';
 import { AccountLookup } from '../components/landing/AccountLookup';
 import { useWallet } from '../hooks/useWallet';
+import { useToast } from '../components/common';
 
 const HomePage: React.FC = () => {
-  const { connectWallet } = useWallet();
+  const navigate = useNavigate();
+  const { walletState, isUserRegistered, registerUser } = useWallet();
+  const toast = useToast();
 
-  const handleConnectWallet = useCallback(async () => {
-    await connectWallet();
-  }, [connectWallet]);
+  const handleConnectWallet = useCallback(() => {
+    navigate('/wallet');
+  }, [navigate]);
+
+  const handleStartGame = useCallback(async () => {
+    // Check if user is registered in contract
+    const registered = await isUserRegistered();
+
+    if (!registered) {
+      // If not registered, register user first (could open a modal for referrer)
+      try {
+        await registerUser(); // or registerUser(referrerAddress)
+        toast.success('Registration Successful!', 'Welcome to Quantum Profit Chain');
+        // After registration, redirect to game
+        navigate('/game');
+      } catch (error: any) {
+        console.error('Registration failed:', error);
+        toast.error(
+          'Registration Failed',
+          error.message || 'An error occurred during registration'
+        );
+      }
+    } else {
+      // If already registered, go directly to game
+      navigate('/game');
+    }
+  }, [isUserRegistered, registerUser, navigate, toast]);
 
   const handleHelpMe = useCallback(() => {
     const faqEl = document.getElementById('faq');
@@ -26,11 +54,15 @@ const HomePage: React.FC = () => {
 
   return (
     <div className="min-h-screen">
-      {/* Landing Header */}
-      <LandingHeader />
+      {/* Dynamic Header based on wallet connection */}
+      {walletState.isConnected ? <ConnectedHeader /> : <LandingHeader />}
 
       {/* Hero Section */}
-      <HeroSection onStartGame={handleConnectWallet} onEnterWithReferral={handleHelpMe} />
+      <HeroSection
+        onStartGame={walletState.isConnected ? handleStartGame : handleConnectWallet}
+        onEnterWithReferral={handleHelpMe}
+        isWalletConnected={walletState.isConnected}
+      />
 
       {/* Stats Panel */}
       <StatsPanel />
