@@ -1,7 +1,14 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { ErrorBoundary, ToastProvider } from './components/common';
-import { HomePage, WalletConnectPage, GamePage, ActivateLevelPage, DashboardPage } from './pages';
+import {
+  HomePage,
+  WalletConnectPage,
+  GamePage,
+  ActivateLevelPage,
+  DashboardPage,
+  StatsPage,
+} from './pages';
 
 function App() {
   return (
@@ -15,6 +22,7 @@ function App() {
               <Route path="/game" element={<GamePage />} />
               <Route path="/activate" element={<ActivateLevelPage />} />
               <Route path="/dashboard" element={<DashboardPage />} />
+              <Route path="/stats" element={<StatsPage />} />
               <Route path="*" element={<HomePage />} />
             </Routes>
           </div>

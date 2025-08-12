@@ -7,6 +7,7 @@ export { LandingHeader } from './LandingHeader';
 export { ConnectedHeader } from './ConnectedHeader';
 export { AuthHeader } from './AuthHeader';
 export { Sidebar } from './Sidebar';
+export { DashboardSidebar } from './DashboardSidebar';
 export { LayoutProvider, LayoutContextProvider, useLayout } from './LayoutProvider';
 
 // Re-export types

@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useCallback } from 'react';
 import { motion } from 'framer-motion';
 import {
   Copy,
@@ -11,16 +11,9 @@ import {
   Activity,
   Calendar,
   ChevronRight,
-  Home,
-  BarChart3,
-  Gift,
-  Info,
-  MessageCircle,
-  Megaphone,
-  Settings,
   Eye,
 } from 'lucide-react';
-import { ConnectedHeader } from '../components/layout';
+import { ConnectedHeader, DashboardSidebar } from '../components/layout';
 import { NeuralBackground } from '../components/neural';
 import { GlassCard, GlassButton } from '../components/glass';
 // Removed StatsPanel import - not needed in dashboard
@@ -109,19 +102,8 @@ const MOCK_USER_DATA = {
   ],
 };
 
-const SIDEBAR_ITEMS = [
-  { id: 'dashboard', label: 'Dashboard', icon: Home, active: true },
-  { id: 'stats', label: 'Stats', icon: BarChart3 },
-  { id: 'partner-bonus', label: 'Partner Bonus', icon: Gift },
-  { id: 'information', label: 'Information', icon: Info },
-  { id: 'telegram-bots', label: 'Telegram Bots', icon: MessageCircle },
-  { id: 'promo', label: 'Promo', icon: Megaphone },
-  { id: 'settings', label: 'Settings', icon: Settings },
-];
-
 const DashboardPage: React.FC = () => {
   const { disconnectWallet } = useWallet();
-  const [selectedSidebarItem, setSelectedSidebarItem] = useState('dashboard');
 
   const copyReferralLink = useCallback(async () => {
     await navigator.clipboard.writeText(MOCK_USER_DATA.referralLink);
@@ -193,50 +175,13 @@ const DashboardPage: React.FC = () => {
     );
   };
 
-  const renderSidebar = () => {
-    return (
-      <div className="w-64 fixed left-0 top-20 bottom-0 z-20 bg-black/60 backdrop-blur-md border-r border-white/10">
-        <div className="p-6">
-          <h3 className="text-lg font-semibold text-white mb-6">Navigation</h3>
-          <div className="space-y-2">
-            {SIDEBAR_ITEMS.map((item) => {
-              const Icon = item.icon;
-              const isActive = selectedSidebarItem === item.id;
-
-              return (
-                <motion.button
-                  key={item.id}
-                  onClick={() => setSelectedSidebarItem(item.id)}
-                  className={`
-                    w-full text-left p-4 rounded-xl transition-all duration-200 flex items-center gap-3
-                    ${
-                      isActive
-                        ? 'bg-gradient-to-r from-cyan-500/20 to-purple-500/20 border border-cyan-400/40 text-cyan-300'
-                        : 'hover:bg-white/5 text-gray-300 hover:text-white hover:border-white/20 border border-transparent'
-                    }
-                  `}
-                  whileHover={{ x: 4 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  <Icon size={20} className={isActive ? 'text-cyan-400' : 'text-gray-400'} />
-                  <span className="font-medium">{item.label}</span>
-                  {isActive && <div className="ml-auto w-2 h-2 bg-cyan-400 rounded-full"></div>}
-                </motion.button>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-    );
-  };
-
   return (
     <div className="min-h-screen relative overflow-hidden">
       <NeuralBackground intensity={0.6} particleCount={30} />
       <ConnectedHeader />
 
       {/* Sidebar */}
-      {renderSidebar()}
+      <DashboardSidebar />
 
       <main className="relative z-10 pt-24 pb-16 ml-64">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
@@ -439,7 +384,7 @@ const DashboardPage: React.FC = () => {
                 <GlassCard className="p-6">
                   <div className="flex items-center justify-between mb-6">
                     <h3 className="text-xl font-semibold text-white">Level Matrix</h3>
-                    <GlassButton variant="secondary" size="sm">
+                    <GlassButton variant="secondary" size="sm" className="flex items-center">
                       <Eye size={16} className="mr-2" />
                       Program View
                     </GlassButton>
