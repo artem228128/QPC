@@ -10,6 +10,7 @@ import {
   StatsPage,
   PartnerBonusPage,
   InformationPage,
+  ProgramViewPage,
 } from './pages';
 
 function App() {
@@ -27,6 +28,7 @@ function App() {
               <Route path="/stats" element={<StatsPage />} />
               <Route path="/partner-bonus" element={<PartnerBonusPage />} />
               <Route path="/information" element={<InformationPage />} />
+              <Route path="/program-view" element={<ProgramViewPage />} />
               <Route path="*" element={<HomePage />} />
             </Routes>
           </div>

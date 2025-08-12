@@ -1,4 +1,5 @@
 import React, { useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   Copy,
@@ -103,6 +104,7 @@ const MOCK_USER_DATA = {
 };
 
 const DashboardPage: React.FC = () => {
+  const navigate = useNavigate();
   const { disconnectWallet } = useWallet();
 
   const copyReferralLink = useCallback(async () => {
@@ -384,9 +386,16 @@ const DashboardPage: React.FC = () => {
                 <GlassCard className="p-6">
                   <div className="flex items-center justify-between mb-6">
                     <h3 className="text-xl font-semibold text-white">Level Matrix</h3>
-                    <GlassButton variant="secondary" size="sm" className="flex items-center">
-                      <Eye size={16} className="mr-2" />
-                      Program View
+                    <GlassButton
+                      variant="primary"
+                      size="md"
+                      onClick={() => navigate('/program-view')}
+                      className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-cyan-500/20 to-purple-500/20 border border-cyan-400/50 hover:border-cyan-300 text-cyan-300 hover:text-white shadow-lg shadow-cyan-400/20 hover:shadow-cyan-400/30 transition-all duration-300 rounded-lg relative overflow-hidden"
+                    >
+                      <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -skew-x-12 translate-x-[-120%] group-hover:translate-x-[120%] transition-transform duration-700" />
+                      <span className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse" />
+                      <Eye size={18} className="mr-1" />
+                      <span className="font-semibold">Program View</span>
                     </GlassButton>
                   </div>
 
