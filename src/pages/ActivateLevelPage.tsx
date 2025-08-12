@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle, AlertTriangle, ArrowLeft, Shield, Zap } from 'lucide-react';
 import { useWallet } from '../hooks/useWallet';
 import { LEVEL_PRICES, formatBNB } from '../utils/contract';
+import { NeuralBackground } from '../components/neural';
 
 const ALL_LEVELS = Array.from({ length: 16 }, (_, i) => i + 1);
 
@@ -65,7 +66,7 @@ const ActivateLevelPage: React.FC = () => {
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5 }}
         >
-          <div className="bg-white/5 rounded-2xl p-8 border border-white/10">
+          <div className="bg-black/40 backdrop-blur-sm rounded-2xl p-8 border border-white/10 shadow-xl shadow-black/30">
             <motion.div
               className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-6"
               initial={{ scale: 0 }}
@@ -78,7 +79,7 @@ const ActivateLevelPage: React.FC = () => {
             <p className="text-gray-400 text-sm mb-4">
               Level {selectedLevel} successfully activated
             </p>
-            <div className="bg-black/20 rounded-lg p-3 text-sm mb-6">
+            <div className="bg-white/5 rounded-lg p-3 text-sm mb-6">
               <div className="text-cyan-400 font-mono">
                 Level {selectedLevel} - {formatBNB(levelPrice)} BNB
               </div>
@@ -118,7 +119,7 @@ const ActivateLevelPage: React.FC = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <div className="bg-white/5 rounded-2xl p-8 border border-white/10">
+        <div className="bg-black/40 backdrop-blur-sm rounded-2xl p-8 border border-white/10 shadow-xl shadow-black/30">
           {/* Upline Info */}
           <div className="mb-6">
             <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
@@ -126,7 +127,7 @@ const ActivateLevelPage: React.FC = () => {
               Upline Information
             </h3>
             <div className="space-y-2 text-sm">
-              <div className="flex justify-between items-center p-2 bg-black/20 rounded-lg">
+              <div className="flex justify-between items-center p-2 bg-white/5 rounded-lg">
                 <span className="text-gray-400">Address:</span>
                 <span className="text-white font-mono text-xs">
                   {contractInfo?.referrer
@@ -134,7 +135,7 @@ const ActivateLevelPage: React.FC = () => {
                     : 'Not specified'}
                 </span>
               </div>
-              <div className="flex justify-between items-center p-2 bg-black/20 rounded-lg">
+              <div className="flex justify-between items-center p-2 bg-white/5 rounded-lg">
                 <span className="text-gray-400">ID:</span>
                 <span className="text-white">{contractInfo?.referrerId ?? 'Not specified'}</span>
               </div>
@@ -148,19 +149,19 @@ const ActivateLevelPage: React.FC = () => {
               Level Selection
             </h3>
             <select
-              className="w-full p-3 bg-black/40 border border-white/20 rounded-lg text-white focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 transition-all"
+              className="w-full p-3 bg-white/10 border border-white/20 rounded-lg text-white focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 transition-all"
               value={selectedLevel}
               onChange={(e) => setSelectedLevel(parseInt(e.target.value, 10))}
               disabled={isSubmitting || isLoading}
             >
               {ALL_LEVELS.map((lvl) => (
-                <option key={lvl} value={lvl} className="bg-black">
+                <option key={lvl} value={lvl} className="bg-white/10 text-white">
                   Level {lvl} — {formatBNB(LEVEL_PRICES[lvl])} BNB
                 </option>
               ))}
             </select>
 
-            <div className="mt-3 p-3 bg-black/20 rounded-lg">
+            <div className="mt-3 p-3 bg-white/5 rounded-lg">
               <div className="flex justify-between items-center text-sm">
                 <span className="text-gray-400">Price:</span>
                 <span className="text-white font-semibold">{formatBNB(levelPrice)} BNB</span>
@@ -185,7 +186,7 @@ const ActivateLevelPage: React.FC = () => {
               Status Check
             </h3>
             <div className="space-y-2">
-              <div className="flex items-center justify-between p-2 bg-black/20 rounded-lg">
+              <div className="flex items-center justify-between p-2 bg-white/5 rounded-lg">
                 <span className="text-gray-400 text-sm">Wallet:</span>
                 <div className="flex items-center gap-2">
                   {isConnected ? (
@@ -202,7 +203,7 @@ const ActivateLevelPage: React.FC = () => {
                 </div>
               </div>
 
-              <div className="flex items-center justify-between p-2 bg-black/20 rounded-lg">
+              <div className="flex items-center justify-between p-2 bg-white/5 rounded-lg">
                 <span className="text-gray-400 text-sm">Network:</span>
                 <div className="flex items-center gap-2">
                   {isOnBSC ? (
@@ -219,7 +220,7 @@ const ActivateLevelPage: React.FC = () => {
                 </div>
               </div>
 
-              <div className="flex items-center justify-between p-2 bg-black/20 rounded-lg">
+              <div className="flex items-center justify-between p-2 bg-white/5 rounded-lg">
                 <span className="text-gray-400 text-sm">Balance:</span>
                 <div className="flex items-center gap-2">
                   {hasSufficientBalance ? (
@@ -293,7 +294,9 @@ const ActivateLevelPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900">
+    <div className="min-h-screen relative">
+      {/* Neural Background */}
+      <NeuralBackground intensity={0.8} particleCount={30} />
       {/* Header */}
       <div className="relative pt-8 pb-16">
         <div className="max-w-4xl mx-auto px-6">

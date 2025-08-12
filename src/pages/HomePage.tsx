@@ -10,6 +10,7 @@ import {
 } from '../components/landing';
 import { AccountLookup } from '../components/landing/AccountLookup';
 import { useWallet } from '../hooks/useWallet';
+import { NeuralBackground } from '../components/neural';
 // Removed unused toast import
 
 const HomePage: React.FC = () => {
@@ -36,6 +37,9 @@ const HomePage: React.FC = () => {
     <div className="min-h-screen">
       {/* Dynamic Header based on wallet connection */}
       {walletState.isConnected ? <HomeHeader /> : <LandingHeader />}
+
+      {/* Neural Background */}
+      <NeuralBackground intensity={0.8} particleCount={30} />
 
       {/* Hero Section */}
       <HeroSection
