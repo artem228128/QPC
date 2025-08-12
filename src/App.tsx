@@ -9,6 +9,7 @@ import {
   DashboardPage,
   StatsPage,
   PartnerBonusPage,
+  InformationPage,
 } from './pages';
 
 function App() {
@@ -25,6 +26,7 @@ function App() {
               <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/stats" element={<StatsPage />} />
               <Route path="/partner-bonus" element={<PartnerBonusPage />} />
+              <Route path="/information" element={<InformationPage />} />
               <Route path="*" element={<HomePage />} />
             </Routes>
           </div>
