@@ -51,7 +51,7 @@ const menuSections: MenuSection[] = [
         id: 'dashboard',
         label: 'Dashboard',
         icon: Home,
-        href: '/dashboard',
+        href: '/game',
       },
       {
         id: 'statistics',

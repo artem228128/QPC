@@ -21,7 +21,7 @@ const HomePage: React.FC = () => {
   }, [navigate]);
 
   const handleStartGame = useCallback(async () => {
-    // If wallet connected, go to activation page first
+    // Go to activation page
     navigate('/activate');
   }, [navigate]);
 

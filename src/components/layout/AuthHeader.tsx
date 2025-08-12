@@ -393,7 +393,7 @@ export const AuthHeader: React.FC<AuthHeaderProps> = ({
           {/* Left Side - Logo & Breadcrumbs */}
           <div className="flex items-center space-x-6">
             {/* Logo */}
-            <motion.a href="/dashboard" className="flex-shrink-0" whileHover={{ scale: 1.02 }}>
+            <motion.a href="/game" className="flex-shrink-0" whileHover={{ scale: 1.02 }}>
               <QuantumLogo className="scale-90" />
             </motion.a>
 

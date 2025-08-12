@@ -33,13 +33,13 @@ const generateBreadcrumbs = (pathname: string): BreadcrumbItem[] => {
   const segments = pathname.split('/').filter(Boolean);
 
   if (segments.length === 0) {
-    return [{ label: 'Dashboard', isActive: true }];
+    return [{ label: 'Program', isActive: true }];
   }
 
-  const breadcrumbs: BreadcrumbItem[] = [{ label: 'Dashboard', href: '/dashboard' }];
+  const breadcrumbs: BreadcrumbItem[] = [{ label: 'Program', href: '/game' }];
 
   const routeMap: Record<string, string> = {
-    dashboard: 'Dashboard',
+    dashboard: 'Program',
     statistics: 'Statistics',
     'partner-bonus': 'Partner Bonus',
     information: 'Information',
