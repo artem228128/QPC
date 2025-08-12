@@ -16,7 +16,7 @@ import {
 
 const QuantumLogo: React.FC<{ className?: string }> = ({ className = '' }) => (
   <motion.div
-    className={`flex items-center space-x-3 ${className}`}
+    className={`flex items-center space-x-3 select-none ${className}`}
     whileHover={{ scale: 1.02 }}
     transition={{ duration: 0.2 }}
   >
@@ -26,7 +26,7 @@ const QuantumLogo: React.FC<{ className?: string }> = ({ className = '' }) => (
       viewBox="0 0 40 40"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
-      className="neural-logo"
+      className="neural-logo select-none"
       animate={{
         filter: [
           'drop-shadow(0 0 8px #00D4FF60)',
@@ -48,9 +48,11 @@ const QuantumLogo: React.FC<{ className?: string }> = ({ className = '' }) => (
       <line x1="32" y1="32" x2="20" y2="20" stroke="#FF6B6B" strokeWidth="0.5" opacity="0.6" />
     </motion.svg>
 
-    <div className="flex flex-col">
-      <span className="text-lg font-bold font-heading text-neural-cyan">Quantum</span>
-      <span className="text-xs font-mono text-neural-purple opacity-80">Profit Chain</span>
+    <div className="flex flex-col select-none">
+      <span className="text-lg font-bold font-heading text-neural-cyan select-none">Quantum</span>
+      <span className="text-xs font-mono text-neural-purple opacity-80 select-none">
+        Profit Chain
+      </span>
     </div>
   </motion.div>
 );

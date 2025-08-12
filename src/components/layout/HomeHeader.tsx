@@ -1,23 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  Wallet,
-  Copy,
-  ExternalLink,
-  Shield,
-  Activity,
-  Bell,
-  LogOut,
-  ChevronDown,
-} from 'lucide-react';
+import { Wallet, Copy, ExternalLink, Shield, Activity, ChevronDown } from 'lucide-react';
 import { useWallet } from '../../hooks/useWallet';
-import { useNavigate } from 'react-router-dom';
 
 // ===========================================
 // 🎨 TYPE DEFINITIONS
 // ===========================================
 
-interface ConnectedHeaderProps {
+interface HomeHeaderProps {
   className?: string;
 }
 
@@ -49,86 +39,7 @@ const QuantumLogo: React.FC<{ className?: string }> = ({ className = '' }) => (
 );
 
 // ===========================================
-// 🔔 NOTIFICATIONS COMPONENT
-// ===========================================
-
-const NotificationsButton: React.FC = () => {
-  const [hasNotifications] = useState(true);
-  const [isOpen, setIsOpen] = useState(false);
-
-  return (
-    <div className="relative">
-      <motion.button
-        className="relative p-3 bg-black/40 border border-blue-400/50 rounded-lg hover:border-blue-400 transition-all duration-200"
-        onClick={() => setIsOpen(!isOpen)}
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-      >
-        <Bell className="w-5 h-5 text-blue-400" />
-        {hasNotifications && (
-          <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse" />
-        )}
-      </motion.button>
-
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            className="absolute top-full right-0 mt-2 w-80 bg-black/90 border border-white/20 rounded-lg shadow-2xl z-50"
-            initial={{ opacity: 0, y: -10, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -10, scale: 0.95 }}
-            transition={{ duration: 0.2, ease: 'easeOut' }}
-          >
-            <div className="p-4">
-              <h3 className="text-white font-bold mb-4">Notifications</h3>
-              <div className="space-y-3">
-                <div className="p-3 bg-blue-500/10 border border-blue-400/20 rounded-lg">
-                  <div className="text-blue-400 text-sm font-medium">Level Activated</div>
-                  <div className="text-gray-300 text-xs">Level 16 successfully activated</div>
-                  <div className="text-gray-500 text-xs mt-1">2 minutes ago</div>
-                </div>
-                <div className="p-3 bg-green-500/10 border border-green-400/20 rounded-lg">
-                  <div className="text-green-400 text-sm font-medium">Reward Received</div>
-                  <div className="text-gray-300 text-xs">+0.15 BNB earned from matrix</div>
-                  <div className="text-gray-500 text-xs mt-1">1 hour ago</div>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-};
-
-// ===========================================
-// 🚪 LOGOUT COMPONENT
-// ===========================================
-
-const LogoutButton: React.FC = () => {
-  const navigate = useNavigate();
-
-  const handleLogout = () => {
-    // Here you would typically clear wallet connection, user data, etc.
-    // For now, just navigate to home
-    navigate('/');
-  };
-
-  return (
-    <motion.button
-      className="p-3 bg-black/40 border border-red-400/50 rounded-lg hover:border-red-400 transition-all duration-200 group"
-      onClick={handleLogout}
-      whileHover={{ scale: 1.05 }}
-      whileTap={{ scale: 0.95 }}
-      title="Logout"
-    >
-      <LogOut className="w-5 h-5 text-red-400 group-hover:text-red-300 transition-colors" />
-    </motion.button>
-  );
-};
-
-// ===========================================
-// 💰 WALLET INFO COMPONENT
+// 💰 WALLET INFO COMPONENT (Simplified for Home)
 // ===========================================
 
 const WalletInfo: React.FC = () => {
@@ -309,10 +220,10 @@ const WalletInfo: React.FC = () => {
 };
 
 // ===========================================
-// 🏠 MAIN CONNECTED HEADER COMPONENT
+// 🏠 MAIN HOME HEADER COMPONENT
 // ===========================================
 
-export const ConnectedHeader: React.FC<ConnectedHeaderProps> = ({ className = '' }) => {
+export const HomeHeader: React.FC<HomeHeaderProps> = ({ className = '' }) => {
   const [isScrolled, setIsScrolled] = useState(false);
 
   // Handle scroll effects
@@ -353,16 +264,9 @@ export const ConnectedHeader: React.FC<ConnectedHeaderProps> = ({ className = ''
             <QuantumLogo />
           </div>
 
-          {/* Right Side Actions */}
-          <div className="flex items-center space-x-3">
-            {/* Wallet Info - Compact */}
+          {/* Right Side Actions - Only Wallet Info */}
+          <div className="flex items-center">
             <WalletInfo />
-
-            {/* Notifications */}
-            <NotificationsButton />
-
-            {/* Logout */}
-            <LogoutButton />
           </div>
         </div>
 
@@ -384,4 +288,4 @@ export const ConnectedHeader: React.FC<ConnectedHeaderProps> = ({ className = ''
   );
 };
 
-export default ConnectedHeader;
+export default HomeHeader;

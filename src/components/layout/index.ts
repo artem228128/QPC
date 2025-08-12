@@ -5,6 +5,7 @@
 // Main Layout Components
 export { LandingHeader } from './LandingHeader';
 export { ConnectedHeader } from './ConnectedHeader';
+export { HomeHeader } from './HomeHeader';
 export { AuthHeader } from './AuthHeader';
 export { Sidebar } from './Sidebar';
 export { DashboardSidebar } from './DashboardSidebar';

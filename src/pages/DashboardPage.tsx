@@ -5,8 +5,6 @@ import {
   Copy,
   Share2,
   ExternalLink,
-  Bell,
-  LogOut,
   TrendingUp,
   Users,
   Activity,
@@ -105,7 +103,7 @@ const MOCK_USER_DATA = {
 
 const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
-  const { disconnectWallet } = useWallet();
+  const {} = useWallet();
 
   const copyReferralLink = useCallback(async () => {
     await navigator.clipboard.writeText(MOCK_USER_DATA.referralLink);
@@ -202,17 +200,6 @@ const DashboardPage: React.FC = () => {
                   </span>
                 </h1>
                 <p className="text-gray-300">Your personal command center</p>
-              </div>
-              <div className="flex items-center gap-4">
-                <button className="p-3 bg-white/5 hover:bg-white/10 rounded-xl border border-white/10 hover:border-white/20 transition-all">
-                  <Bell size={20} className="text-gray-400" />
-                </button>
-                <button
-                  onClick={disconnectWallet}
-                  className="p-3 bg-red-500/10 hover:bg-red-500/20 rounded-xl border border-red-400/20 hover:border-red-400/40 transition-all"
-                >
-                  <LogOut size={20} className="text-red-400" />
-                </button>
               </div>
             </div>
           </motion.div>

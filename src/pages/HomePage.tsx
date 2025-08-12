@@ -1,6 +1,6 @@
 import React, { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LandingHeader, ConnectedHeader } from '../components/layout';
+import { LandingHeader, HomeHeader } from '../components/layout';
 import {
   HeroSection,
   StatsPanel,
@@ -35,7 +35,7 @@ const HomePage: React.FC = () => {
   return (
     <div className="min-h-screen">
       {/* Dynamic Header based on wallet connection */}
-      {walletState.isConnected ? <ConnectedHeader /> : <LandingHeader />}
+      {walletState.isConnected ? <HomeHeader /> : <LandingHeader />}
 
       {/* Hero Section */}
       <HeroSection
