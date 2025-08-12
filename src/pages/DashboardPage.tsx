@@ -25,7 +25,7 @@ import { NeuralBackground } from '../components/neural';
 import { GlassCard, GlassButton } from '../components/glass';
 // Removed StatsPanel import - not needed in dashboard
 import { useWallet } from '../hooks/useWallet';
-import { LEVEL_PRICES, formatBNB } from '../utils/contract';
+import { LEVEL_PRICES, formatBNB, CONTRACT_ADDRESS } from '../utils/contract';
 
 // Mock data for demonstration - expanded activations
 const MOCK_USER_DATA = {
@@ -349,61 +349,85 @@ const DashboardPage: React.FC = () => {
                 </motion.div>
               </div>
 
-              {/* How Game Works */}
+              {/* How Game Works - Compact */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4, duration: 0.6 }}
               >
-                <GlassCard className="p-6 border border-blue-400/20 bg-gradient-to-br from-blue-500/5 to-indigo-500/5">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-xl font-semibold text-white">How Game Works</h3>
-                    <div className="p-2 bg-blue-500/20 rounded-lg">
-                      <Info className="text-blue-400" size={20} />
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-white">How Game Works</h3>
+
+                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                    {/* Matrix */}
+                    <div
+                      className="relative p-3 rounded-lg transition-all duration-300 border bg-black/40 border-cyan-400/30 hover:border-cyan-400/50"
+                      style={{
+                        boxShadow: '0 0 15px rgba(0, 255, 255, 0.1)',
+                        backdropFilter: 'blur(4px)',
+                      }}
+                    >
+                      <div className="flex flex-col items-center space-y-2">
+                        <div className="w-6 h-6 bg-gradient-to-r from-cyan-400 to-blue-400 rounded-full flex items-center justify-center">
+                          <span className="text-white font-bold text-xs">1</span>
+                        </div>
+                        <div className="text-cyan-400 font-medium text-xs">Matrix</div>
+                        <div className="text-gray-300 text-xs text-center">Levels 1-16</div>
+                      </div>
+                    </div>
+
+                    {/* Partner */}
+                    <div
+                      className="relative p-3 rounded-lg transition-all duration-300 border bg-black/40 border-purple-400/30 hover:border-purple-400/50"
+                      style={{
+                        boxShadow: '0 0 15px rgba(168, 85, 247, 0.1)',
+                        backdropFilter: 'blur(4px)',
+                      }}
+                    >
+                      <div className="flex flex-col items-center space-y-2">
+                        <div className="w-6 h-6 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full flex items-center justify-center">
+                          <span className="text-white font-bold text-xs">2</span>
+                        </div>
+                        <div className="text-purple-400 font-medium text-xs">Partner</div>
+                        <div className="text-green-400 text-xs font-bold">26% Bonus</div>
+                      </div>
+                    </div>
+
+                    {/* Profit */}
+                    <div
+                      className="relative p-3 rounded-lg transition-all duration-300 border bg-black/40 border-green-400/30 hover:border-green-400/50"
+                      style={{
+                        boxShadow: '0 0 15px rgba(34, 197, 94, 0.1)',
+                        backdropFilter: 'blur(4px)',
+                      }}
+                    >
+                      <div className="flex flex-col items-center space-y-2">
+                        <div className="w-6 h-6 bg-gradient-to-r from-green-400 to-emerald-400 rounded-full flex items-center justify-center">
+                          <span className="text-white font-bold text-xs">3</span>
+                        </div>
+                        <div className="text-green-400 font-medium text-xs">Split</div>
+                        <div className="text-gray-300 text-xs">74% / 26%</div>
+                      </div>
+                    </div>
+
+                    {/* Auto */}
+                    <div
+                      className="relative p-3 rounded-lg transition-all duration-300 border bg-black/40 border-orange-400/30 hover:border-orange-400/50"
+                      style={{
+                        boxShadow: '0 0 15px rgba(251, 146, 60, 0.1)',
+                        backdropFilter: 'blur(4px)',
+                      }}
+                    >
+                      <div className="flex flex-col items-center space-y-2">
+                        <div className="w-6 h-6 bg-gradient-to-r from-orange-400 to-red-400 rounded-full flex items-center justify-center">
+                          <span className="text-white font-bold text-xs">4</span>
+                        </div>
+                        <div className="text-orange-400 font-medium text-xs">Auto</div>
+                        <div className="text-gray-300 text-xs">BSC Smart</div>
+                      </div>
                     </div>
                   </div>
-
-                  <div className="space-y-4 text-sm text-gray-300">
-                    <div className="flex items-start gap-3">
-                      <div className="w-6 h-6 bg-cyan-500/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <span className="text-cyan-400 font-bold text-xs">1</span>
-                      </div>
-                      <div>
-                        <div className="text-white font-medium mb-1">Matrix Levels</div>
-                        <div>
-                          Activate levels 1-16 sequentially. Each level costs different amounts and
-                          generates earnings when others join under you.
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-start gap-3">
-                      <div className="w-6 h-6 bg-purple-500/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <span className="text-purple-400 font-bold text-xs">2</span>
-                      </div>
-                      <div>
-                        <div className="text-white font-medium mb-1">Referral System</div>
-                        <div>
-                          Share your referral link. When someone joins via your link and activates
-                          levels, you earn partner bonuses.
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-start gap-3">
-                      <div className="w-6 h-6 bg-green-500/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <span className="text-green-400 font-bold text-xs">3</span>
-                      </div>
-                      <div>
-                        <div className="text-white font-medium mb-1">Smart Contracts</div>
-                        <div>
-                          All transactions are powered by smart contracts on BSC. Payments are
-                          automatic and transparent.
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </GlassCard>
+                </div>
               </motion.div>
 
               {/* Level Visualization */}
@@ -580,6 +604,55 @@ const DashboardPage: React.FC = () => {
                     <div className="bg-black/20 rounded-lg p-3">
                       <div className="text-purple-400 text-lg font-bold">2</div>
                       <div className="text-gray-400 text-xs">New Referrals</div>
+                    </div>
+                  </div>
+                </GlassCard>
+              </motion.div>
+
+              {/* Smart Contract */}
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.5, duration: 0.6 }}
+              >
+                <GlassCard className="p-6 border border-orange-400/20 bg-gradient-to-br from-orange-500/5 to-red-500/5">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold text-white">Smart Contract</h3>
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                      <span className="text-green-400 text-xs font-medium">Verified</span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <div className="bg-black/20 rounded-lg p-3">
+                      <div className="text-orange-400 text-xs mb-2 font-medium">
+                        BSC Contract Address
+                      </div>
+                      <div className="font-mono text-xs text-gray-300 break-all leading-relaxed">
+                        {CONTRACT_ADDRESS}
+                      </div>
+                    </div>
+
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => navigator.clipboard.writeText(CONTRACT_ADDRESS)}
+                        className="flex-1 p-2 bg-cyan-500/20 hover:bg-cyan-500/30 rounded-lg transition-colors border border-cyan-400/30 text-cyan-400 text-xs font-medium"
+                        title="Copy Contract Address"
+                      >
+                        <Copy size={12} className="inline mr-1" />
+                        Copy
+                      </button>
+                      <button
+                        onClick={() =>
+                          window.open(`https://bscscan.com/address/${CONTRACT_ADDRESS}`, '_blank')
+                        }
+                        className="flex-1 p-2 bg-blue-500/20 hover:bg-blue-500/30 rounded-lg transition-colors border border-blue-400/30 text-blue-400 text-xs font-medium"
+                        title="View on BscScan"
+                      >
+                        <ExternalLink size={12} className="inline mr-1" />
+                        BscScan
+                      </button>
                     </div>
                   </div>
                 </GlassCard>
