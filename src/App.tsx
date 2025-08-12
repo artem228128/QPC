@@ -8,6 +8,7 @@ import {
   ActivateLevelPage,
   DashboardPage,
   StatsPage,
+  PartnerBonusPage,
 } from './pages';
 
 function App() {
@@ -23,6 +24,7 @@ function App() {
               <Route path="/activate" element={<ActivateLevelPage />} />
               <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/stats" element={<StatsPage />} />
+              <Route path="/partner-bonus" element={<PartnerBonusPage />} />
               <Route path="*" element={<HomePage />} />
             </Routes>
           </div>
