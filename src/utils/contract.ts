@@ -9,121 +9,47 @@ export const CONTRACT_ADDRESS = '0x...'; // Your deployed contract address
 // Simplified ABI for the main functions we need
 export const CONTRACT_ABI = [
   // Registration functions
-  {
-    "inputs": [],
-    "name": "register",
-    "outputs": [],
-    "stateMutability": "payable",
-    "type": "function"
-  },
-  {
-    "inputs": [{"internalType": "address", "name": "referrer", "type": "address"}],
-    "name": "registerWithReferrer", 
-    "outputs": [],
-    "stateMutability": "payable",
-    "type": "function"
-  },
+  { inputs: [], name: 'register', outputs: [], stateMutability: 'payable', type: 'function' },
+  { inputs: [{ internalType: 'address', name: 'referrer', type: 'address' }], name: 'registerWithReferrer', outputs: [], stateMutability: 'payable', type: 'function' },
   
   // Level purchase
-  {
-    "inputs": [{"internalType": "uint8", "name": "level", "type": "uint8"}],
-    "name": "buyLevel",
-    "outputs": [],
-    "stateMutability": "payable", 
-    "type": "function"
-  },
+  { inputs: [{ internalType: 'uint8', name: 'level', type: 'uint8' }], name: 'buyLevel', outputs: [], stateMutability: 'payable', type: 'function' },
 
   // View functions
-  {
-    "inputs": [{"internalType": "address", "name": "userAddress", "type": "address"}],
-    "name": "getUser",
-    "outputs": [
-      {"internalType": "uint256", "name": "id", "type": "uint256"},
-      {"internalType": "uint256", "name": "registrationTimestamp", "type": "uint256"},
-      {"internalType": "uint256", "name": "referrerId", "type": "uint256"},
-      {"internalType": "address", "name": "referrer", "type": "address"},
-      {"internalType": "uint256", "name": "referrals", "type": "uint256"},
-      {"internalType": "uint256", "name": "referralPayoutSum", "type": "uint256"},
-      {"internalType": "uint256", "name": "levelsRewardSum", "type": "uint256"},
-      {"internalType": "uint256", "name": "missedReferralPayoutSum", "type": "uint256"}
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
+  { inputs: [{ internalType: 'address', name: 'userAddress', type: 'address' }], name: 'getUser', outputs: [ { internalType: 'uint256', name: 'id', type: 'uint256' }, { internalType: 'uint256', name: 'registrationTimestamp', type: 'uint256' }, { internalType: 'uint256', name: 'referrerId', type: 'uint256' }, { internalType: 'address', name: 'referrer', type: 'address' }, { internalType: 'uint256', name: 'referrals', type: 'uint256' }, { internalType: 'uint256', name: 'referralPayoutSum', type: 'uint256' }, { internalType: 'uint256', name: 'levelsRewardSum', type: 'uint256' }, { internalType: 'uint256', name: 'missedReferralPayoutSum', type: 'uint256' } ], stateMutability: 'view', type: 'function' },
   
-  {
-    "inputs": [{"internalType": "address", "name": "userAddress", "type": "address"}],
-    "name": "getUserLevels",
-    "outputs": [
-      {"internalType": "bool[]", "name": "active", "type": "bool[]"},
-      {"internalType": "uint16[]", "name": "payouts", "type": "uint16[]"},
-      {"internalType": "uint16[]", "name": "maxPayouts", "type": "uint16[]"},
-      {"internalType": "uint16[]", "name": "activationTimes", "type": "uint16[]"},
-      {"internalType": "uint256[]", "name": "rewardSum", "type": "uint256[]"},
-      {"internalType": "uint256[]", "name": "referralPayoutSum", "type": "uint256[]"}
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
+  { inputs: [{ internalType: 'address', name: 'userAddress', type: 'address' }], name: 'getUserLevels', outputs: [ { internalType: 'bool[]', name: 'active', type: 'bool[]' }, { internalType: 'uint16[]', name: 'payouts', type: 'uint16[]' }, { internalType: 'uint16[]', name: 'maxPayouts', type: 'uint16[]' }, { internalType: 'uint16[]', name: 'activationTimes', type: 'uint16[]' }, { internalType: 'uint256[]', name: 'rewardSum', type: 'uint256[]' }, { internalType: 'uint256[]', name: 'referralPayoutSum', type: 'uint256[]' } ], stateMutability: 'view', type: 'function' },
 
-  {
-    "inputs": [{"internalType": "address", "name": "userAddress", "type": "address"}],
-    "name": "isUserRegistered",
-    "outputs": [{"internalType": "bool", "name": "", "type": "bool"}],
-    "stateMutability": "view",
-    "type": "function"
-  },
+  { inputs: [{ internalType: 'address', name: 'userAddress', type: 'address' }], name: 'isUserRegistered', outputs: [{ internalType: 'bool', name: '', type: 'bool' }], stateMutability: 'view', type: 'function' },
 
-  {
-    "inputs": [],
-    "name": "getGlobalStats",
-    "outputs": [
-      {"internalType": "uint256", "name": "members", "type": "uint256"},
-      {"internalType": "uint256", "name": "transactions", "type": "uint256"},
-      {"internalType": "uint256", "name": "turnover", "type": "uint256"}
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
+  { inputs: [], name: 'getGlobalStats', outputs: [ { internalType: 'uint256', name: 'members', type: 'uint256' }, { internalType: 'uint256', name: 'transactions', type: 'uint256' }, { internalType: 'uint256', name: 'turnover', type: 'uint256' } ], stateMutability: 'view', type: 'function' },
 
-  {
-    "inputs": [],
-    "name": "getAllLevelPrices",
-    "outputs": [{"internalType": "uint256[17]", "name": "", "type": "uint256[17]"}],
-    "stateMutability": "view",
-    "type": "function"
-  },
+  { inputs: [], name: 'getAllLevelPrices', outputs: [{ internalType: 'uint256[17]', name: '', type: 'uint256[17]' }], stateMutability: 'view', type: 'function' },
 
   // Constants
-  {
-    "inputs": [],
-    "name": "REGISTRATION_PRICE",
-    "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
-    "stateMutability": "view",
-    "type": "function"
-  },
+  { inputs: [], name: 'REGISTRATION_PRICE', outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }], stateMutability: 'view', type: 'function' },
 
   // Events
   {
-    "anonymous": false,
-    "inputs": [
-      {"indexed": true, "internalType": "uint256", "name": "userId", "type": "uint256"},
-      {"indexed": true, "internalType": "uint256", "name": "referrerId", "type": "uint256"},
-      {"indexed": true, "internalType": "address", "name": "userAddress", "type": "address"}
+    anonymous: false,
+    inputs: [
+      { indexed: true, internalType: 'uint256', name: 'userId', type: 'uint256' },
+      { indexed: true, internalType: 'uint256', name: 'referrerId', type: 'uint256' },
+      { indexed: true, internalType: 'address', name: 'userAddress', type: 'address' },
     ],
-    "name": "UserRegistration",
-    "type": "event"
+    name: 'UserRegistration',
+    type: 'event',
   },
   
   {
-    "anonymous": false,
-    "inputs": [
-      {"indexed": true, "internalType": "uint256", "name": "userId", "type": "uint256"},
-      {"indexed": true, "internalType": "uint8", "name": "level", "type": "uint8"},
-      {"internalType": "uint256", "name": "value", "type": "uint256"}
+    anonymous: false,
+    inputs: [
+      { indexed: true, internalType: 'uint256', name: 'userId', type: 'uint256' },
+      { indexed: true, internalType: 'uint8', name: 'level', type: 'uint8' },
+      { internalType: 'uint256', name: 'value', type: 'uint256' },
     ],
-    "name": "BuyLevel",
-    "type": "event"
+    name: 'BuyLevel',
+    type: 'event',
   }
 ] as const;
 
