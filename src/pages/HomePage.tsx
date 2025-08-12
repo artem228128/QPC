@@ -10,40 +10,20 @@ import {
 } from '../components/landing';
 import { AccountLookup } from '../components/landing/AccountLookup';
 import { useWallet } from '../hooks/useWallet';
-import { useToast } from '../components/common';
+// Removed unused toast import
 
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
-  const { walletState, isUserRegistered, registerUser } = useWallet();
-  const toast = useToast();
+  const { walletState } = useWallet();
 
   const handleConnectWallet = useCallback(() => {
     navigate('/wallet');
   }, [navigate]);
 
   const handleStartGame = useCallback(async () => {
-    // Check if user is registered in contract
-    const registered = await isUserRegistered();
-
-    if (!registered) {
-      // If not registered, register user first (could open a modal for referrer)
-      try {
-        await registerUser(); // or registerUser(referrerAddress)
-        toast.success('Registration Successful!', 'Welcome to Quantum Profit Chain');
-        // After registration, redirect to game
-        navigate('/game');
-      } catch (error: any) {
-        console.error('Registration failed:', error);
-        toast.error(
-          'Registration Failed',
-          error.message || 'An error occurred during registration'
-        );
-      }
-    } else {
-      // If already registered, go directly to game
-      navigate('/game');
-    }
-  }, [isUserRegistered, registerUser, navigate, toast]);
+    // If wallet connected, go to activation page first
+    navigate('/activate');
+  }, [navigate]);
 
   const handleHelpMe = useCallback(() => {
     const faqEl = document.getElementById('faq');
