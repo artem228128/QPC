@@ -3,8 +3,11 @@ import { motion } from 'framer-motion';
 import { ConnectedHeader, DashboardSidebar } from '../components/layout';
 import { NeuralBackground } from '../components/neural';
 import { ProgramViewGrid } from '../components/matrix';
+import { useWallet } from '../hooks/useWallet';
 
 const ProgramViewPage: React.FC = () => {
+  const { buyLevel, userLevels } = useWallet();
+
   return (
     <div className="min-h-screen relative overflow-hidden">
       <NeuralBackground intensity={0.6} particleCount={30} />
@@ -32,7 +35,7 @@ const ProgramViewPage: React.FC = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2, duration: 0.6 }}
           >
-            <ProgramViewGrid />
+            <ProgramViewGrid onActivate={buyLevel} userLevels={userLevels} />
           </motion.div>
         </div>
       </main>

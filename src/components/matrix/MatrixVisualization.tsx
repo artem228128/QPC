@@ -2,7 +2,8 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Users, TrendingUp, Lock, Timer, Wallet, Award, Target } from 'lucide-react';
 import { GlassCard, GlassButton } from '../glass';
-import { formatBNB } from '../../utils/contract';
+import { formatBNB, LEVEL_PRICES } from '../../utils/contract';
+import { ContractUserLevelsData } from '../../types';
 
 interface MatrixLevel {
   level: number;
@@ -20,6 +21,8 @@ interface MatrixLevel {
 
 interface MatrixVisualizationProps {
   matrixLevel: MatrixLevel;
+  onActivate?: (level: number, priceBNB: number) => void;
+  isBusy?: boolean;
 }
 
 // Generate all 16 levels with mock data
@@ -60,7 +63,7 @@ const generateMockMatrixData = (): MatrixLevel[] => {
 
 const MOCK_MATRIX_DATA: MatrixLevel[] = generateMockMatrixData();
 
-export const MatrixVisualization: React.FC<MatrixVisualizationProps> = ({ matrixLevel }) => {
+export const MatrixVisualization: React.FC<MatrixVisualizationProps> = ({ matrixLevel, onActivate, isBusy }) => {
   // LOCKED LEVEL
   if (matrixLevel.isLocked) {
     return (
@@ -107,13 +110,15 @@ export const MatrixVisualization: React.FC<MatrixVisualizationProps> = ({ matrix
           </div>
         </div>
 
-        <div className="text-center py-6">
+          <div className="text-center py-6">
           <div className="text-blue-400 text-sm mb-4 font-medium">Not Activated</div>
           <GlassButton
             variant="primary"
             className="w-full py-2 bg-gradient-to-r from-blue-500/30 to-cyan-500/30 border-blue-400/50 hover:border-blue-300 text-blue-300 hover:text-white shadow-lg shadow-blue-400/20 hover:shadow-blue-400/30 transition-all duration-300"
+              onClick={() => onActivate?.(matrixLevel.level, matrixLevel.priceBNB)}
+              disabled={isBusy}
           >
-            <span className="font-semibold">Activate Level</span>
+            <span className="font-semibold">{isBusy ? 'Processing…' : 'Activate Level'}</span>
           </GlassButton>
         </div>
       </GlassCard>
@@ -210,7 +215,10 @@ export const MatrixVisualization: React.FC<MatrixVisualizationProps> = ({ matrix
   );
 };
 
-export const ProgramViewGrid: React.FC = () => {
+export const ProgramViewGrid: React.FC<{
+  onActivate?: (level: number, priceBNB: number) => Promise<void> | void;
+  userLevels?: ContractUserLevelsData | null;
+}> = ({ onActivate, userLevels }) => {
   // Calculate total earnings from all activated levels
   const totalLevelProfit = MOCK_MATRIX_DATA.filter((level) => level.isActivated).reduce(
     (sum, level) => sum + level.levelProfit,
@@ -323,16 +331,63 @@ export const ProgramViewGrid: React.FC = () => {
       </motion.div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-        {MOCK_MATRIX_DATA.map((matrixLevel) => (
+        {MOCK_MATRIX_DATA.map((ml) => {
+          const level = ml.level;
+          const priceBNB = (LEVEL_PRICES as any)[level] ?? ml.priceBNB;
+          const arr = userLevels?.active;
+          let isActive = ml.isActivated;
+          if (arr && arr.length) {
+            if (arr.length >= 17) {
+              isActive = Boolean(arr[level]);
+            } else {
+              isActive = Boolean(arr[level - 1]);
+            }
+          }
+          // compute availability based on max active
+          let maxActive = 0;
+          if (arr && arr.length) {
+            const flags = arr.length >= 17 ? arr.slice(1, 17) : arr.slice(0, 16);
+            flags.forEach((v: any, idx: number) => {
+              if (v) maxActive = Math.max(maxActive, idx + 1);
+            });
+          }
+          const isAvailable = !isActive && (maxActive > 0 ? level <= maxActive + 1 : level === 1);
+          const isLocked = !(isActive || isAvailable);
+
+          // derive progress from on-chain payouts/maxPayouts
+          const getIdx = (lvl: number) => (userLevels?.active && userLevels.active.length >= 17 ? lvl : lvl - 1);
+          const pArr = userLevels?.payouts;
+          const mArr = userLevels?.maxPayouts;
+          const idx = getIdx(level);
+          let progress = ml.progress;
+          let nextCycleCount = ml.nextCycleCount;
+          if (pArr && mArr && pArr[idx] !== undefined && mArr[idx] !== undefined && mArr[idx] > 0) {
+            const p = Number(pArr[idx]);
+            const m = Number(mArr[idx]);
+            progress = Math.max(0, Math.min(100, Math.round((p / m) * 100)));
+            nextCycleCount = Math.max(0, m - p);
+          }
+
+          const matrixLevel = {
+            ...ml,
+            level,
+            priceBNB,
+            isActivated: isActive,
+            isLocked,
+            progress,
+            matrixFillPercent: progress,
+            nextCycleCount,
+          };
+          return (
           <motion.div
             key={matrixLevel.level}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: (16 - matrixLevel.level) * 0.05 }}
           >
-            <MatrixVisualization matrixLevel={matrixLevel} />
+            <MatrixVisualization matrixLevel={matrixLevel} onActivate={(lvl) => onActivate?.(lvl, priceBNB)} />
           </motion.div>
-        ))}
+        );})}
       </div>
     </div>
   );

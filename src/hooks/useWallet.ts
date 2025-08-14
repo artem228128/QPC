@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { WalletState, NetworkConfig, ContractUserInfo, ContractGlobalStats, ContractUserLevelsData } from '../types';
 import { Web3Provider } from '../types/web3';
 import { parseEther } from 'ethers';
+import { toast } from 'react-hot-toast';
 import { ACTIVE_NETWORK, getQpcContract } from '../utils/contract';
 
 export const useWallet = () => {
@@ -308,6 +309,7 @@ export const useWallet = () => {
         method: 'wallet_switchEthereumChain',
         params: [{ chainId: BSC_NETWORK.chainId }],
       });
+      toast.success('Switched to BNB Smart Chain');
       return true;
     } catch (switchError: any) {
       if (switchError.code === 4902) {
@@ -316,13 +318,16 @@ export const useWallet = () => {
             method: 'wallet_addEthereumChain',
             params: [BSC_NETWORK],
           });
+          toast.success('BNB Smart Chain added and selected');
           return true;
         } catch (addError) {
           console.error('Failed to add BSC network:', addError);
+          toast.error('Failed to add BNB Smart Chain. Please add/select it in your wallet.');
           return false;
         }
       } else {
         console.error('Failed to switch to BSC:', switchError);
+        toast.error('Please switch your wallet to BNB Smart Chain (BSC).');
         return false;
       }
     }
@@ -351,9 +356,11 @@ export const useWallet = () => {
         throw new Error('Wallet not connected');
       }
 
-      if (walletState.network !== 'bsc') {
+      // Ensure exact target chain (mainnet 0x38 or testnet 0x61)
+      if ((walletState.chainIdHex || '').toLowerCase() !== BSC_NETWORK.chainId.toLowerCase()) {
         const switched = await switchToBSC();
         if (!switched) {
+          toast.error('Please switch to BNB Smart Chain (BSC)');
           throw new Error('Please switch to BSC network');
         }
       }
@@ -367,8 +374,10 @@ export const useWallet = () => {
           : contract.register({ value: price }));
         await tx.wait();
         await loadContractInfo(walletState.address);
+        toast.success('Registration confirmed');
       } catch (err: any) {
         setError(err.message || 'Registration failed');
+        toast.error(err?.message || 'Registration failed');
         throw err;
       } finally {
         setIsLoading(false);
@@ -381,13 +390,18 @@ export const useWallet = () => {
     async (level: number, valueBnb: number) => {
       const provider = getProvider();
       if (!provider || !walletState.address) throw new Error('Wallet not connected');
-      if (walletState.network !== 'bsc') {
+      // Ensure exact target chain (mainnet 0x38 or testnet 0x61)
+      if ((walletState.chainIdHex || '').toLowerCase() !== BSC_NETWORK.chainId.toLowerCase()) {
         const switched = await switchToBSC();
-        if (!switched) throw new Error('Please switch to BSC network');
+        if (!switched) {
+          toast.error('Please switch to BNB Smart Chain (BSC)');
+          throw new Error('Please switch to BSC network');
+        }
       }
       // Ensure user is registered before attempting level purchase
       const registered = await isUserRegistered();
       if (!registered) {
+        toast.error('Not registered. Please register before buying a level.');
         throw new Error('Not registered: please register before buying a level');
       }
       setIsLoading(true);
@@ -399,6 +413,11 @@ export const useWallet = () => {
         if (walletState.address) {
           await loadContractInfo(walletState.address);
         }
+        toast.success(`Level ${level} activated`);
+      } catch (err: any) {
+        setError(err?.message || 'Activation failed');
+        toast.error(err?.message || 'Activation failed');
+        throw err;
       } finally {
         setIsLoading(false);
       }
