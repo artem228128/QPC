@@ -18,6 +18,7 @@ import { GlassCard, GlassButton } from '../components/glass';
 // Removed StatsPanel import - not needed in dashboard
 import { useWallet } from '../hooks/useWallet';
 import { LEVEL_PRICES, formatBNB, CONTRACT_ADDRESS } from '../utils/contract';
+import { RecentActivationsTable } from '../components';
 
 // Mock data for demonstration - expanded activations
 const MOCK_USER_DATA = {
@@ -205,6 +206,34 @@ const DashboardPage: React.FC = () => {
       </div>
     );
   };
+
+  // Recent Activations from-chain (BuyLevel events)
+  const [recentActs, setRecentActs] = React.useState<Array<{datetime: string; level: number; userId: number; amount: number; tx: string}>>([]);
+  React.useEffect(() => {
+    (async () => {
+      try {
+        const c: any = await getQpcContract(false);
+        const now = await (c.runner?.getBlock ? c.runner.getBlock('latest') : null);
+        const latest = now?.number ?? undefined;
+        const from = latest ? Math.max(0, latest - 5000) : 0;
+        const iface = new (require('ethers').Interface)(["event BuyLevel(uint256 indexed userId, uint8 indexed level, uint256 value)"]);
+        const topic = iface.getEvent("BuyLevel").topicHash;
+        const logs = await c.runner.getLogs({ address: c.target, fromBlock: from, toBlock: latest ?? 'latest', topics: [topic] });
+        const parsed = await Promise.all(logs.slice(-20).reverse().map(async (l: any) => {
+          const p = iface.decodeEventLog("BuyLevel", l.data, l.topics);
+          const userId = Number(p.userId);
+          const level = Number(p.level);
+          const amount = Number(p.value) / 1e18;
+          const block = await c.runner.getBlock(l.blockHash);
+          const dt = new Date(Number(block.timestamp) * 1000).toISOString().replace('T',' ').slice(0,16);
+          return { datetime: dt, level, userId, amount, tx: l.transactionHash };
+        }));
+        setRecentActs(parsed);
+      } catch (e) {
+        // ignore silently in UI
+      }
+    })();
+  }, []);
 
   return (
     <div className="min-h-screen relative overflow-hidden">
@@ -440,74 +469,9 @@ const DashboardPage: React.FC = () => {
                 </GlassCard>
               </motion.div>
 
-              {/* Recent Activations - Expanded */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.6, duration: 0.6 }}
-              >
-                <GlassCard className="p-6">
-                  <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-xl font-semibold text-white">Recent Activations</h3>
-                    <button className="text-cyan-400 hover:text-cyan-300 text-sm flex items-center gap-1 font-medium">
-                      Show All <ChevronRight size={16} />
-                    </button>
-                  </div>
-
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="border-b border-white/10">
-                          <th className="text-left text-gray-400 pb-3 font-medium">Date & Time</th>
-                          <th className="text-left text-gray-400 pb-3 font-medium">Level</th>
-                          <th className="text-left text-gray-400 pb-3 font-medium">Player ID</th>
-                          <th className="text-left text-gray-400 pb-3 font-medium">Amount</th>
-                          <th className="text-left text-gray-400 pb-3 font-medium">Bonus</th>
-                          <th className="text-left text-gray-400 pb-3 font-medium">Transaction</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {MOCK_USER_DATA.activations.map((activation, index) => (
-                          <motion.tr
-                            key={index}
-                            className="border-b border-white/5 hover:bg-white/5 transition-colors"
-                            initial={{ opacity: 0, x: -20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: 0.7 + index * 0.05 }}
-                          >
-                            <td className="py-4 text-white">{activation.date}</td>
-                            <td className="py-4">
-                              <span className="px-2 py-1 bg-cyan-500/20 text-cyan-400 rounded-lg font-bold">
-                                L{activation.level}
-                              </span>
-                            </td>
-                            <td className="py-4 text-white font-mono">#{activation.playerId}</td>
-                            <td className="py-4 text-green-400 font-semibold">
-                              {formatBNB(activation.amount)} BNB
-                            </td>
-                            <td className="py-4 text-yellow-400 font-semibold">
-                              +{formatBNB(activation.partnerBonus)} BNB
-                            </td>
-                            <td className="py-4">
-                              <button
-                                onClick={() =>
-                                  window.open(
-                                    `https://bscscan.com/tx/${activation.txHash}`,
-                                    '_blank'
-                                  )
-                                }
-                                className="p-2 bg-blue-500/20 hover:bg-blue-500/30 rounded-lg transition-colors"
-                                title="View Transaction"
-                              >
-                                <ExternalLink size={16} className="text-blue-400" />
-                              </button>
-                            </td>
-                          </motion.tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </GlassCard>
+              {/* Recent Activations - Reusable Table */}
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6, duration: 0.6 }}>
+                <RecentActivationsTable />
               </motion.div>
             </div>
 

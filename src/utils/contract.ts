@@ -187,6 +187,14 @@ export const CONTRACT_ABI = [
     name: 'BuyLevel',
     type: 'event',
   },
+  // Public mapping getter
+  {
+    inputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
+    name: 'usersAddressById',
+    outputs: [{ internalType: 'address', name: '', type: 'address' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
 ] as const;
 
 // Contract Constants

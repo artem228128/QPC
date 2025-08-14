@@ -219,6 +219,26 @@ export const ProgramViewGrid: React.FC<{
   onActivate?: (level: number, priceBNB: number) => Promise<void> | void;
   userLevels?: ContractUserLevelsData | null;
 }> = ({ onActivate, userLevels }) => {
+  const [freezeUntil, setFreezeUntil] = React.useState<Record<number, number>>({});
+  const lastPayoutsRef = React.useRef<Record<number, number>>({});
+
+  React.useEffect(() => {
+    const pArr = userLevels?.payouts;
+    const now = Date.now();
+    if (!pArr) return;
+    const next: Record<number, number> = { ...freezeUntil };
+    for (let level = 1; level <= 16; level++) {
+      const idx = userLevels?.active && userLevels.active.length >= 17 ? level : level - 1;
+      const pVal = Number((pArr as any)?.[idx] ?? 0);
+      const prev = lastPayoutsRef.current[level] ?? 0;
+      if (pVal > prev) {
+        next[level] = now + 5000; // freeze dot for 5s after a payout
+      }
+      lastPayoutsRef.current[level] = pVal;
+    }
+    setFreezeUntil(next);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userLevels?.payouts]);
   // Calculate total earnings from all activated levels
   const totalLevelProfit = MOCK_MATRIX_DATA.filter((level) => level.isActivated).reduce(
     (sum, level) => sum + level.levelProfit,
@@ -361,11 +381,18 @@ export const ProgramViewGrid: React.FC<{
           const idx = getIdx(level);
           let progress = ml.progress;
           let nextCycleCount = ml.nextCycleCount;
+          let rewardPosition: number | undefined = ml.rewardPosition;
           if (pArr && mArr && pArr[idx] !== undefined && mArr[idx] !== undefined && mArr[idx] > 0) {
             const p = Number(pArr[idx]);
             const m = Number(mArr[idx]);
             progress = Math.max(0, Math.min(100, Math.round((p / m) * 100)));
             nextCycleCount = Math.max(0, m - p);
+            // Reward dot behavior: keep at last achieved threshold briefly, then move to next cycle threshold
+            const nextThreshold = Math.max(0, Math.min(100, Math.round(((Math.min(p + 1, m)) / m) * 100)));
+            const lastThreshold = Math.max(0, Math.min(100, Math.round(((Math.max(p, 1)) / m) * 100)));
+            const now = Date.now();
+            const frozen = freezeUntil[level] && now < (freezeUntil[level] as number);
+            rewardPosition = frozen ? lastThreshold : nextThreshold;
           }
 
           const matrixLevel = {
@@ -377,6 +404,7 @@ export const ProgramViewGrid: React.FC<{
             progress,
             matrixFillPercent: progress,
             nextCycleCount,
+            rewardPosition,
           };
           return (
           <motion.div

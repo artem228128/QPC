@@ -20,3 +20,4 @@ export * from './game';
 
 // Animation components
 export * from './animations';
+export { default as RecentActivationsTable } from './dashboard/RecentActivationsTable';
