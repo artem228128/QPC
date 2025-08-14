@@ -15,16 +15,27 @@ import { NeuralBackground } from '../components/neural';
 
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
-  const { walletState } = useWallet();
+  const { walletState, isUserRegistered } = useWallet();
 
   const handleConnectWallet = useCallback(() => {
     navigate('/wallet');
   }, [navigate]);
 
   const handleStartGame = useCallback(async () => {
-    // Go to activation page
-    navigate('/activate');
-  }, [navigate]);
+    // If wallet not connected, send to connect page
+    if (!walletState.isConnected) {
+      navigate('/wallet');
+      return;
+    }
+
+    // Check on-chain registration and route accordingly
+    const registered = await isUserRegistered();
+    if (registered) {
+      navigate('/dashboard');
+    } else {
+      navigate('/activate');
+    }
+  }, [navigate, walletState.isConnected, isUserRegistered]);
 
   const handleHelpMe = useCallback(() => {
     const faqEl = document.getElementById('faq');
@@ -43,7 +54,7 @@ const HomePage: React.FC = () => {
 
       {/* Hero Section */}
       <HeroSection
-        onStartGame={walletState.isConnected ? handleStartGame : handleConnectWallet}
+        onStartGame={handleStartGame}
         onEnterWithReferral={handleHelpMe}
         isWalletConnected={walletState.isConnected}
       />

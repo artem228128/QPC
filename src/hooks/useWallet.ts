@@ -213,44 +213,72 @@ export const useWallet = () => {
     autoConnect();
   }, [getProvider, connectWallet]);
 
-  // Load contract user info
+  // Load contract user info from-chain
   const loadContractInfo = useCallback(
     async (address: string) => {
-      const provider = getProvider();
-      if (!provider) return;
-
       try {
-        // In a real implementation, you would use ethers.js or web3.js
-        // For now, we'll simulate the contract call
-        console.log('Loading contract info for:', address);
+        const contract: any = await getQpcContract(false);
 
-        // This would be replaced with actual contract calls
-        // const contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, provider);
-        // const userInfo = await contract.getUser(address);
-        // const globalStats = await contract.getGlobalStats();
+        // Safely check registration (some builds may not expose this method)
+        let registered = false;
+        if (typeof contract.isUserRegistered === 'function') {
+          try {
+            registered = await contract.isUserRegistered(address);
+          } catch {
+            registered = false;
+          }
+        }
 
-        // Simulated response
-        setContractInfo({
-          id: 1,
-          registrationTimestamp: Date.now(),
-          referrerId: 0,
-          referrer: '0x0000000000000000000000000000000000000000',
-          referrals: 0,
-          referralPayoutSum: 0,
-          levelsRewardSum: 0,
-          missedReferralPayoutSum: 0,
-        });
+        if (!registered) {
+          setContractInfo(null);
 
-        setGlobalStats({
-          members: 1000,
-          transactions: 5000,
-          turnover: 500,
-        });
+          // Global stats are optional; attempt to load but ignore errors or missing method
+          if (typeof contract.getGlobalStats === 'function') {
+            try {
+              const gs = await contract.getGlobalStats();
+              setGlobalStats({
+                members: Number(gs?.members ?? 0),
+                transactions: Number(gs?.transactions ?? 0),
+                turnover: Number(gs?.turnover ?? 0),
+              });
+            } catch {}
+          }
+          return;
+        }
+
+        // Load user info if method exists
+        if (typeof contract.getUser === 'function') {
+          try {
+            const ui = await contract.getUser(address);
+            setContractInfo({
+              id: Number(ui?.id ?? 0),
+              registrationTimestamp: Number(ui?.registrationTimestamp ?? 0) * 1000,
+              referrerId: Number(ui?.referrerId ?? 0),
+              referrer: String(ui?.referrer ?? '0x0000000000000000000000000000000000000000'),
+              referrals: Number(ui?.referrals ?? 0),
+              referralPayoutSum: Number(ui?.referralPayoutSum ?? 0),
+              levelsRewardSum: Number(ui?.levelsRewardSum ?? 0),
+              missedReferralPayoutSum: Number(ui?.missedReferralPayoutSum ?? 0),
+            });
+          } catch {}
+        }
+
+        // Optional global stats
+        if (typeof contract.getGlobalStats === 'function') {
+          try {
+            const gs = await contract.getGlobalStats();
+            setGlobalStats({
+              members: Number(gs?.members ?? 0),
+              transactions: Number(gs?.transactions ?? 0),
+              turnover: Number(gs?.turnover ?? 0),
+            });
+          } catch {}
+        }
       } catch (err) {
         console.error('Failed to load contract info:', err);
       }
     },
-    [getProvider]
+    []
   );
 
   // Switch to BSC network
@@ -288,14 +316,14 @@ export const useWallet = () => {
     async (address?: string) => {
       const userAddress = address || walletState.address;
       if (!userAddress) return false;
-
-      // In real implementation, check contract
-      // const contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, provider);
-      // return await contract.isUserRegistered(userAddress);
-
-      return contractInfo !== null;
+      try {
+        const contract: any = await getQpcContract(false);
+        return await contract.isUserRegistered(userAddress);
+      } catch {
+        return false;
+      }
     },
-    [walletState.address, contractInfo]
+    [walletState.address]
   );
 
   // Register user in contract
@@ -316,7 +344,7 @@ export const useWallet = () => {
       try {
         setIsLoading(true);
         const contract: any = await getQpcContract(true);
-        const price = parseEther('0.025');
+        const price = await contract.REGISTRATION_PRICE();
         const tx = await (_referrerAddress
           ? contract.registerWithReferrer(_referrerAddress, { value: price })
           : contract.register({ value: price }));
@@ -340,6 +368,11 @@ export const useWallet = () => {
         const switched = await switchToBSC();
         if (!switched) throw new Error('Please switch to BSC network');
       }
+      // Ensure user is registered before attempting level purchase
+      const registered = await isUserRegistered();
+      if (!registered) {
+        throw new Error('Not registered: please register before buying a level');
+      }
       setIsLoading(true);
       try {
         const contract: any = await getQpcContract(true);
@@ -349,7 +382,7 @@ export const useWallet = () => {
         setIsLoading(false);
       }
     },
-    [getProvider, walletState.address, walletState.network, switchToBSC]
+    [getProvider, walletState.address, walletState.network, switchToBSC, isUserRegistered]
   );
 
   return {

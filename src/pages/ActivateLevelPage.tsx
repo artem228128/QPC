@@ -189,16 +189,7 @@ const ActivateLevelPage: React.FC = () => {
             </div>
           </div>
 
-          {/* DEBUG INFO */}
-          <div className="mb-6 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
-            <h3 className="text-sm font-semibold text-red-400 mb-2">DEBUG INFO</h3>
-            <div className="text-xs text-gray-300 space-y-1">
-              <div>network: "{walletState.network}"</div>
-              <div>chainIdHex: "{walletState.chainIdHex}"</div>
-              <div>isOnBSC: {isOnBSC ? 'TRUE' : 'FALSE'}</div>
-              <div>isConnected: {walletState.isConnected ? 'TRUE' : 'FALSE'}</div>
-            </div>
-          </div>
+          
 
           {/* Status Checks */}
           <div className="mb-6">
