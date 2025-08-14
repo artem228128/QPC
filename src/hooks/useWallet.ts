@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { WalletState, NetworkConfig, ContractUserInfo, ContractGlobalStats } from '../types';
+import { WalletState, NetworkConfig, ContractUserInfo, ContractGlobalStats, ContractUserLevelsData } from '../types';
 import { Web3Provider } from '../types/web3';
 import { parseEther } from 'ethers';
 import { ACTIVE_NETWORK, getQpcContract } from '../utils/contract';
@@ -16,6 +16,7 @@ export const useWallet = () => {
   const [error, setError] = useState<string | null>(null);
   const [contractInfo, setContractInfo] = useState<ContractUserInfo | null>(null);
   const [globalStats, setGlobalStats] = useState<ContractGlobalStats | null>(null);
+  const [userLevels, setUserLevels] = useState<ContractUserLevelsData | null>(null);
 
   // Import contract configuration
   const BSC_NETWORK: NetworkConfig = {
@@ -256,9 +257,25 @@ export const useWallet = () => {
               referrerId: Number(ui?.referrerId ?? 0),
               referrer: String(ui?.referrer ?? '0x0000000000000000000000000000000000000000'),
               referrals: Number(ui?.referrals ?? 0),
-              referralPayoutSum: Number(ui?.referralPayoutSum ?? 0),
-              levelsRewardSum: Number(ui?.levelsRewardSum ?? 0),
-              missedReferralPayoutSum: Number(ui?.missedReferralPayoutSum ?? 0),
+              // values from contract are in wei; convert to BNB
+              referralPayoutSum: Number(ui?.referralPayoutSum ?? 0) / 1e18,
+              levelsRewardSum: Number(ui?.levelsRewardSum ?? 0) / 1e18,
+              missedReferralPayoutSum: Number(ui?.missedReferralPayoutSum ?? 0) / 1e18,
+            });
+          } catch {}
+        }
+
+        // Load levels if method exists
+        if (typeof contract.getUserLevels === 'function') {
+          try {
+            const lv = await contract.getUserLevels(address);
+            setUserLevels({
+              active: Array.from(lv?.active ?? []).map(Boolean),
+              payouts: Array.from(lv?.payouts ?? []).map((v: any) => Number(v)),
+              maxPayouts: Array.from(lv?.maxPayouts ?? []).map((v: any) => Number(v)),
+              activationTimes: Array.from(lv?.activationTimes ?? []).map((v: any) => Number(v)),
+              rewardSum: Array.from(lv?.rewardSum ?? []).map((v: any) => Number(v) / 1e18),
+              referralPayoutSum: Array.from(lv?.referralPayoutSum ?? []).map((v: any) => Number(v) / 1e18),
             });
           } catch {}
         }
@@ -378,11 +395,15 @@ export const useWallet = () => {
         const contract: any = await getQpcContract(true);
         const tx = await contract.buyLevel(level, { value: parseEther(String(valueBnb)) });
         await tx.wait();
+        // Refresh on-chain user info and levels after successful purchase
+        if (walletState.address) {
+          await loadContractInfo(walletState.address);
+        }
       } finally {
         setIsLoading(false);
       }
     },
-    [getProvider, walletState.address, walletState.network, switchToBSC, isUserRegistered]
+    [getProvider, walletState.address, walletState.network, switchToBSC, isUserRegistered, loadContractInfo]
   );
 
   return {
@@ -391,6 +412,7 @@ export const useWallet = () => {
     error,
     contractInfo,
     globalStats,
+    userLevels,
     connectWallet,
     disconnectWallet,
     updateBalance,

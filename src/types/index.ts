@@ -96,6 +96,16 @@ export interface ContractGlobalStats {
   turnover: number;
 }
 
+// User levels data returned by getUserLevels
+export interface ContractUserLevelsData {
+  active: boolean[];
+  payouts: number[];
+  maxPayouts: number[];
+  activationTimes: number[];
+  rewardSum: number[];
+  referralPayoutSum: number[];
+}
+
 // BSC Network configuration
 export interface NetworkConfig {
   chainId: string;

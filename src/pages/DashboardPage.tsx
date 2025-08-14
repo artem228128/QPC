@@ -103,7 +103,21 @@ const MOCK_USER_DATA = {
 
 const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
-  const {} = useWallet();
+  const { walletState, contractInfo, userLevels } = useWallet();
+
+  // Activated levels count (bind to on-chain data)
+  const activatedCount = React.useMemo(() => {
+    const arr = userLevels?.active;
+    if (!arr || !arr.length) return 0;
+    if (arr.length >= 17) {
+      let c = 0;
+      for (let i = 1; i <= 16 && i < arr.length; i += 1) {
+        if (Boolean(arr[i])) c++;
+      }
+      return c;
+    }
+    return arr.filter(Boolean).length;
+  }, [userLevels?.active]);
 
   const copyReferralLink = useCallback(async () => {
     await navigator.clipboard.writeText(MOCK_USER_DATA.referralLink);
@@ -124,12 +138,29 @@ const DashboardPage: React.FC = () => {
 
   const renderLevelVisualization = () => {
     const levels = Array.from({ length: 16 }, (_, i) => i + 1);
+    const activeSet = new Set<number>();
+    if (userLevels?.active && userLevels.active.length) {
+      const arr = userLevels.active;
+      if (arr.length >= 17) {
+        // Contracts often return index 0 as unused; map 1..16 -> levels 1..16
+        for (let i = 1; i <= 16 && i < arr.length; i += 1) {
+          if (arr[i]) activeSet.add(i);
+        }
+      } else {
+        // 16-length array maps 0..15 -> levels 1..16
+        arr.forEach((isActive: boolean, idx: number) => {
+          if (isActive) activeSet.add(idx + 1);
+        });
+      }
+    }
 
     return (
       <div className="grid grid-cols-4 sm:grid-cols-8 gap-3">
         {levels.map((level) => {
-          const isActivated = MOCK_USER_DATA.activatedLevels.includes(level);
-          const isAvailable = level <= Math.max(...MOCK_USER_DATA.activatedLevels) + 1;
+          const isActivated = activeSet.has(level);
+          const maxActive = activeSet.size ? Math.max(...Array.from(activeSet)) : 0;
+          // Временное правило: если активен хотя бы 1 уровень, доступными считаем первые 5 уровней
+          const isAvailable = level <= Math.max(5, maxActive + 1);
 
           return (
             <motion.div
@@ -161,7 +192,7 @@ const DashboardPage: React.FC = () => {
                 ${isActivated ? 'text-green-300' : isAvailable ? 'text-blue-300' : 'text-gray-400'}
               `}
               >
-                {formatBNB(LEVEL_PRICES[level])}
+                 {formatBNB(LEVEL_PRICES[level])}
               </div>
               {isActivated && (
                 <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-400 rounded-full border-2 border-black flex items-center justify-center">
@@ -227,14 +258,16 @@ const DashboardPage: React.FC = () => {
                       <div className="bg-black/30 rounded-lg p-3 font-mono text-sm text-white border border-white/10">
                         <div className="flex justify-between items-center">
                           <span className="text-gray-400">User ID:</span>
-                          <span className="text-cyan-400 font-bold">#{MOCK_USER_DATA.id}</span>
+                          <span className="text-cyan-400 font-bold">
+                            #{contractInfo?.id ?? '—'}
+                          </span>
                         </div>
                       </div>
                       <div className="bg-black/30 rounded-lg p-3 font-mono text-sm text-white border border-white/10">
                         <div className="flex justify-between items-center">
                           <span className="text-gray-400">Total Earnings:</span>
                           <span className="text-green-400 font-bold">
-                            {formatBNB(MOCK_USER_DATA.totalEarnings)} BNB
+                            {formatBNB(contractInfo?.levelsRewardSum ?? 0)} BNB
                           </span>
                         </div>
                       </div>
@@ -390,9 +423,7 @@ const DashboardPage: React.FC = () => {
                     <div className="flex items-center gap-6 text-sm">
                       <div className="flex items-center gap-2">
                         <div className="w-4 h-4 bg-green-400 rounded border-2 border-green-400/60"></div>
-                        <span className="text-gray-300">
-                          Activated ({MOCK_USER_DATA.activatedLevels.length})
-                        </span>
+                          <span className="text-gray-300">Activated ({activatedCount})</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <div className="w-4 h-4 bg-blue-400 rounded border-2 border-blue-400/40"></div>
@@ -535,15 +566,15 @@ const DashboardPage: React.FC = () => {
                   <h3 className="text-lg font-semibold text-white mb-4">Today's Summary</h3>
                   <div className="space-y-3">
                     <div className="bg-black/20 rounded-lg p-3">
-                      <div className="text-green-400 text-lg font-bold">{formatBNB(0.84)} BNB</div>
+                      <div className="text-green-400 text-lg font-bold">—</div>
                       <div className="text-gray-400 text-xs">Earnings Today</div>
                     </div>
                     <div className="bg-black/20 rounded-lg p-3">
-                      <div className="text-cyan-400 text-lg font-bold">3</div>
+                      <div className="text-cyan-400 text-lg font-bold">—</div>
                       <div className="text-gray-400 text-xs">New Activations</div>
                     </div>
                     <div className="bg-black/20 rounded-lg p-3">
-                      <div className="text-purple-400 text-lg font-bold">2</div>
+                      <div className="text-purple-400 text-lg font-bold">—</div>
                       <div className="text-gray-400 text-xs">New Referrals</div>
                     </div>
                   </div>
