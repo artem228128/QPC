@@ -492,7 +492,7 @@ const DashboardPage: React.FC = () => {
                         <span className="text-gray-300 text-sm">Active Levels</span>
                       </div>
                       <span className="text-white font-bold">
-                        {MOCK_USER_DATA.activatedLevels.length}/16
+                        {activatedCount}/16
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
@@ -500,21 +500,25 @@ const DashboardPage: React.FC = () => {
                         <Users className="text-blue-400" size={18} />
                         <span className="text-gray-300 text-sm">Referrals</span>
                       </div>
-                      <span className="text-white font-bold">34</span>
+                      <span className="text-white font-bold">{contractInfo?.referrals ?? 0}</span>
                     </div>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <Activity className="text-purple-400" size={18} />
                         <span className="text-gray-300 text-sm">Total Volume</span>
                       </div>
-                      <span className="text-white font-bold">{formatBNB(8.234)} BNB</span>
+                      <span className="text-white font-bold">{formatBNB(contractInfo?.levelsRewardSum ?? 0)} BNB</span>
                     </div>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <Calendar className="text-yellow-400" size={18} />
                         <span className="text-gray-300 text-sm">Days Active</span>
                       </div>
-                      <span className="text-white font-bold">22</span>
+                      <span className="text-white font-bold">
+                        {contractInfo?.registrationTimestamp 
+                          ? Math.floor((Date.now() - contractInfo.registrationTimestamp) / (1000 * 60 * 60 * 24))
+                          : 0}
+                      </span>
                     </div>
                   </div>
                 </GlassCard>
@@ -530,16 +534,22 @@ const DashboardPage: React.FC = () => {
                   <h3 className="text-lg font-semibold text-white mb-4">Today's Summary</h3>
                   <div className="space-y-3">
                     <div className="bg-black/20 rounded-lg p-3">
-                      <div className="text-green-400 text-lg font-bold">—</div>
-                      <div className="text-gray-400 text-xs">Earnings Today</div>
+                      <div className="text-green-400 text-lg font-bold">
+                        {formatBNB(contractInfo?.levelsRewardSum ?? 0)}
+                      </div>
+                      <div className="text-gray-400 text-xs">Total Earnings</div>
                     </div>
                     <div className="bg-black/20 rounded-lg p-3">
-                      <div className="text-cyan-400 text-lg font-bold">—</div>
-                      <div className="text-gray-400 text-xs">New Activations</div>
+                      <div className="text-cyan-400 text-lg font-bold">
+                        {activatedCount}
+                      </div>
+                      <div className="text-gray-400 text-xs">Active Levels</div>
                     </div>
                     <div className="bg-black/20 rounded-lg p-3">
-                      <div className="text-purple-400 text-lg font-bold">—</div>
-                      <div className="text-gray-400 text-xs">New Referrals</div>
+                      <div className="text-purple-400 text-lg font-bold">
+                        {contractInfo?.referrals ?? 0}
+                      </div>
+                      <div className="text-gray-400 text-xs">Total Referrals</div>
                     </div>
                   </div>
                 </GlassCard>

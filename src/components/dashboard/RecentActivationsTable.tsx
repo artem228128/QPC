@@ -114,7 +114,7 @@ export const RecentActivationsTable: React.FC<{ className?: string }> = ({ class
         }
         setActivations(rows);
       } catch (logError) {
-        console.log('Log query failed, using fallback data:', logError.message);
+        console.log('Log query failed, using fallback data:', (logError as Error)?.message || 'Unknown error');
         // Fallback: generate some mock data to show the UI works
         const mockData: Activation[] = [
           {
@@ -139,7 +139,7 @@ export const RecentActivationsTable: React.FC<{ className?: string }> = ({ class
         setActivations(mockData);
       }
     } catch (error) {
-      console.log('Contract connection failed:', error.message);
+      console.log('Contract connection failed:', (error as Error)?.message || 'Unknown error');
       setActivations([]);
     } finally {
       setIsLoading(false);
