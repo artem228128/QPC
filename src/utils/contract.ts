@@ -2,9 +2,71 @@
 // 🔗 SMART CONTRACT CONFIGURATION
 // ===========================================
 
-// Contract Address on BSC Mainnet
-// TODO: Replace with your actual deployed contract address
-export const CONTRACT_ADDRESS = '0x...'; // Your deployed contract address
+import { BrowserProvider, Contract, JsonRpcProvider, parseEther } from 'ethers';
+
+// Network selection via env (defaults to testnet for safety)
+export const ACTIVE_NETWORK = (process.env.REACT_APP_DEFAULT_NETWORK || 'testnet').toLowerCase();
+
+const MAINNET = {
+  chainId: '0x38',
+  chainName: 'BNB Smart Chain',
+  nativeCurrency: { name: 'BNB', symbol: 'BNB', decimals: 18 },
+  rpcUrls: ['https://bsc-dataseed.binance.org/'],
+  blockExplorerUrls: ['https://bscscan.com/'],
+};
+
+const TESTNET = {
+  chainId: '0x61',
+  chainName: 'BNB Smart Chain Testnet',
+  nativeCurrency: { name: 'tBNB', symbol: 'tBNB', decimals: 18 },
+  rpcUrls: ['https://data-seed-prebsc-1-s1.binance.org:8545/'],
+  blockExplorerUrls: ['https://testnet.bscscan.com/'],
+};
+
+export const BSC_NETWORK = ACTIVE_NETWORK === 'mainnet' ? MAINNET : TESTNET;
+
+// Contract address by environment
+const ENV_MAINNET = process.env.REACT_APP_CONTRACT_ADDRESS || '';
+const ENV_TESTNET = process.env.REACT_APP_CONTRACT_ADDRESS_TESTNET || '';
+
+// Normalize to lowercase to avoid EIP-55 checksum errors from mixed-case env values
+export const CONTRACT_ADDRESS = (
+  (ACTIVE_NETWORK === 'mainnet' ? ENV_MAINNET : ENV_TESTNET) || ''
+)
+  .toLowerCase()
+  || '0x0000000000000000000000000000000000000000';
+
+function validateConfiguredAddress(): { ok: boolean; message?: string } {
+  const raw = (ACTIVE_NETWORK === 'mainnet' ? ENV_MAINNET : ENV_TESTNET) || '';
+  const varName = ACTIVE_NETWORK === 'mainnet'
+    ? 'REACT_APP_CONTRACT_ADDRESS'
+    : 'REACT_APP_CONTRACT_ADDRESS_TESTNET';
+
+  if (!raw) {
+    return {
+      ok: false,
+      message: `Missing ${varName} for ${ACTIVE_NETWORK}. Set it in .env.local`,
+    };
+  }
+
+  const isHex40 = /^0x[0-9a-fA-F]{40}$/.test(raw);
+  if (!isHex40) {
+    return {
+      ok: false,
+      message: `Invalid ${varName} value for ${ACTIVE_NETWORK}: "${raw}"`,
+    };
+  }
+
+  const isZero = /^0x0{40}$/i.test(raw);
+  if (isZero) {
+    return {
+      ok: false,
+      message: `${varName} is zero-address on ${ACTIVE_NETWORK}. Provide a real contract address`,
+    };
+  }
+
+  return { ok: true };
+}
 
 // Simplified ABI for the main functions we need
 export const CONTRACT_ABI = [
@@ -132,18 +194,7 @@ export const CONTRACT_CONSTANTS = {
   REGISTRATION_PRICE: '0.025', // BNB
   MAX_LEVELS: 16,
   REWARD_PERCENT: 74,
-  BSC_CHAIN_ID: '0x38', // 56 in hex
-  BSC_NETWORK: {
-    chainId: '0x38',
-    chainName: 'BNB Smart Chain',
-    nativeCurrency: {
-      name: 'BNB',
-      symbol: 'BNB',
-      decimals: 18,
-    },
-    rpcUrls: ['https://bsc-dataseed.binance.org/'],
-    blockExplorerUrls: ['https://bscscan.com/'],
-  },
+  BSC_CHAIN_ID: BSC_NETWORK.chainId,
 } as const;
 
 // Level Prices in BNB (matching contract)
@@ -184,3 +235,39 @@ export const fromWei = (wei: string | number): number => {
   const num = typeof wei === 'string' ? parseInt(wei, 16) : wei;
   return num / Math.pow(10, 18);
 };
+
+// ===========================================
+// Providers / Contract helpers
+// ===========================================
+
+export async function getBrowserProvider(): Promise<BrowserProvider> {
+  if (typeof window === 'undefined' || !(window as any).ethereum) {
+    throw new Error('No wallet provider found');
+  }
+  return new BrowserProvider((window as any).ethereum);
+}
+
+export function getReadonlyProvider(): JsonRpcProvider {
+  const rpc = BSC_NETWORK.rpcUrls?.[0];
+  if (!rpc) throw new Error('No RPC URL configured for active network');
+  return new JsonRpcProvider(rpc);
+}
+
+export async function getQpcContract(withSigner = true) {
+  const provider = withSigner ? await getBrowserProvider() : getReadonlyProvider();
+  const validation = validateConfiguredAddress();
+  if (!validation.ok) {
+    throw new Error(`Contract address is not configured: ${validation.message}`);
+  }
+  const code = await provider.getCode(CONTRACT_ADDRESS);
+  if (!code || code === '0x') {
+    throw new Error('No contract code at address on current network');
+  }
+  const runner =
+    withSigner && 'getSigner' in provider
+      ? await (provider as BrowserProvider).getSigner()
+      : provider;
+  return new Contract(CONTRACT_ADDRESS, CONTRACT_ABI as any, runner);
+}
+
+export { parseEther };

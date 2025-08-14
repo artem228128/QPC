@@ -65,6 +65,7 @@ export interface WalletState {
   address: string | null;
   balance: number;
   network: string | null;
+  chainIdHex?: string; // e.g. 0x61, 0x38
   provider?: string; // MetaMask, Trust Wallet, etc.
 }
 

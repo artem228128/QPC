@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { WalletState, NetworkConfig, ContractUserInfo, ContractGlobalStats } from '../types';
 import { Web3Provider } from '../types/web3';
+import { parseEther } from 'ethers';
+import { ACTIVE_NETWORK, getQpcContract } from '../utils/contract';
 
 export const useWallet = () => {
   const [walletState, setWalletState] = useState<WalletState>({
@@ -17,15 +19,21 @@ export const useWallet = () => {
 
   // Import contract configuration
   const BSC_NETWORK: NetworkConfig = {
-    chainId: '0x38', // 56 in hex
-    chainName: 'BNB Smart Chain',
+    chainId: ACTIVE_NETWORK === 'mainnet' ? '0x38' : '0x61',
+    chainName: ACTIVE_NETWORK === 'mainnet' ? 'BNB Smart Chain' : 'BNB Smart Chain Testnet',
     nativeCurrency: {
-      name: 'BNB',
-      symbol: 'BNB',
+      name: ACTIVE_NETWORK === 'mainnet' ? 'BNB' : 'tBNB',
+      symbol: ACTIVE_NETWORK === 'mainnet' ? 'BNB' : 'tBNB',
       decimals: 18,
     },
-    rpcUrls: ['https://bsc-dataseed.binance.org/'],
-    blockExplorerUrls: ['https://bscscan.com/'],
+    rpcUrls: [
+      ACTIVE_NETWORK === 'mainnet'
+        ? 'https://bsc-dataseed.binance.org/'
+        : 'https://data-seed-prebsc-1-s1.binance.org:8545/',
+    ],
+    blockExplorerUrls: [
+      ACTIVE_NETWORK === 'mainnet' ? 'https://bscscan.com/' : 'https://testnet.bscscan.com/',
+    ],
   };
 
   // Check if wallet is available
@@ -72,9 +80,10 @@ export const useWallet = () => {
       const balanceInEth = parseInt(balance, 16) / Math.pow(10, 18);
 
       // Get network
-      const chainId = await provider.request({
+      const chainIdRaw = await provider.request({
         method: 'eth_chainId',
       });
+      const chainIdStr = String(chainIdRaw).toLowerCase();
 
       const networkMap: { [key: string]: string } = {
         '0x1': 'ethereum',
@@ -84,9 +93,18 @@ export const useWallet = () => {
         '0x89': 'polygon',
         '0xa86a': 'avalanche',
         '0x38': 'bsc',
+        '0x61': 'bsc',
       };
 
-      const network = networkMap[chainId] || 'unknown';
+      let network = networkMap[chainIdStr] || 'unknown';
+      if (network === 'unknown') {
+        if (chainIdStr === '0x61' || chainIdStr === '0x38') {
+          network = 'bsc';
+        } else if (/^\d+$/.test(chainIdStr)) {
+          const chainNum = parseInt(chainIdStr, 10);
+          if (chainNum === 97 || chainNum === 56) network = 'bsc';
+        }
+      }
 
       // Detect wallet provider
       let walletProvider = 'unknown';
@@ -100,6 +118,7 @@ export const useWallet = () => {
         address,
         balance: balanceInEth,
         network,
+        chainIdHex: chainIdStr,
         provider: walletProvider,
       });
 
@@ -296,15 +315,12 @@ export const useWallet = () => {
 
       try {
         setIsLoading(true);
-
-        // In real implementation:
-        // const contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, provider);
-        // const tx = await contract.registerWithReferrer(referrerAddress || owner, {
-        //   value: ethers.utils.parseEther('0.025')
-        // });
-        // await tx.wait();
-
-        console.log('User registration simulated');
+        const contract: any = await getQpcContract(true);
+        const price = parseEther('0.025');
+        const tx = await (_referrerAddress
+          ? contract.registerWithReferrer(_referrerAddress, { value: price })
+          : contract.register({ value: price }));
+        await tx.wait();
         await loadContractInfo(walletState.address);
       } catch (err: any) {
         setError(err.message || 'Registration failed');
@@ -314,6 +330,26 @@ export const useWallet = () => {
       }
     },
     [getProvider, walletState.address, walletState.network, switchToBSC, loadContractInfo]
+  );
+
+  const buyLevel = useCallback(
+    async (level: number, valueBnb: number) => {
+      const provider = getProvider();
+      if (!provider || !walletState.address) throw new Error('Wallet not connected');
+      if (walletState.network !== 'bsc') {
+        const switched = await switchToBSC();
+        if (!switched) throw new Error('Please switch to BSC network');
+      }
+      setIsLoading(true);
+      try {
+        const contract: any = await getQpcContract(true);
+        const tx = await contract.buyLevel(level, { value: parseEther(String(valueBnb)) });
+        await tx.wait();
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [getProvider, walletState.address, walletState.network, switchToBSC]
   );
 
   return {
@@ -328,6 +364,7 @@ export const useWallet = () => {
     switchToBSC,
     isUserRegistered,
     registerUser,
+    buyLevel,
     loadContractInfo,
     isWalletAvailable: isWalletAvailable(),
     BSC_NETWORK,

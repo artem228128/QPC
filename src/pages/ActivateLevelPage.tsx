@@ -10,17 +10,25 @@ const ALL_LEVELS = Array.from({ length: 16 }, (_, i) => i + 1);
 
 const ActivateLevelPage: React.FC = () => {
   const navigate = useNavigate();
-  const { walletState, switchToBSC, contractInfo, isLoading, registerUser } = useWallet();
+  const { walletState, switchToBSC, contractInfo, isLoading, registerUser, buyLevel } = useWallet();
 
   const [selectedLevel, setSelectedLevel] = useState<number>(1);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [step, setStep] = useState<'form' | 'success'>('form');
+  const [activationError, setActivationError] = useState<string | null>(null);
 
   const levelPrice = useMemo(() => {
     return LEVEL_PRICES[selectedLevel] ?? 0;
   }, [selectedLevel]);
 
-  const isOnBSC = walletState.network === 'bsc';
+
+  const isOnBSC = 
+    walletState.network === 'bsc' || 
+    (walletState.chainIdHex || '').toLowerCase() === '0x61' || 
+    (walletState.chainIdHex || '').toLowerCase() === '0x38' ||
+    Number(walletState.chainIdHex) === 97 ||
+    Number(walletState.chainIdHex) === 56;
+    
   const hasSufficientBalance = (walletState.balance || 0) >= levelPrice;
   const isConnected = walletState.isConnected;
   const canActivate = isConnected && isOnBSC && hasSufficientBalance;
@@ -32,22 +40,24 @@ const ActivateLevelPage: React.FC = () => {
   const handleActivate = useCallback(async () => {
     try {
       setIsSubmitting(true);
+      setActivationError(null);
 
       // If not registered, register first
       if (!contractInfo) {
         await registerUser();
       }
 
-      // Simulate buy level (replace with contract call in real integration)
-      await new Promise((resolve) => setTimeout(resolve, 1200));
+      // Real buy level call on selected network
+      await buyLevel(selectedLevel, levelPrice);
 
       setStep('success');
-    } catch (err) {
-      // Swallow - UI already reflects errors in real integration
+    } catch (err: any) {
+      console.error('Activation failed:', err);
+      setActivationError(err?.message || 'Activation failed');
     } finally {
       setIsSubmitting(false);
     }
-  }, [contractInfo, registerUser]);
+  }, [contractInfo, registerUser, buyLevel, selectedLevel, levelPrice]);
 
   const goToDashboard = useCallback(() => {
     navigate('/dashboard');
@@ -179,6 +189,17 @@ const ActivateLevelPage: React.FC = () => {
             </div>
           </div>
 
+          {/* DEBUG INFO */}
+          <div className="mb-6 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
+            <h3 className="text-sm font-semibold text-red-400 mb-2">DEBUG INFO</h3>
+            <div className="text-xs text-gray-300 space-y-1">
+              <div>network: "{walletState.network}"</div>
+              <div>chainIdHex: "{walletState.chainIdHex}"</div>
+              <div>isOnBSC: {isOnBSC ? 'TRUE' : 'FALSE'}</div>
+              <div>isConnected: {walletState.isConnected ? 'TRUE' : 'FALSE'}</div>
+            </div>
+          </div>
+
           {/* Status Checks */}
           <div className="mb-6">
             <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
@@ -215,6 +236,9 @@ const ActivateLevelPage: React.FC = () => {
                     <>
                       <div className="w-2 h-2 bg-yellow-400 rounded-full"></div>
                       <span className="text-yellow-400 text-sm">Wrong network</span>
+                      <div className="text-xs text-gray-400 mt-1">
+                        Debug: network="{walletState.network}", chainId="{walletState.chainIdHex}"
+                      </div>
                     </>
                   )}
                 </div>
@@ -280,6 +304,14 @@ const ActivateLevelPage: React.FC = () => {
           </motion.button>
 
           {/* Error Messages */}
+          {activationError && (
+            <div className="mt-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
+              <div className="flex items-center gap-2 text-red-400 text-sm">
+                <AlertTriangle className="w-4 h-4" />
+                {activationError}
+              </div>
+            </div>
+          )}
           {!isConnected && (
             <div className="mt-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
               <div className="flex items-center gap-2 text-red-400 text-sm">

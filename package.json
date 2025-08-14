@@ -70,7 +70,7 @@
     "yup": "^1.7.0"
   },
   "scripts": {
-    "start": "craco start",
+    "start": "react-scripts start",
     "dev": "react-scripts start",
     "build": "react-scripts build",
     "build:analyze": "npm run build && npx bundle-analyzer build/static/js/*.js",
