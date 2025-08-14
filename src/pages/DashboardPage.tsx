@@ -17,7 +17,7 @@ import { NeuralBackground } from '../components/neural';
 import { GlassCard, GlassButton } from '../components/glass';
 // Removed StatsPanel import - not needed in dashboard
 import { useWallet } from '../hooks/useWallet';
-import { LEVEL_PRICES, formatBNB, CONTRACT_ADDRESS } from '../utils/contract';
+import { LEVEL_PRICES, formatBNB, CONTRACT_ADDRESS, getQpcContract } from '../utils/contract';
 import { RecentActivationsTable } from '../components';
 
 // Mock data for demonstration - expanded activations
