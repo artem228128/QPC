@@ -18,7 +18,7 @@ export const DashboardSidebar: React.FC = () => {
   const location = useLocation();
 
   return (
-    <div className="w-64 fixed left-0 top-20 bottom-0 z-20 bg-gradient-to-b from-black/80 via-black/70 to-black/80 backdrop-blur-lg border-r border-gradient-to-b from-cyan-400/20 to-purple-400/20 shadow-2xl">
+    <div className="w-64 fixed left-0 top-20 bottom-0 z-20 bg-gradient-to-b from-black/80 via-black/70 to-black/80 backdrop-blur-lg border-r border-gray-800/50 shadow-2xl">
       {/* Decorative Elements */}
       <div className="absolute inset-0 bg-gradient-to-b from-cyan-500/5 via-transparent to-purple-500/5 pointer-events-none"></div>
       <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-cyan-400 via-purple-400 to-cyan-400"></div>
