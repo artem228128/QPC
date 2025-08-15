@@ -12,6 +12,7 @@ import {
   InformationPage,
   ProgramViewPage,
   TelegramBotsPage,
+  PromoPage,
 } from './pages';
 
 function App() {
@@ -31,6 +32,7 @@ function App() {
               <Route path="/information" element={<InformationPage />} />
               <Route path="/program-view" element={<ProgramViewPage />} />
               <Route path="/telegram-bots" element={<TelegramBotsPage />} />
+              <Route path="/promo" element={<PromoPage />} />
               <Route path="*" element={<HomePage />} />
             </Routes>
           </div>
