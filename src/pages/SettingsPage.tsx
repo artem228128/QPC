@@ -143,7 +143,7 @@ const SettingsPage: React.FC = () => {
     setSettings(prev => {
       const newSettings = { ...prev };
       const keys = key.split('.');
-      let current = newSettings;
+      let current: any = newSettings;
       
       for (let i = 0; i < keys.length - 1; i++) {
         current = current[keys[i]];
@@ -253,9 +253,9 @@ const SettingsPage: React.FC = () => {
                 <Copy size={16} />
               </GlassButton>
               <GlassButton
-                variant="destructive"
+                variant="secondary"
                 onClick={disconnectWallet}
-                className="px-3 py-2"
+                className="px-3 py-2 border-red-500/50 text-red-400 hover:border-red-400"
               >
                 <LogOut size={16} />
               </GlassButton>
@@ -265,7 +265,7 @@ const SettingsPage: React.FC = () => {
           <div className="grid grid-cols-2 gap-4">
             <div className="glass-panel-secondary p-3 rounded-lg border border-white/10">
               <div className="text-gray-400 text-sm">Network</div>
-              <div className="text-white font-medium">BSC {BSC_NETWORK.name}</div>
+              <div className="text-white font-medium">{BSC_NETWORK.chainName}</div>
             </div>
             <div className="glass-panel-secondary p-3 rounded-lg border border-white/10">
               <div className="text-gray-400 text-sm">Balance</div>
@@ -363,9 +363,9 @@ const SettingsPage: React.FC = () => {
               </div>
             </div>
             <GlassButton
-              variant={settings.telegramBot.connected ? "destructive" : "primary"}
+              variant={settings.telegramBot.connected ? "secondary" : "primary"}
               onClick={() => updateSetting('telegramBot.connected', !settings.telegramBot.connected)}
-              className="px-4 py-2"
+              className={`px-4 py-2 ${settings.telegramBot.connected ? 'border-red-500/50 text-red-400 hover:border-red-400' : ''}`}
             >
               {settings.telegramBot.connected ? 'Disconnect' : 'Connect'}
             </GlassButton>
@@ -637,7 +637,7 @@ const SettingsPage: React.FC = () => {
                 <span className="text-green-400 text-sm">Connected</span>
               </div>
             </div>
-            <div className="text-gray-400 text-sm">BSC {BSC_NETWORK.name}</div>
+            <div className="text-gray-400 text-sm">{BSC_NETWORK.chainName}</div>
           </div>
         </div>
       </GlassCard>
@@ -860,7 +860,7 @@ const SettingsPage: React.FC = () => {
               <div className="text-purple-400 font-medium mb-2">Debug Information</div>
               <div className="space-y-1 text-sm text-gray-300 font-mono">
                 <div>Contract: {process.env.REACT_APP_CONTRACT_ADDRESS_TESTNET || 'Not configured'}</div>
-                <div>Network: {BSC_NETWORK.name}</div>
+                <div>Network: {BSC_NETWORK.chainName}</div>
                 <div>Chain ID: {BSC_NETWORK.chainId}</div>
                 <div>App Version: 1.0.0</div>
               </div>
