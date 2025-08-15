@@ -4,6 +4,12 @@ export const formatCurrency = (amount: number, decimals: number = 4): string => 
   return amount.toFixed(decimals);
 };
 
+export const formatBNB = (amount: number | string, decimals: number = 4): string => {
+  const num = typeof amount === 'string' ? parseFloat(amount) : amount;
+  if (isNaN(num)) return '0.0000';
+  return num.toFixed(decimals);
+};
+
 export const formatAddress = (address: string, start: number = 6, end: number = 4): string => {
   if (!address) return '';
   return `${address.slice(0, start)}...${address.slice(-end)}`;
