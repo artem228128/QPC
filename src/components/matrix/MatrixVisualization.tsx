@@ -17,6 +17,8 @@ interface MatrixLevel {
   isLocked?: boolean;
   unlockTime?: string;
   rewardPosition?: number; // Position on progress bar where reward will be received (0-100)
+  currentCycle?: number; // Current cycle number
+  maxCycles?: number; // Maximum cycles for this level
 }
 
 interface MatrixVisualizationProps {
@@ -61,7 +63,7 @@ const generateMockMatrixData = (): MatrixLevel[] => {
   });
 };
 
-const MOCK_MATRIX_DATA: MatrixLevel[] = generateMockMatrixData();
+// const MOCK_MATRIX_DATA: MatrixLevel[] = generateMockMatrixData(); // No longer used - using real contract data
 
 export const MatrixVisualization: React.FC<MatrixVisualizationProps> = ({ matrixLevel, onActivate, isBusy }) => {
   // LOCKED LEVEL
@@ -140,10 +142,10 @@ export const MatrixVisualization: React.FC<MatrixVisualizationProps> = ({ matrix
         </div>
       </div>
 
-      <div className="flex justify-between text-xs mb-3">
-        <span className="text-gray-400">To cycle: {matrixLevel.nextCycleCount}</span>
-        <span className="text-gray-400">Matrix: {matrixLevel.matrixFillPercent}%</span>
-      </div>
+              <div className="flex justify-between text-xs mb-3">
+          <span className="text-gray-400">Cycle: {matrixLevel.currentCycle || 1}/{matrixLevel.maxCycles || 2}</span>
+          <span className="text-gray-400">Matrix: {matrixLevel.matrixFillPercent}%</span>
+        </div>
 
       {/* Compact Progress Bar with Reward Point */}
       <div className="mb-4">
@@ -239,19 +241,34 @@ export const ProgramViewGrid: React.FC<{
     setFreezeUntil(next);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userLevels?.payouts]);
-  // Calculate total earnings from all activated levels
-  const totalLevelProfit = MOCK_MATRIX_DATA.filter((level) => level.isActivated).reduce(
-    (sum, level) => sum + level.levelProfit,
-    0
-  );
+  // Calculate total earnings and activated levels from real data
+  let totalLevelProfit = 0;
+  let totalPartnerBonus = 0;
+  let activatedLevelsCount = 0;
 
-  const totalPartnerBonus = MOCK_MATRIX_DATA.filter((level) => level.isActivated).reduce(
-    (sum, level) => sum + level.partnerBonus,
-    0
-  );
+  if (userLevels?.active) {
+    const arr = userLevels.active;
+    for (let i = 1; i <= 16; i++) {
+      const isActive = arr.length >= 17 ? Boolean(arr[i]) : Boolean(arr[i - 1]);
+      if (isActive) {
+        activatedLevelsCount++;
+        const priceBNB = (LEVEL_PRICES as any)[i] ?? 0;
+        
+        // Get payout data for this level
+        const idx = arr.length >= 17 ? i : i - 1;
+        const pArr = userLevels.payouts;
+        const mArr = userLevels.maxPayouts;
+        
+        if (pArr && pArr[idx] !== undefined && pArr[idx] > 0) {
+          const payouts = Number(pArr[idx]);
+          totalLevelProfit += priceBNB * 0.74 * payouts; // 74% base reward per cycle
+          totalPartnerBonus += priceBNB * 0.26 * payouts; // 26% potential referral bonuses
+        }
+      }
+    }
+  }
 
   const totalEarnings = totalLevelProfit + totalPartnerBonus;
-  const activatedLevelsCount = MOCK_MATRIX_DATA.filter((level) => level.isActivated).length;
 
   return (
     <div className="space-y-6">
@@ -261,36 +278,36 @@ export const ProgramViewGrid: React.FC<{
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
       >
-        <GlassCard className="p-8 border border-cyan-400/30 bg-gradient-to-br from-cyan-500/10 via-purple-500/5 to-blue-500/10 relative overflow-hidden">
+        <GlassCard className="p-6 border border-cyan-400/30 bg-gradient-to-br from-cyan-500/10 via-purple-500/5 to-blue-500/10 relative overflow-hidden">
           {/* Decorative background */}
           <div className="absolute inset-0 bg-gradient-to-br from-cyan-400/5 via-transparent to-purple-400/5 pointer-events-none"></div>
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-cyan-400 via-purple-400 to-blue-400"></div>
 
           <div className="relative z-10">
-            <h2 className="text-center text-2xl font-bold bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent mb-8">
+            <h2 className="text-center text-xl font-bold bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent mb-6">
               Earnings Overview
             </h2>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {/* Total Earnings */}
               <motion.div
                 className="relative group"
                 whileHover={{ scale: 1.02 }}
                 transition={{ duration: 0.2 }}
               >
-                <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/20 to-blue-500/20 rounded-xl blur-sm group-hover:blur-md transition-all duration-300"></div>
-                <div className="relative bg-black/30 rounded-xl p-6 border border-cyan-400/30 group-hover:border-cyan-400/50 transition-all duration-300">
-                  <div className="flex items-center justify-center mb-4">
-                    <div className="p-3 bg-gradient-to-br from-cyan-400/20 to-blue-400/20 rounded-full border border-cyan-400/40">
-                      <Wallet className="text-cyan-400" size={24} />
+                <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/20 to-blue-500/20 rounded-lg blur-sm group-hover:blur-md transition-all duration-300"></div>
+                <div className="relative bg-black/30 rounded-lg p-4 border border-cyan-400/30 group-hover:border-cyan-400/50 transition-all duration-300">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-gradient-to-br from-cyan-400/20 to-blue-400/20 rounded-lg border border-cyan-400/40 flex-shrink-0">
+                      <Wallet className="text-cyan-400" size={20} />
                     </div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-cyan-400 text-3xl font-bold font-mono mb-2 bg-gradient-to-r from-cyan-300 to-cyan-500 bg-clip-text text-transparent">
-                      {formatBNB(totalEarnings)}
+                    <div className="flex-1 min-w-0">
+                      <div className="text-cyan-400 text-2xl font-bold font-mono leading-tight bg-gradient-to-r from-cyan-300 to-cyan-500 bg-clip-text text-transparent">
+                        {formatBNB(totalEarnings)}
+                      </div>
+                      <div className="text-gray-300 text-sm font-medium">Total Earnings</div>
+                      <div className="text-cyan-400/60 text-xs">BNB</div>
                     </div>
-                    <div className="text-gray-300 text-sm font-medium">Total Earnings</div>
-                    <div className="text-cyan-400/60 text-xs mt-1">BNB</div>
                   </div>
                 </div>
               </motion.div>
@@ -301,19 +318,19 @@ export const ProgramViewGrid: React.FC<{
                 whileHover={{ scale: 1.02 }}
                 transition={{ duration: 0.2 }}
               >
-                <div className="absolute inset-0 bg-gradient-to-br from-purple-500/20 to-pink-500/20 rounded-xl blur-sm group-hover:blur-md transition-all duration-300"></div>
-                <div className="relative bg-black/30 rounded-xl p-6 border border-purple-400/30 group-hover:border-purple-400/50 transition-all duration-300">
-                  <div className="flex items-center justify-center mb-4">
-                    <div className="p-3 bg-gradient-to-br from-purple-400/20 to-pink-400/20 rounded-full border border-purple-400/40">
-                      <Award className="text-purple-400" size={24} />
+                <div className="absolute inset-0 bg-gradient-to-br from-purple-500/20 to-pink-500/20 rounded-lg blur-sm group-hover:blur-md transition-all duration-300"></div>
+                <div className="relative bg-black/30 rounded-lg p-4 border border-purple-400/30 group-hover:border-purple-400/50 transition-all duration-300">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-gradient-to-br from-purple-400/20 to-pink-400/20 rounded-lg border border-purple-400/40 flex-shrink-0">
+                      <Award className="text-purple-400" size={20} />
                     </div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-purple-400 text-3xl font-bold font-mono mb-2 bg-gradient-to-r from-purple-300 to-purple-500 bg-clip-text text-transparent">
-                      {formatBNB(totalPartnerBonus)}
+                    <div className="flex-1 min-w-0">
+                      <div className="text-purple-400 text-2xl font-bold font-mono leading-tight bg-gradient-to-r from-purple-300 to-purple-500 bg-clip-text text-transparent">
+                        {formatBNB(totalPartnerBonus)}
+                      </div>
+                      <div className="text-gray-300 text-sm font-medium">Partner Bonuses</div>
+                      <div className="text-purple-400/60 text-xs">26% Commission</div>
                     </div>
-                    <div className="text-gray-300 text-sm font-medium">Partner Bonuses</div>
-                    <div className="text-purple-400/60 text-xs mt-1">26% Commission</div>
                   </div>
                 </div>
               </motion.div>
@@ -324,23 +341,23 @@ export const ProgramViewGrid: React.FC<{
                 whileHover={{ scale: 1.02 }}
                 transition={{ duration: 0.2 }}
               >
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 to-indigo-500/20 rounded-xl blur-sm group-hover:blur-md transition-all duration-300"></div>
-                <div className="relative bg-black/30 rounded-xl p-6 border border-blue-400/30 group-hover:border-blue-400/50 transition-all duration-300">
-                  <div className="flex items-center justify-center mb-4">
-                    <div className="p-3 bg-gradient-to-br from-blue-400/20 to-indigo-400/20 rounded-full border border-blue-400/40">
-                      <Target className="text-blue-400" size={24} />
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 to-indigo-500/20 rounded-lg blur-sm group-hover:blur-md transition-all duration-300"></div>
+                <div className="relative bg-black/30 rounded-lg p-4 border border-blue-400/30 group-hover:border-blue-400/50 transition-all duration-300">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-gradient-to-br from-blue-400/20 to-indigo-400/20 rounded-lg border border-blue-400/40 flex-shrink-0">
+                      <Target className="text-blue-400" size={20} />
                     </div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-blue-400 text-3xl font-bold mb-2">
-                      <span className="bg-gradient-to-r from-blue-300 to-blue-500 bg-clip-text text-transparent">
-                        {activatedLevelsCount}
-                      </span>
-                      <span className="text-gray-500 text-xl">/16</span>
-                    </div>
-                    <div className="text-gray-300 text-sm font-medium">Active Levels</div>
-                    <div className="text-blue-400/60 text-xs mt-1">
-                      {Math.round((activatedLevelsCount / 16) * 100)}% Complete
+                    <div className="flex-1 min-w-0">
+                      <div className="text-blue-400 text-2xl font-bold leading-tight">
+                        <span className="bg-gradient-to-r from-blue-300 to-blue-500 bg-clip-text text-transparent">
+                          {activatedLevelsCount}
+                        </span>
+                        <span className="text-gray-500 text-lg">/16</span>
+                      </div>
+                      <div className="text-gray-300 text-sm font-medium">Active Levels</div>
+                      <div className="text-blue-400/60 text-xs">
+                        {Math.round((activatedLevelsCount / 16) * 100)}% Complete
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -351,11 +368,11 @@ export const ProgramViewGrid: React.FC<{
       </motion.div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-        {MOCK_MATRIX_DATA.map((ml) => {
-          const level = ml.level;
-          const priceBNB = (LEVEL_PRICES as any)[level] ?? ml.priceBNB;
+        {Array.from({ length: 16 }, (_, index) => {
+          const level = 16 - index; // Start from level 16 down to 1
+          const priceBNB = (LEVEL_PRICES as any)[level] ?? 0;
           const arr = userLevels?.active;
-          let isActive = ml.isActivated;
+          let isActive = false;
           if (arr && arr.length) {
             if (arr.length >= 17) {
               isActive = Boolean(arr[level]);
@@ -379,9 +396,9 @@ export const ProgramViewGrid: React.FC<{
           const pArr = userLevels?.payouts;
           const mArr = userLevels?.maxPayouts;
           const idx = getIdx(level);
-          let progress = ml.progress;
-          let nextCycleCount = ml.nextCycleCount;
-          let rewardPosition: number | undefined = ml.rewardPosition;
+          let progress = 0;
+          let nextCycleCount = 2; // Default 2 cycles
+          let rewardPosition: number | undefined = undefined;
           if (pArr && mArr && pArr[idx] !== undefined && mArr[idx] !== undefined && mArr[idx] > 0) {
             const p = Number(pArr[idx]);
             const m = Number(mArr[idx]);
@@ -396,7 +413,6 @@ export const ProgramViewGrid: React.FC<{
           }
 
           const matrixLevel = {
-            ...ml,
             level,
             priceBNB,
             isActivated: isActive,
@@ -405,6 +421,10 @@ export const ProgramViewGrid: React.FC<{
             matrixFillPercent: progress,
             nextCycleCount,
             rewardPosition,
+            levelProfit: isActive && userLevels?.rewardSum && userLevels.rewardSum[idx] !== undefined ? userLevels.rewardSum[idx] : 0,
+            partnerBonus: isActive && userLevels?.referralPayoutSum && userLevels.referralPayoutSum[idx] !== undefined ? userLevels.referralPayoutSum[idx] : 0,
+            currentCycle: pArr && mArr && pArr[idx] !== undefined && mArr[idx] !== undefined ? Math.min(Number(pArr[idx]) + 1, Number(mArr[idx])) : 1,
+            maxCycles: mArr && mArr[idx] !== undefined ? Number(mArr[idx]) : 2,
           };
           return (
           <motion.div
