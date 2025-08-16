@@ -243,11 +243,11 @@ const DashboardPage: React.FC = () => {
       {/* Sidebar */}
       <DashboardSidebar />
 
-      <main className="relative z-10 pt-24 pb-16 ml-64">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8">
+      <main className="relative z-10 pt-16 pb-16 ml-0 md:ml-64">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
           {/* Dashboard Header */}
           <motion.div
-            className="mb-8"
+            className="mt-4 mb-8"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
@@ -264,11 +264,11 @@ const DashboardPage: React.FC = () => {
             </div>
           </motion.div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 md:gap-8">
             {/* Left Column - Main Info */}
             <div className="lg:col-span-3 space-y-8">
               {/* User Info Cards Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                 {/* User Stats */}
                 <motion.div
                   initial={{ opacity: 0, x: -20 }}

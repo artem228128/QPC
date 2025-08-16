@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { ErrorBoundary, ToastProvider } from './components/common';
+import { MobileMenuProvider } from './contexts/MobileMenuContext';
 import {
   HomePage,
   WalletConnectPage,
@@ -20,7 +21,8 @@ function App() {
   return (
     <ErrorBoundary>
       <ToastProvider>
-        <Router>
+        <MobileMenuProvider>
+          <Router>
           <div className="App">
             <Routes>
               <Route path="/" element={<HomePage />} />
@@ -39,6 +41,7 @@ function App() {
             </Routes>
           </div>
         </Router>
+        </MobileMenuProvider>
       </ToastProvider>
     </ErrorBoundary>
   );

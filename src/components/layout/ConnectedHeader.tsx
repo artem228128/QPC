@@ -9,9 +9,12 @@ import {
   Bell,
   LogOut,
   ChevronDown,
+  Menu,
+  X,
 } from 'lucide-react';
 import { useWallet } from '../../hooks/useWallet';
 import { useNavigate } from 'react-router-dom';
+import { useMobileMenuContext } from '../../contexts/MobileMenuContext';
 
 // ===========================================
 // 🎨 TYPE DEFINITIONS
@@ -102,6 +105,30 @@ const NotificationsButton: React.FC = () => {
 };
 
 // ===========================================
+// 📱 MOBILE MENU BUTTON COMPONENT
+// ===========================================
+
+const MobileMenuButton: React.FC = () => {
+  const { isMobileMenuOpen, toggleMobileMenu } = useMobileMenuContext();
+
+  return (
+    <motion.button
+      className="md:hidden p-3 bg-black/40 border border-cyan-400/50 rounded-lg hover:border-cyan-400 transition-all duration-200"
+      onClick={toggleMobileMenu}
+      whileHover={{ scale: 1.05 }}
+      whileTap={{ scale: 0.95 }}
+      title="Menu"
+    >
+      {isMobileMenuOpen ? (
+        <X className="w-5 h-5 text-cyan-400" />
+      ) : (
+        <Menu className="w-5 h-5 text-cyan-400" />
+      )}
+    </motion.button>
+  );
+};
+
+// ===========================================
 // 🚪 LOGOUT COMPONENT
 // ===========================================
 
@@ -163,7 +190,7 @@ const WalletInfo: React.FC = () => {
   return (
     <div className="relative">
       <motion.button
-        className="flex items-center space-x-3 bg-black/40 border border-green-400/50 rounded-lg px-4 py-2 hover:border-green-400 transition-all duration-200"
+        className="flex items-center space-x-2 md:space-x-3 bg-black/40 border border-green-400/50 rounded-lg px-2 md:px-4 py-2 hover:border-green-400 transition-all duration-200"
         onClick={() => setIsDropdownOpen(!isDropdownOpen)}
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.98 }}
@@ -189,7 +216,7 @@ const WalletInfo: React.FC = () => {
         </div>
 
         {/* Provider Badge */}
-        <div className="hidden md:flex items-center space-x-1 bg-white/10 rounded-full px-2 py-1">
+        <div className="hidden lg:flex items-center space-x-1 bg-white/10 rounded-full px-2 py-1">
           <span className="text-xs text-gray-300">{walletState.provider}</span>
         </div>
 
@@ -347,22 +374,22 @@ export const ConnectedHeader: React.FC<ConnectedHeaderProps> = ({ className = ''
     >
       {/* Full width container */}
       <div className="w-full px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16 sm:h-20">
+        <div className="flex items-center justify-between h-16">
           {/* Left Side - Logo */}
           <div className="flex items-center">
             <QuantumLogo />
           </div>
 
           {/* Right Side Actions */}
-          <div className="flex items-center space-x-3">
-            {/* Wallet Info - Compact */}
-            <WalletInfo />
+          <div className="flex items-center space-x-2 md:space-x-3">
+            {/* Mobile Menu Button */}
+            <MobileMenuButton />
 
             {/* Notifications */}
             <NotificationsButton />
 
-            {/* Logout */}
-            <LogoutButton />
+            {/* Wallet Info - Compact */}
+            <WalletInfo />
           </div>
         </div>
 

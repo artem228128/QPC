@@ -959,11 +959,11 @@ const SettingsPage: React.FC = () => {
       <ConnectedHeader />
       <DashboardSidebar />
 
-      <main className="relative z-10 pt-24 pb-16 ml-64">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8">
+      <main className="relative z-10 pt-16 pb-16 ml-0 md:ml-64">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
           {/* Page Header */}
           <motion.div
-            className="mb-8"
+            className="mt-4 mb-8"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
@@ -1005,7 +1005,7 @@ const SettingsPage: React.FC = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1, duration: 0.6 }}
           >
-            <div className="flex gap-2 overflow-x-auto pb-2">
+            <div className="flex gap-2 overflow-x-auto pb-2 -mx-2 px-2">
               {tabs.map((tab) => {
                 const Icon = tab.icon;
                 return (

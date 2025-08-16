@@ -6,3 +6,4 @@ export {
   isPerformanceModeActive,
   getPerformanceLevel,
 } from './usePerformanceMode';
+export { useMobileMenu } from './useMobileMenu';
