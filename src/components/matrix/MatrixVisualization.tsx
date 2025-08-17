@@ -185,7 +185,9 @@ export const MatrixVisualization: React.FC<MatrixVisualizationProps> = ({
       {/* Compact Progress Bar with Reward Point */}
       <div className="mb-4">
         <div className="flex justify-between text-xs mb-1">
-          <span className="text-gray-400">Progress</span>
+          <span className="text-gray-400">
+            {matrixLevel.progress >= 90 ? 'Next participant = payout' : 'Cycle progress'}
+          </span>
           <span className="text-cyan-400">{matrixLevel.progress}%</span>
         </div>
         <div className="relative w-full bg-black/30 rounded-full h-2">
@@ -581,11 +583,15 @@ export const ProgramViewGrid: React.FC<{
 
 
 
-          // Progress показывает, насколько близко к получению награды
-          // place=1 -> 100% (получит сразу), place=2 -> 75%, place=3 -> 50%, etc.
-          // If just unfrozen (contract reports not frozen) but previously frozen UI state lingered,
-          // ensure progress derives from place/total, never forced to 100%
-          progress = Math.max(0, Math.min(100, Math.round(((total - place + 1) / total) * 100)));
+          // Progress показывает заполнение текущего цикла до выплаты
+          // place=1 означает что выплата будет на следующем участнике -> 90%
+          // place=2 -> 75%, place=3 -> 50%, etc.
+          // 100% показываем только когда реально получена выплата (что случается редко в UI)
+          if (place === 1) {
+            progress = 90; // Почти готов, но нужен еще 1 участник
+          } else {
+            progress = Math.max(0, Math.min(90, Math.round(((total - place + 1) / total) * 90)));
+          }
 
           nextCycleCount = Math.max(0, place - 1);
 
