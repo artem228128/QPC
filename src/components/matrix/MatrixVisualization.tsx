@@ -136,11 +136,22 @@ export const MatrixVisualization: React.FC<MatrixVisualizationProps> = ({
           <div className="text-blue-400 text-sm mb-4 font-medium">Not Activated</div>
           <GlassButton
             variant="primary"
-            className="w-full py-2 bg-gradient-to-r from-blue-500/30 to-cyan-500/30 border-blue-400/50 hover:border-blue-300 text-blue-300 hover:text-white shadow-lg shadow-blue-400/20 hover:shadow-blue-400/30 transition-all duration-300"
+            className="w-full py-2 bg-gradient-to-r from-blue-500/30 to-cyan-500/30 border-blue-400/50 hover:border-blue-300 text-blue-300 hover:text-white shadow-lg shadow-blue-400/20 hover:shadow-blue-400/30 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
             onClick={() => onActivate?.(matrixLevel.level, matrixLevel.priceBNB)}
             disabled={isBusy}
           >
-            <span className="font-semibold">{isBusy ? 'Processing…' : 'Activate Level'}</span>
+            {isBusy ? (
+              <div className="flex items-center justify-center gap-2">
+                <motion.div
+                  className="w-4 h-4 border-2 border-cyan-400 border-t-transparent rounded-full"
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                />
+                <span className="font-semibold">Activating...</span>
+              </div>
+            ) : (
+            <span className="font-semibold">Activate Level</span>
+            )}
           </GlassButton>
         </div>
       </GlassCard>
@@ -376,6 +387,7 @@ export const ProgramViewGrid: React.FC<{
 }> = ({ onActivate, userLevels }) => {
   const { freezeUntil } = useProgramViewData(userLevels);
   const { walletState } = useWallet();
+  const [activatingLevels, setActivatingLevels] = React.useState<Set<number>>(new Set());
   const [queuePositions, setQueuePositions] = React.useState<
     Record<number, { place: number; total: number }>
   >({});
@@ -567,10 +579,7 @@ export const ProgramViewGrid: React.FC<{
           const total = Math.max(1, qp.total);
           const place = Math.max(1, qp.place || 1);
 
-          // Debug: log queue position for level 1
-          if (level === 1 && walletState?.address) {
-            console.log(`Level ${level} queue: place=${place}, total=${total}, frozen=${isFrozen}`);
-          }
+
 
           // Progress показывает, насколько близко к получению награды
           // place=1 -> 100% (получит сразу), place=2 -> 75%, place=3 -> 50%, etc.
@@ -622,6 +631,19 @@ export const ProgramViewGrid: React.FC<{
           maxCycles: mArr && mArr[idxM] !== undefined ? Number(mArr[idxM]) : 2,
           nextLevelActive: Boolean(arr && (arr.length >= 17 ? arr[level + 1] : arr[level])),
         };
+        const handleActivate = async (lvl: number, price: number) => {
+          try {
+            setActivatingLevels(prev => new Set([...prev, lvl]));
+            await onActivate?.(lvl, price);
+          } finally {
+            setActivatingLevels(prev => {
+              const newSet = new Set(prev);
+              newSet.delete(lvl);
+              return newSet;
+            });
+          }
+        };
+
         return (
           <motion.div
             key={matrixLevel.level}
@@ -631,7 +653,8 @@ export const ProgramViewGrid: React.FC<{
           >
             <MatrixVisualization
               matrixLevel={matrixLevel}
-              onActivate={(lvl) => onActivate?.(lvl, priceBNB)}
+              onActivate={handleActivate}
+              isBusy={activatingLevels.has(level)}
             />
           </motion.div>
         );

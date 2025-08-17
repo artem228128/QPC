@@ -34,7 +34,7 @@ export const LiveActivationsTable: React.FC<LiveActivationsTableProps> = ({ clas
       if (!contract) return;
 
       // Get recent events from the last 1000 blocks (~50 minutes on BSC)
-      const currentBlock = await contract.provider.getBlockNumber();
+      const currentBlock = await contract.provider?.getBlockNumber();
       const fromBlock = Math.max(0, currentBlock - 1000);
 
       const events: LiveActivation[] = [];
@@ -45,9 +45,9 @@ export const LiveActivationsTable: React.FC<LiveActivationsTableProps> = ({ clas
         const buyEvents = await contract.queryFilter(buyLevelFilter, fromBlock, currentBlock);
         
         for (const event of buyEvents.slice(-20)) { // Last 20 events
-          if (event.args) {
+          if ('args' in event && event.args) {
             events.push({
-              id: `buy-${event.transactionHash}-${event.logIndex}`,
+              id: `buy-${event.transactionHash}-${'logIndex' in event ? event.logIndex : 0}`,
               userAddress: event.args.user,
               level: Number(event.args.level),
               amount: Number(event.args.price) / 1e18,
@@ -63,9 +63,9 @@ export const LiveActivationsTable: React.FC<LiveActivationsTableProps> = ({ clas
         const payoutEvents = await contract.queryFilter(payoutFilter, fromBlock, currentBlock);
         
         for (const event of payoutEvents.slice(-20)) {
-          if (event.args) {
+          if ('args' in event && event.args) {
             events.push({
-              id: `payout-${event.transactionHash}-${event.logIndex}`,
+              id: `payout-${event.transactionHash}-${'logIndex' in event ? event.logIndex : 0}`,
               userAddress: event.args.receiver,
               level: Number(event.args.level),
               amount: Number(event.args.reward) / 1e18,
@@ -81,9 +81,9 @@ export const LiveActivationsTable: React.FC<LiveActivationsTableProps> = ({ clas
         const referralEvents = await contract.queryFilter(referralFilter, fromBlock, currentBlock);
         
         for (const event of referralEvents.slice(-20)) {
-          if (event.args) {
+          if ('args' in event && event.args) {
             events.push({
-              id: `referral-${event.transactionHash}-${event.logIndex}`,
+              id: `referral-${event.transactionHash}-${'logIndex' in event ? event.logIndex : 0}`,
               userAddress: event.args.referrer,
               level: Number(event.args.level),
               amount: Number(event.args.reward) / 1e18,

@@ -6,14 +6,41 @@ import { ConnectedHeader } from '../components/layout';
 import { NeuralBackground } from '../components/neural';
 import { ProgramViewGrid, EarningsOverview, LiveActivationsTable } from '../components/matrix';
 import { GlassButton } from '../components/glass';
+import { InsufficientFundsToast } from '../components/common';
 import { useWallet } from '../hooks/useWallet';
 
 const ProgramViewPage: React.FC = () => {
   const navigate = useNavigate();
-  const { buyLevel, userLevels } = useWallet();
+  const { buyLevel, userLevels, walletState } = useWallet();
+  const [insufficientFundsError, setInsufficientFundsError] = React.useState<{
+    show: boolean;
+    level: number;
+    requiredAmount: string;
+  }>({ show: false, level: 0, requiredAmount: '0' });
 
   const handleBack = () => {
     navigate('/dashboard');
+  };
+
+  const handleActivateLevel = async (level: number, priceBNB: number) => {
+    try {
+      await buyLevel(level, priceBNB);
+    } catch (error: any) {
+      // Check if it's an insufficient funds error
+      if (
+        error.code === 'INSUFFICIENT_FUNDS' ||
+        error.message?.includes('insufficient funds') ||
+        error.message?.includes('insufficient balance') ||
+        error.reason?.includes('insufficient funds')
+      ) {
+        setInsufficientFundsError({
+          show: true,
+          level,
+          requiredAmount: priceBNB.toString(),
+        });
+      }
+      // Other errors are already handled by useWallet
+    }
   };
 
   return (
@@ -79,7 +106,7 @@ const ProgramViewPage: React.FC = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2, duration: 0.6 }}
           >
-            <ProgramViewGrid onActivate={buyLevel} userLevels={userLevels} />
+            <ProgramViewGrid onActivate={handleActivateLevel} userLevels={userLevels} />
           </motion.div>
 
           {/* Live Activations Table */}
@@ -93,6 +120,15 @@ const ProgramViewPage: React.FC = () => {
           </motion.div>
         </div>
       </main>
+
+      {/* Insufficient Funds Toast */}
+      <InsufficientFundsToast
+        show={insufficientFundsError.show}
+        onClose={() => setInsufficientFundsError({ show: false, level: 0, requiredAmount: '0' })}
+        level={insufficientFundsError.level}
+        requiredAmount={insufficientFundsError.requiredAmount}
+        currentBalance={walletState.balance}
+      />
     </div>
   );
 };

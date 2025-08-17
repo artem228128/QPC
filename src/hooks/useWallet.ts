@@ -433,6 +433,14 @@ export const useWallet = () => {
         throw new Error('Not registered: please register before buying a level');
       }
       setIsLoading(true);
+
+      // Check balance before transaction
+      if (walletState.balance < valueBnb) {
+        setIsLoading(false);
+        const insufficientError = new Error('Insufficient funds');
+        (insufficientError as any).code = 'INSUFFICIENT_FUNDS';
+        throw insufficientError;
+      }
       try {
         const contract: any = await getQpcContract(true);
         const tx = await contract.buyLevel(level, { value: parseEther(String(valueBnb)) });
@@ -443,7 +451,9 @@ export const useWallet = () => {
         }
         toast.success(`Level ${level} activated`);
       } catch (err: any) {
-        // Handle user rejection gracefully
+        console.error('Buy level error:', err);
+        
+        // Handle specific error types
         if (
           err.code === 'ACTION_REJECTED' ||
           err.message?.includes('User denied') ||
@@ -451,9 +461,27 @@ export const useWallet = () => {
         ) {
           setError('Transaction was cancelled');
           toast.error('Transaction cancelled');
+        } else if (
+          err.code === 'INSUFFICIENT_FUNDS' ||
+          err.message?.includes('insufficient funds') ||
+          err.message?.includes('insufficient balance') ||
+          err.reason?.includes('insufficient funds')
+        ) {
+          setError('Insufficient funds to activate this level');
+          // Don't show toast here - let ProgramViewPage handle it with custom toast
+        } else if (
+          err.message?.includes('Invalid BNB amount') ||
+          err.message?.includes('Incorrect BNB amount')
+        ) {
+          setError('Incorrect amount sent');
+          toast.error(`Incorrect amount! Level ${level} requires exactly ${valueBnb} BNB`);
+        } else if (err.message?.includes('Already active')) {
+          setError('Level already activated');
+          toast.error(`Level ${level} is already activated`);
         } else {
-          setError(err?.message || 'Activation failed');
-          toast.error(err?.message || 'Activation failed');
+          const errorMsg = err?.reason || err?.message || 'Activation failed';
+          setError(errorMsg);
+          toast.error(errorMsg);
         }
         throw err;
       } finally {
