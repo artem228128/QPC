@@ -1,5 +1,9 @@
 import React from 'react';
 
+// ===========================================
+// 🔔 NOTIFICATION TYPES (moved to useNotifications.ts to avoid conflicts)
+// ===========================================
+
 export interface GlassComponentProps {
   blur?: number;
   opacity?: number;
@@ -94,6 +98,12 @@ export interface ContractGlobalStats {
   members: number;
   transactions: number;
   turnover: number;
+  totalParticipants: number;
+  totalContractBalance: number;
+  activeLevelsCount: number;
+  gameStartDate: string;
+  dailyNewPlayers: number;
+  dailyVolumeChange: number;
 }
 
 // User levels data returned by getUserLevels

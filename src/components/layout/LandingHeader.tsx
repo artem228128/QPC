@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 
 // ===========================================
 // 🎨 TYPE DEFINITIONS
@@ -13,28 +14,38 @@ interface LandingHeaderProps {
 // 🎮 GAMEFI NEON LOGO COMPONENT
 // ===========================================
 
-const QuantumLogo: React.FC<{ className?: string }> = ({ className = '' }) => (
-  <motion.div
-    className={`flex items-center select-none ${className}`}
-    whileHover={{ scale: 1.02 }}
-    transition={{ duration: 0.3 }}
-  >
-    <div className="flex flex-col items-start select-none">
-      <motion.span
-        className="text-2xl lg:text-3xl font-bold font-cyberpunk bg-gradient-to-r from-neon-cyan to-neon-magenta bg-clip-text text-transparent select-none"
-        animate={{
-          textShadow: ['0 0 10px #00FFFF60', '0 0 20px #00FFFF80', '0 0 10px #00FFFF60'],
-        }}
-        transition={{ duration: 2, repeat: Infinity }}
-      >
-        QUANTUM
-      </motion.span>
-      <span className="text-sm lg:text-base font-terminal text-neon-green opacity-90 tracking-wider select-none">
-        PROFIT.CHAIN
-      </span>
-    </div>
-  </motion.div>
-);
+const QuantumLogo: React.FC<{ className?: string }> = ({ className = '' }) => {
+  const navigate = useNavigate();
+  
+  const handleLogoClick = () => {
+    navigate('/');
+  };
+
+  return (
+    <motion.button
+      className={`flex items-center select-none cursor-pointer ${className}`}
+      whileHover={{ scale: 1.02 }}
+      whileTap={{ scale: 0.98 }}
+      transition={{ duration: 0.3 }}
+      onClick={handleLogoClick}
+    >
+      <div className="flex flex-col items-start select-none">
+        <motion.span
+          className="text-2xl lg:text-3xl font-bold font-cyberpunk bg-gradient-to-r from-neon-cyan to-neon-magenta bg-clip-text text-transparent select-none"
+          animate={{
+            textShadow: ['0 0 10px #00FFFF60', '0 0 20px #00FFFF80', '0 0 10px #00FFFF60'],
+          }}
+          transition={{ duration: 2, repeat: Infinity }}
+        >
+          QUANTUM
+        </motion.span>
+        <span className="text-sm lg:text-base font-terminal text-neon-green opacity-90 tracking-wider select-none">
+          PROFIT.CHAIN
+        </span>
+      </div>
+    </motion.button>
+  );
+};
 
 // ===========================================
 // 🏠 MAIN LANDING HEADER COMPONENT

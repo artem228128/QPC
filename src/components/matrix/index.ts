@@ -1,1 +1,1 @@
-export { MatrixVisualization, ProgramViewGrid } from './MatrixVisualization';
+export { MatrixVisualization, ProgramViewGrid, EarningsOverview } from './MatrixVisualization';

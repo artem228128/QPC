@@ -70,9 +70,9 @@
     "yup": "^1.7.0"
   },
   "scripts": {
-    "start": "react-scripts start",
-    "dev": "react-scripts start",
-    "build": "react-scripts build",
+    "start": "craco start",
+    "dev": "craco start",
+    "build": "craco build",
     "build:analyze": "npm run build && npx bundle-analyzer build/static/js/*.js",
     "test": "react-scripts test",
     "test:coverage": "react-scripts test --coverage --collectCoverageFrom='src/**/*.{ts,tsx}' --collectCoverageFrom='!src/**/*.d.ts'",

@@ -1,10 +1,13 @@
 import { ethers } from "hardhat";
 
 async function main() {
-  const tokenBurner = process.env.TOKEN_BURNER || ethers.ZeroAddress;
-  if (tokenBurner === ethers.ZeroAddress) {
-    throw new Error("Please set TOKEN_BURNER env var");
-  }
+  const [deployer] = await ethers.getSigners();
+  const fallbackBurner = await deployer.getAddress();
+  const envBurner = process.env.TOKEN_BURNER;
+  const tokenBurner = envBurner && envBurner !== "" ? envBurner : fallbackBurner;
+
+  console.log("Deployer:", fallbackBurner);
+  console.log("TokenBurner:", tokenBurner);
 
   const Factory = await ethers.getContractFactory("ImprovedMLM_BSC");
   const contract = await Factory.deploy(tokenBurner as any);

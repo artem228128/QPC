@@ -7,10 +7,9 @@ import {
   ExternalLink,
   TrendingUp,
   Users,
-  Activity,
   Calendar,
-  ChevronRight,
   Eye,
+  DollarSign,
 } from 'lucide-react';
 import { ConnectedHeader, DashboardSidebar } from '../components/layout';
 import { NeuralBackground } from '../components/neural';
@@ -19,6 +18,7 @@ import { GlassCard, GlassButton } from '../components/glass';
 import { useWallet } from '../hooks/useWallet';
 import { LEVEL_PRICES, formatBNB, CONTRACT_ADDRESS, getQpcContract } from '../utils/contract';
 import { RecentActivationsTable } from '../components';
+import { useState, useEffect } from 'react';
 
 // Mock data for demonstration - expanded activations
 const MOCK_USER_DATA = {
@@ -104,7 +104,59 @@ const MOCK_USER_DATA = {
 
 const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
-  const { walletState, contractInfo, userLevels } = useWallet();
+  const { /* walletState, */ contractInfo, userLevels, getTodayStats, getGlobalStats } =
+    useWallet();
+  const [todayStats, setTodayStats] = useState({
+    todayEarnings: 0,
+    todayReferrals: 0,
+    todayActivations: 0,
+  });
+  const [globalStats, setGlobalStats] = useState({
+    totalParticipants: 0,
+    totalContractBalance: 0,
+    activeLevelsCount: 0,
+    gameStartDate: 'Unknown',
+    dailyNewPlayers: 0,
+    dailyVolumeChange: 0,
+  });
+  const [isLoadingTodayStats, setIsLoadingTodayStats] = useState(false);
+  const [isLoadingGlobalStats, setIsLoadingGlobalStats] = useState(false);
+
+  // Load today's statistics
+  useEffect(() => {
+    const loadTodayStats = async () => {
+      if (contractInfo) {
+        setIsLoadingTodayStats(true);
+        try {
+          const stats = await getTodayStats();
+          setTodayStats(stats);
+        } catch (error) {
+          console.log('Error loading today stats:', error);
+        } finally {
+          setIsLoadingTodayStats(false);
+        }
+      }
+    };
+
+    loadTodayStats();
+  }, [contractInfo, getTodayStats]);
+
+  // Load global statistics
+  useEffect(() => {
+    const loadGlobalStats = async () => {
+      setIsLoadingGlobalStats(true);
+      try {
+        const stats = await getGlobalStats();
+        setGlobalStats(stats);
+      } catch (error) {
+        console.log('Error loading global stats:', error);
+      } finally {
+        setIsLoadingGlobalStats(false);
+      }
+    };
+
+    loadGlobalStats();
+  }, [getGlobalStats]);
 
   // Activated levels count (bind to on-chain data)
   const activatedCount = React.useMemo(() => {
@@ -193,7 +245,7 @@ const DashboardPage: React.FC = () => {
                 ${isActivated ? 'text-green-300' : isAvailable ? 'text-blue-300' : 'text-gray-400'}
               `}
               >
-                 {formatBNB(LEVEL_PRICES[level])}
+                {formatBNB(LEVEL_PRICES[level])}
               </div>
               {isActivated && (
                 <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-400 rounded-full border-2 border-black flex items-center justify-center">
@@ -208,7 +260,9 @@ const DashboardPage: React.FC = () => {
   };
 
   // Recent Activations from-chain (BuyLevel events)
-  const [recentActs, setRecentActs] = React.useState<Array<{datetime: string; level: number; userId: number; amount: number; tx: string}>>([]);
+  const [, /* recentActs */ setRecentActs] = React.useState<
+    Array<{ datetime: string; level: number; userId: number; amount: number; tx: string }>
+  >([]);
   React.useEffect(() => {
     (async () => {
       try {
@@ -216,18 +270,33 @@ const DashboardPage: React.FC = () => {
         const now = await (c.runner?.getBlock ? c.runner.getBlock('latest') : null);
         const latest = now?.number ?? undefined;
         const from = latest ? Math.max(0, latest - 5000) : 0;
-        const iface = new (require('ethers').Interface)(["event BuyLevel(uint256 indexed userId, uint8 indexed level, uint256 value)"]);
-        const topic = iface.getEvent("BuyLevel").topicHash;
-        const logs = await c.runner.getLogs({ address: c.target, fromBlock: from, toBlock: latest ?? 'latest', topics: [topic] });
-        const parsed = await Promise.all(logs.slice(-20).reverse().map(async (l: any) => {
-          const p = iface.decodeEventLog("BuyLevel", l.data, l.topics);
-          const userId = Number(p.userId);
-          const level = Number(p.level);
-          const amount = Number(p.value) / 1e18;
-          const block = await c.runner.getBlock(l.blockHash);
-          const dt = new Date(Number(block.timestamp) * 1000).toISOString().replace('T',' ').slice(0,16);
-          return { datetime: dt, level, userId, amount, tx: l.transactionHash };
-        }));
+        const iface = new (require('ethers').Interface)([
+          'event BuyLevel(uint256 indexed userId, uint8 indexed level, uint256 value)',
+        ]);
+        const topic = iface.getEvent('BuyLevel').topicHash;
+        const logs = await c.runner.getLogs({
+          address: c.target,
+          fromBlock: from,
+          toBlock: latest ?? 'latest',
+          topics: [topic],
+        });
+        const parsed = await Promise.all(
+          logs
+            .slice(-20)
+            .reverse()
+            .map(async (l: any) => {
+              const p = iface.decodeEventLog('BuyLevel', l.data, l.topics);
+              const userId = Number(p.userId);
+              const level = Number(p.level);
+              const amount = Number(p.value) / 1e18;
+              const block = await c.runner.getBlock(l.blockHash);
+              const dt = new Date(Number(block.timestamp) * 1000)
+                .toISOString()
+                .replace('T', ' ')
+                .slice(0, 16);
+              return { datetime: dt, level, userId, amount, tx: l.transactionHash };
+            })
+        );
         setRecentActs(parsed);
       } catch (e) {
         // ignore silently in UI
@@ -452,7 +521,7 @@ const DashboardPage: React.FC = () => {
                     <div className="flex items-center gap-6 text-sm">
                       <div className="flex items-center gap-2">
                         <div className="w-4 h-4 bg-green-400 rounded border-2 border-green-400/60"></div>
-                          <span className="text-gray-300">Activated ({activatedCount})</span>
+                        <span className="text-gray-300">Activated ({activatedCount})</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <div className="w-4 h-4 bg-blue-400 rounded border-2 border-blue-400/40"></div>
@@ -470,55 +539,109 @@ const DashboardPage: React.FC = () => {
               </motion.div>
 
               {/* Recent Activations - Reusable Table */}
-              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6, duration: 0.6 }}>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.6, duration: 0.6 }}
+              >
                 <RecentActivationsTable />
               </motion.div>
             </div>
 
             {/* Right Column - Stats */}
             <div className="space-y-6">
-              {/* Performance Stats */}
+              {/* Global Game Stats */}
               <motion.div
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.3, duration: 0.6 }}
               >
-                <GlassCard className="p-6">
-                  <h3 className="text-lg font-semibold text-white mb-4">Performance</h3>
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <TrendingUp className="text-green-400" size={18} />
-                        <span className="text-gray-300 text-sm">Active Levels</span>
+                <GlassCard className="p-4 border border-purple-400/20 bg-gradient-to-br from-purple-500/5 to-indigo-500/5">
+                  <div className="mb-3">
+                    <h3 className="text-base font-semibold text-white">Game Stats</h3>
+                  </div>
+                  <div className="space-y-3">
+                    <div className="bg-black/20 rounded-lg p-3">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Users className="text-blue-400" size={14} />
+                        <span className="text-gray-400 text-xs">Players</span>
                       </div>
-                      <span className="text-white font-bold">
-                        {activatedCount}/16
-                      </span>
+                      <div className="text-blue-400 text-lg font-bold font-mono">
+                        {isLoadingGlobalStats ? (
+                          <div className="animate-pulse">...</div>
+                        ) : (
+                          <>
+                            {globalStats.totalParticipants.toLocaleString()}
+                            <span className="text-green-400 text-sm font-medium ml-2">
+                              {isLoadingGlobalStats ? (
+                                <span className="animate-pulse">...</span>
+                              ) : globalStats.dailyNewPlayers > 0 ? (
+                                `+${globalStats.dailyNewPlayers}`
+                              ) : (
+                                '+0'
+                              )}
+                            </span>
+                          </>
+                        )}
+                      </div>
                     </div>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Users className="text-blue-400" size={18} />
-                        <span className="text-gray-300 text-sm">Referrals</span>
+
+                    <div className="bg-black/20 rounded-lg p-3">
+                      <div className="flex items-center gap-2 mb-1">
+                        <DollarSign className="text-green-400" size={14} />
+                        <span className="text-gray-400 text-xs">Total Volume</span>
                       </div>
-                      <span className="text-white font-bold">{contractInfo?.referrals ?? 0}</span>
+                      <div className="text-green-400 text-lg font-bold font-mono">
+                        {isLoadingGlobalStats ? (
+                          <div className="animate-pulse">...</div>
+                        ) : (
+                          <>
+                            {formatBNB(globalStats.totalContractBalance)} BNB
+                            <span className="text-green-400 text-sm font-medium ml-2">
+                              {isLoadingGlobalStats ? (
+                                <span className="animate-pulse">...</span>
+                              ) : globalStats.dailyVolumeChange > 0 ? (
+                                `+${formatBNB(globalStats.dailyVolumeChange)}`
+                              ) : (
+                                '+0'
+                              )}
+                            </span>
+                          </>
+                        )}
+                      </div>
                     </div>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Activity className="text-purple-400" size={18} />
-                        <span className="text-gray-300 text-sm">Total Volume</span>
+
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="bg-black/20 rounded-lg p-2">
+                        <div className="flex items-center gap-1 mb-1">
+                          <TrendingUp className="text-purple-400" size={12} />
+                          <span className="text-gray-400 text-xs">Levels</span>
+                        </div>
+                        <div className="text-purple-400 text-sm font-bold">
+                          {isLoadingGlobalStats ? '...' : `${globalStats.activeLevelsCount}/16`}
+                        </div>
                       </div>
-                      <span className="text-white font-bold">{formatBNB(contractInfo?.levelsRewardSum ?? 0)} BNB</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Calendar className="text-yellow-400" size={18} />
-                        <span className="text-gray-300 text-sm">Days Active</span>
+
+                      <div className="bg-black/20 rounded-lg p-2">
+                        <div className="flex items-center gap-1 mb-1">
+                          <Calendar className="text-yellow-400" size={12} />
+                          <span className="text-gray-400 text-xs">Days</span>
+                        </div>
+                        <div className="text-yellow-400 text-sm font-bold">
+                          {isLoadingGlobalStats
+                            ? '...'
+                            : (() => {
+                                if (contractInfo?.registrationTimestamp) {
+                                  const daysPassed = Math.floor(
+                                    (Date.now() - contractInfo.registrationTimestamp) /
+                                      (1000 * 60 * 60 * 24)
+                                  );
+                                  return daysPassed;
+                                }
+                                return '0';
+                              })()}
+                        </div>
                       </div>
-                      <span className="text-white font-bold">
-                        {contractInfo?.registrationTimestamp 
-                          ? Math.floor((Date.now() - contractInfo.registrationTimestamp) / (1000 * 60 * 60 * 24))
-                          : 0}
-                      </span>
                     </div>
                   </div>
                 </GlassCard>
@@ -531,25 +654,56 @@ const DashboardPage: React.FC = () => {
                 transition={{ delay: 0.4, duration: 0.6 }}
               >
                 <GlassCard className="p-6 border border-green-400/20 bg-gradient-to-br from-green-500/5 to-cyan-500/5">
-                  <h3 className="text-lg font-semibold text-white mb-4">Today's Summary</h3>
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold text-white">Today's Summary</h3>
+                    <button
+                      onClick={async () => {
+                        setIsLoadingTodayStats(true);
+                        try {
+                          const stats = await getTodayStats();
+                          setTodayStats(stats);
+                        } catch (error) {
+                          console.log('Error refreshing today stats:', error);
+                        } finally {
+                          setIsLoadingTodayStats(false);
+                        }
+                      }}
+                      className="px-2 py-1 bg-blue-500/20 hover:bg-blue-500/30 rounded text-blue-400 text-xs border border-blue-400/30"
+                      disabled={isLoadingTodayStats}
+                    >
+                      {isLoadingTodayStats ? 'Loading...' : 'Refresh'}
+                    </button>
+                  </div>
                   <div className="space-y-3">
                     <div className="bg-black/20 rounded-lg p-3">
                       <div className="text-green-400 text-lg font-bold">
-                        {formatBNB(contractInfo?.levelsRewardSum ?? 0)}
+                        {isLoadingTodayStats ? (
+                          <div className="animate-pulse">Loading...</div>
+                        ) : (
+                          formatBNB(todayStats.todayEarnings)
+                        )}
                       </div>
-                      <div className="text-gray-400 text-xs">Total Earnings</div>
+                      <div className="text-gray-400 text-xs">Today's Earnings</div>
                     </div>
                     <div className="bg-black/20 rounded-lg p-3">
                       <div className="text-cyan-400 text-lg font-bold">
-                        {activatedCount}
+                        {isLoadingTodayStats ? (
+                          <div className="animate-pulse">Loading...</div>
+                        ) : (
+                          todayStats.todayActivations
+                        )}
                       </div>
-                      <div className="text-gray-400 text-xs">Active Levels</div>
+                      <div className="text-gray-400 text-xs">Today's Activations</div>
                     </div>
                     <div className="bg-black/20 rounded-lg p-3">
                       <div className="text-purple-400 text-lg font-bold">
-                        {contractInfo?.referrals ?? 0}
+                        {isLoadingTodayStats ? (
+                          <div className="animate-pulse">Loading...</div>
+                        ) : (
+                          todayStats.todayReferrals
+                        )}
                       </div>
-                      <div className="text-gray-400 text-xs">Total Referrals</div>
+                      <div className="text-gray-400 text-xs">Today's Referrals</div>
                     </div>
                   </div>
                 </GlassCard>

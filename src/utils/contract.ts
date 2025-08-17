@@ -30,17 +30,16 @@ const ENV_MAINNET = process.env.REACT_APP_CONTRACT_ADDRESS || '';
 const ENV_TESTNET = process.env.REACT_APP_CONTRACT_ADDRESS_TESTNET || '';
 
 // Normalize to lowercase to avoid EIP-55 checksum errors from mixed-case env values
-export const CONTRACT_ADDRESS = (
-  (ACTIVE_NETWORK === 'mainnet' ? ENV_MAINNET : ENV_TESTNET) || ''
-)
-  .toLowerCase()
-  || '0x0000000000000000000000000000000000000000';
+export const CONTRACT_ADDRESS =
+  ((ACTIVE_NETWORK === 'mainnet' ? ENV_MAINNET : ENV_TESTNET) || '').toLowerCase() ||
+  '0x0000000000000000000000000000000000000000';
 
 function validateConfiguredAddress(): { ok: boolean; message?: string } {
   const raw = (ACTIVE_NETWORK === 'mainnet' ? ENV_MAINNET : ENV_TESTNET) || '';
-  const varName = ACTIVE_NETWORK === 'mainnet'
-    ? 'REACT_APP_CONTRACT_ADDRESS'
-    : 'REACT_APP_CONTRACT_ADDRESS_TESTNET';
+  const varName =
+    ACTIVE_NETWORK === 'mainnet'
+      ? 'REACT_APP_CONTRACT_ADDRESS'
+      : 'REACT_APP_CONTRACT_ADDRESS_TESTNET';
 
   if (!raw) {
     return {
@@ -136,6 +135,21 @@ export const CONTRACT_ABI = [
     type: 'function',
   },
 
+  // Queue position for precise progress
+  {
+    inputs: [
+      { internalType: 'address', name: 'userAddress', type: 'address' },
+      { internalType: 'uint8', name: 'level', type: 'uint8' },
+    ],
+    name: 'getPlaceInQueue',
+    outputs: [
+      { internalType: 'uint256', name: 'place', type: 'uint256' },
+      { internalType: 'uint256', name: 'totalInQueue', type: 'uint256' },
+    ],
+    stateMutability: 'view',
+    type: 'function',
+  },
+
   {
     inputs: [],
     name: 'getGlobalStats',
@@ -154,6 +168,69 @@ export const CONTRACT_ABI = [
     outputs: [{ internalType: 'uint256[17]', name: '', type: 'uint256[17]' }],
     stateMutability: 'view',
     type: 'function',
+  },
+
+  {
+    inputs: [],
+    name: 'getContractBalance',
+    outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+
+  {
+    inputs: [
+      { internalType: 'address', name: 'userAddress', type: 'address' },
+      { internalType: 'uint8', name: 'level', type: 'uint8' },
+    ],
+    name: 'isLevelFrozen',
+    outputs: [{ internalType: 'bool', name: '', type: 'bool' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+
+  // Events
+  {
+    anonymous: false,
+    inputs: [
+      { indexed: true, internalType: 'uint256', name: 'userId', type: 'uint256' },
+      { indexed: true, internalType: 'uint8', name: 'level', type: 'uint8' },
+      { internalType: 'uint256', name: 'rewardValue', type: 'uint256' },
+      { indexed: true, internalType: 'uint256', name: 'fromUserId', type: 'uint256' },
+    ],
+    name: 'LevelPayout',
+    type: 'event',
+  },
+  {
+    anonymous: false,
+    inputs: [
+      { indexed: true, internalType: 'uint256', name: 'userId', type: 'uint256' },
+      { indexed: true, internalType: 'uint8', name: 'level', type: 'uint8' },
+      { internalType: 'uint256', name: 'value', type: 'uint256' },
+    ],
+    name: 'BuyLevel',
+    type: 'event',
+  },
+  {
+    anonymous: false,
+    inputs: [
+      { indexed: true, internalType: 'uint256', name: 'referrerId', type: 'uint256' },
+      { indexed: true, internalType: 'uint256', name: 'referralId', type: 'uint256' },
+      { indexed: true, internalType: 'uint8', name: 'level', type: 'uint8' },
+      { internalType: 'uint256', name: 'rewardValue', type: 'uint256' },
+    ],
+    name: 'ReferralPayout',
+    type: 'event',
+  },
+  {
+    anonymous: false,
+    inputs: [
+      { indexed: true, internalType: 'uint256', name: 'userId', type: 'uint256' },
+      { indexed: true, internalType: 'uint256', name: 'referrerId', type: 'uint256' },
+      { indexed: true, internalType: 'address', name: 'userAddress', type: 'address' },
+    ],
+    name: 'UserRegistration',
+    type: 'event',
   },
 
   // Constants

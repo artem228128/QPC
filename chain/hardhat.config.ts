@@ -12,6 +12,10 @@ const config: HardhatUserConfig = {
     }
   },
   networks: {
+    localhost: {
+      url: "http://127.0.0.1:8545",
+      chainId: 31337
+    },
     bscTestnet: {
       url: process.env.BSC_TESTNET_RPC_URL || "https://data-seed-prebsc-1-s1.binance.org:8545/",
       chainId: 97,

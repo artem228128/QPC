@@ -208,8 +208,13 @@ contract ImprovedMLM_BSC is ReentrancyGuard, Ownable, Pausable {
             _processQueuePosition(rewardAddress, level);
             emit LevelPayout(users[rewardAddress].id, level, reward, users[msg.sender].id);
         } else {
+            // Buyer is at the head of the queue for this level.
+            // Business rule: avoid self-reward, route funds to owner,
+            // but DO NOT skip the buyer's cycle progression.
             _sendReward(owner(), reward);
             _updateUserLevelStats(owner(), level, reward);
+            _processQueuePosition(rewardAddress, level);
+            // No LevelPayout event for the buyer to avoid misleading accounting of funds.
         }
         delete levelQueue[level][headIndex[level]];
         headIndex[level]++;
@@ -217,10 +222,24 @@ contract ImprovedMLM_BSC is ReentrancyGuard, Ownable, Pausable {
 
     function _processQueuePosition(address userAddress, uint8 level) private {
         users[userAddress].levels[level].payouts++;
+        
+        // Check if user should continue in queue
+        bool shouldContinue = false;
+        
         if (users[userAddress].levels[level].payouts < users[userAddress].levels[level].maxPayouts) {
+            // Still within initial payouts limit
+            shouldContinue = true;
+        } else if (level < MAX_LEVELS && users[userAddress].levels[level + 1].active) {
+            // Exceeded initial limit but next level is active - infinite cycles
+            shouldContinue = true;
+        }
+        // If next level is not active and exceeded maxPayouts, level gets frozen (not deactivated)
+        
+        if (shouldContinue) {
             levelQueue[level].push(userAddress);
         } else {
-            users[userAddress].levels[level].active = false;
+            // Level is frozen but remains active for reactivation
+            // Don't set active = false, just don't add back to queue
             emit LevelDeactivation(users[userAddress].id, level);
         }
     }
@@ -240,11 +259,21 @@ contract ImprovedMLM_BSC is ReentrancyGuard, Ownable, Pausable {
 
     function _sendReferralReward(address userAddress, uint8 line, uint8 level, uint256 rewardValue) private {
         address referrer = _findReferrer(userAddress, line);
-        while (!users[referrer].levels[level].active && referrer != owner()) {
+        uint8 skipCount = 0;
+        
+        // Prevent infinite loop by limiting skips to MAX_REFERRAL_LINES
+        while (!users[referrer].levels[level].active && referrer != owner() && referrer != address(0) && skipCount < MAX_REFERRAL_LINES) {
             users[referrer].missedReferralPayoutSum += rewardValue;
             emit MissedReferralPayout(users[referrer].id, users[userAddress].id, level, rewardValue);
             referrer = users[referrer].referrer;
+            skipCount++;
         }
+        
+        // If all referrers are invalid, send to owner
+        if (referrer == address(0) || skipCount >= MAX_REFERRAL_LINES) {
+            referrer = owner();
+        }
+        
         _sendReward(referrer, rewardValue);
         users[referrer].levels[level].referralPayoutSum += rewardValue;
         users[referrer].referralPayoutSum += rewardValue;
@@ -253,10 +282,11 @@ contract ImprovedMLM_BSC is ReentrancyGuard, Ownable, Pausable {
 
     function _findReferrer(address userAddress, uint8 line) private view returns (address) {
         address referrer = users[userAddress].referrer;
-        for (uint8 i = 1; i < line && referrer != owner(); i++) {
+        for (uint8 i = 1; i < line && referrer != owner() && referrer != address(0); i++) {
             referrer = users[referrer].referrer;
+            if (referrer == address(0)) break; // Prevent accessing zero address
         }
-        return referrer;
+        return referrer == address(0) ? owner() : referrer;
     }
 
     function _sendReward(address recipient, uint256 amount) private {
@@ -339,6 +369,22 @@ contract ImprovedMLM_BSC is ReentrancyGuard, Ownable, Pausable {
             if (levelQueue[level][i] == userAddress) return (place, totalInQueue);
         }
         return (0, totalInQueue);
+    }
+
+    function isLevelFrozen(address userAddress, uint8 level) external view validLevel(level) returns (bool) {
+        UserLevelInfo storage levelInfo = users[userAddress].levels[level];
+        if (!levelInfo.active) return false;
+        
+        // Level is frozen if it exceeded maxPayouts but next level is not active
+        if (levelInfo.payouts < levelInfo.maxPayouts) return false;
+        if (level >= MAX_LEVELS) return true; // Last level always freezes after maxPayouts
+        
+        // Check if next level exists and is active
+        if (level + 1 <= MAX_LEVELS) {
+            return !users[userAddress].levels[level + 1].active;
+        }
+        
+        return true; // No next level, so freeze
     }
 
     function _isContract(address account) private view returns (bool) { return account.code.length > 0; }

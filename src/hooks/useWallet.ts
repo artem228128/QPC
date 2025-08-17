@@ -1,9 +1,16 @@
 import { useState, useEffect, useCallback } from 'react';
-import { WalletState, NetworkConfig, ContractUserInfo, ContractGlobalStats, ContractUserLevelsData } from '../types';
+import {
+  WalletState,
+  NetworkConfig,
+  ContractUserInfo,
+  ContractGlobalStats,
+  ContractUserLevelsData,
+} from '../types';
 import { Web3Provider } from '../types/web3';
 import { parseEther } from 'ethers';
 import { toast } from 'react-hot-toast';
 import { ACTIVE_NETWORK, getQpcContract } from '../utils/contract';
+// import { notifyError } from './useNotifications';
 
 export const useWallet = () => {
   const [walletState, setWalletState] = useState<WalletState>({
@@ -216,72 +223,24 @@ export const useWallet = () => {
   }, [getProvider, connectWallet]);
 
   // Load contract user info from-chain
-  const loadContractInfo = useCallback(
-    async (address: string) => {
-      try {
-        const contract: any = await getQpcContract(false);
+  const loadContractInfo = useCallback(async (address: string) => {
+    try {
+      const contract: any = await getQpcContract(false);
 
-        // Safely check registration (some builds may not expose this method)
-        let registered = false;
-        if (typeof contract.isUserRegistered === 'function') {
-          try {
-            registered = await contract.isUserRegistered(address);
-          } catch {
-            registered = false;
-          }
+      // Safely check registration (some builds may not expose this method)
+      let registered = false;
+      if (typeof contract.isUserRegistered === 'function') {
+        try {
+          registered = await contract.isUserRegistered(address);
+        } catch {
+          registered = false;
         }
+      }
 
-        if (!registered) {
-          setContractInfo(null);
+      if (!registered) {
+        setContractInfo(null);
 
-          // Global stats are optional; attempt to load but ignore errors or missing method
-          if (typeof contract.getGlobalStats === 'function') {
-            try {
-              const gs = await contract.getGlobalStats();
-              setGlobalStats({
-                members: Number(gs?.members ?? 0),
-                transactions: Number(gs?.transactions ?? 0),
-                turnover: Number(gs?.turnover ?? 0),
-              });
-            } catch {}
-          }
-          return;
-        }
-
-        // Load user info if method exists
-        if (typeof contract.getUser === 'function') {
-          try {
-            const ui = await contract.getUser(address);
-            setContractInfo({
-              id: Number(ui?.id ?? 0),
-              registrationTimestamp: Number(ui?.registrationTimestamp ?? 0) * 1000,
-              referrerId: Number(ui?.referrerId ?? 0),
-              referrer: String(ui?.referrer ?? '0x0000000000000000000000000000000000000000'),
-              referrals: Number(ui?.referrals ?? 0),
-              // values from contract are in wei; convert to BNB
-              referralPayoutSum: Number(ui?.referralPayoutSum ?? 0) / 1e18,
-              levelsRewardSum: Number(ui?.levelsRewardSum ?? 0) / 1e18,
-              missedReferralPayoutSum: Number(ui?.missedReferralPayoutSum ?? 0) / 1e18,
-            });
-          } catch {}
-        }
-
-        // Load levels if method exists
-        if (typeof contract.getUserLevels === 'function') {
-          try {
-            const lv = await contract.getUserLevels(address);
-            setUserLevels({
-              active: Array.from(lv?.active ?? []).map(Boolean),
-              payouts: Array.from(lv?.payouts ?? []).map((v: any) => Number(v)),
-              maxPayouts: Array.from(lv?.maxPayouts ?? []).map((v: any) => Number(v)),
-              activationTimes: Array.from(lv?.activationTimes ?? []).map((v: any) => Number(v)),
-              rewardSum: Array.from(lv?.rewardSum ?? []).map((v: any) => Number(v) / 1e18),
-              referralPayoutSum: Array.from(lv?.referralPayoutSum ?? []).map((v: any) => Number(v) / 1e18),
-            });
-          } catch {}
-        }
-
-        // Optional global stats
+        // Global stats are optional; attempt to load but ignore errors or missing method
         if (typeof contract.getGlobalStats === 'function') {
           try {
             const gs = await contract.getGlobalStats();
@@ -289,15 +248,74 @@ export const useWallet = () => {
               members: Number(gs?.members ?? 0),
               transactions: Number(gs?.transactions ?? 0),
               turnover: Number(gs?.turnover ?? 0),
+              totalParticipants: Number(gs?.members ?? 0),
+              totalContractBalance: 0,
+              activeLevelsCount: 16,
+              gameStartDate: 'Unknown',
+              dailyNewPlayers: 0,
+              dailyVolumeChange: 0,
             });
           } catch {}
         }
-      } catch (err) {
-        console.error('Failed to load contract info:', err);
+        return;
       }
-    },
-    []
-  );
+
+      // Load user info if method exists
+      if (typeof contract.getUser === 'function') {
+        try {
+          const ui = await contract.getUser(address);
+          setContractInfo({
+            id: Number(ui?.id ?? 0),
+            registrationTimestamp: Number(ui?.registrationTimestamp ?? 0) * 1000,
+            referrerId: Number(ui?.referrerId ?? 0),
+            referrer: String(ui?.referrer ?? '0x0000000000000000000000000000000000000000'),
+            referrals: Number(ui?.referrals ?? 0),
+            // values from contract are in wei; convert to BNB
+            referralPayoutSum: Number(ui?.referralPayoutSum ?? 0) / 1e18,
+            levelsRewardSum: Number(ui?.levelsRewardSum ?? 0) / 1e18,
+            missedReferralPayoutSum: Number(ui?.missedReferralPayoutSum ?? 0) / 1e18,
+          });
+        } catch {}
+      }
+
+      // Load levels if method exists
+      if (typeof contract.getUserLevels === 'function') {
+        try {
+          const lv = await contract.getUserLevels(address);
+          setUserLevels({
+            active: Array.from(lv?.active ?? []).map(Boolean),
+            payouts: Array.from(lv?.payouts ?? []).map((v: any) => Number(v)),
+            maxPayouts: Array.from(lv?.maxPayouts ?? []).map((v: any) => Number(v)),
+            activationTimes: Array.from(lv?.activationTimes ?? []).map((v: any) => Number(v)),
+            rewardSum: Array.from(lv?.rewardSum ?? []).map((v: any) => Number(v) / 1e18),
+            referralPayoutSum: Array.from(lv?.referralPayoutSum ?? []).map(
+              (v: any) => Number(v) / 1e18
+            ),
+          });
+        } catch {}
+      }
+
+      // Optional global stats
+      if (typeof contract.getGlobalStats === 'function') {
+        try {
+          const gs = await contract.getGlobalStats();
+          setGlobalStats({
+            members: Number(gs?.members ?? 0),
+            transactions: Number(gs?.transactions ?? 0),
+            turnover: Number(gs?.turnover ?? 0),
+            totalParticipants: Number(gs?.members ?? 0),
+            totalContractBalance: 0,
+            activeLevelsCount: 16,
+            gameStartDate: 'Unknown',
+            dailyNewPlayers: 0,
+            dailyVolumeChange: 0,
+          });
+        } catch {}
+      }
+    } catch (err) {
+      console.error('Failed to load contract info:', err);
+    }
+  }, []);
 
   // Switch to BSC network
   const switchToBSC = useCallback(async () => {
@@ -376,8 +394,18 @@ export const useWallet = () => {
         await loadContractInfo(walletState.address);
         toast.success('Registration confirmed');
       } catch (err: any) {
-        setError(err.message || 'Registration failed');
-        toast.error(err?.message || 'Registration failed');
+        // Handle user rejection gracefully
+        if (
+          err.code === 'ACTION_REJECTED' ||
+          err.message?.includes('User denied') ||
+          err.message?.includes('user rejected')
+        ) {
+          setError('Registration was cancelled');
+          toast.error('Registration cancelled');
+        } else {
+          setError(err.message || 'Registration failed');
+          toast.error(err?.message || 'Registration failed');
+        }
         throw err;
       } finally {
         setIsLoading(false);
@@ -415,15 +443,296 @@ export const useWallet = () => {
         }
         toast.success(`Level ${level} activated`);
       } catch (err: any) {
-        setError(err?.message || 'Activation failed');
-        toast.error(err?.message || 'Activation failed');
+        // Handle user rejection gracefully
+        if (
+          err.code === 'ACTION_REJECTED' ||
+          err.message?.includes('User denied') ||
+          err.message?.includes('user rejected')
+        ) {
+          setError('Transaction was cancelled');
+          toast.error('Transaction cancelled');
+        } else {
+          setError(err?.message || 'Activation failed');
+          toast.error(err?.message || 'Activation failed');
+        }
         throw err;
       } finally {
         setIsLoading(false);
       }
     },
-    [getProvider, walletState.address, walletState.network, switchToBSC, isUserRegistered, loadContractInfo]
+    [
+      getProvider,
+      walletState.address,
+      walletState.network,
+      switchToBSC,
+      isUserRegistered,
+      loadContractInfo,
+    ]
   );
+
+  // Get today's statistics from contract events
+  const getTodayStats = useCallback(async (): Promise<{
+    todayEarnings: number;
+    todayReferrals: number;
+    todayActivations: number;
+  }> => {
+    const contract: any = await getQpcContract(false);
+    const address = walletState.address;
+
+    if (!contract || !address) return { todayEarnings: 0, todayReferrals: 0, todayActivations: 0 };
+
+    try {
+      const now = Math.floor(Date.now() / 1000);
+      const oneDayAgo = now - 24 * 60 * 60; // 24 hours ago
+      const blockNumber = await contract.provider?.getBlockNumber();
+      if (!blockNumber) return { todayEarnings: 0, todayReferrals: 0, todayActivations: 0 };
+
+      // Estimate blocks per day (BSC has ~3 second blocks)
+      const blocksPerDay = Math.floor((24 * 60 * 60) / 3);
+      const fromBlock = Math.max(0, blockNumber - blocksPerDay);
+
+      let todayEarnings = 0;
+      let todayReferrals = 0;
+      let todayActivations = 0;
+
+      // Get LevelPayout events for today's earnings
+      try {
+        const payoutFilter = contract.filters.LevelPayout(address);
+        const payoutEvents = await contract.queryFilter(payoutFilter, fromBlock, blockNumber);
+
+        for (const event of payoutEvents) {
+          const block = await contract.provider?.getBlock(event.blockNumber);
+          if (block && block.timestamp >= oneDayAgo) {
+            todayEarnings += Number(event.args?.rewardValue || 0) / 1e18;
+          }
+        }
+      } catch (error) {
+        console.log('Error fetching payout events:', error);
+      }
+
+      // Get ReferralPayout events for today's referral earnings
+      try {
+        const referralFilter = contract.filters.ReferralPayout(address);
+        const referralEvents = await contract.queryFilter(referralFilter, fromBlock, blockNumber);
+
+        for (const event of referralEvents) {
+          const block = await contract.provider?.getBlock(event.blockNumber);
+          if (block && block.timestamp >= oneDayAgo) {
+            todayEarnings += Number(event.args?.rewardValue || 0) / 1e18;
+          }
+        }
+      } catch (error) {
+        console.log('Error fetching referral events:', error);
+      }
+
+      // Get BuyLevel events for today's activations
+      try {
+        // Try to get all BuyLevel events first, then filter by address
+        const buyLevelFilter = contract.filters.BuyLevel();
+        const buyLevelEvents = await contract.queryFilter(buyLevelFilter, fromBlock, blockNumber);
+
+        // Filter events for this specific address
+        const userBuyLevelEvents = buyLevelEvents.filter(
+          (event: any) => event.args && event.args[0] && event.args[0].toString() === address
+        );
+
+        console.log('Total BuyLevel events found:', buyLevelEvents.length);
+        console.log('User BuyLevel events found:', userBuyLevelEvents.length);
+        console.log('From block:', fromBlock, 'To block:', blockNumber);
+        console.log('One day ago timestamp:', oneDayAgo);
+
+        for (const event of userBuyLevelEvents) {
+          const block = await contract.provider?.getBlock(event.blockNumber);
+          console.log('Event block:', event.blockNumber, 'Block timestamp:', block?.timestamp);
+          if (block && block.timestamp >= oneDayAgo) {
+            todayActivations++;
+            console.log('Today activation found! Total:', todayActivations);
+          }
+        }
+      } catch (error) {
+        console.log('Error fetching buy level events:', error);
+      }
+
+      // Get UserRegistration events for today's referrals
+      try {
+        const registrationFilter = contract.filters.UserRegistration(null, null, address);
+        const registrationEvents = await contract.queryFilter(
+          registrationFilter,
+          fromBlock,
+          blockNumber
+        );
+
+        for (const event of registrationEvents) {
+          const block = await contract.provider?.getBlock(event.blockNumber);
+          if (block && block.timestamp >= oneDayAgo) {
+            todayReferrals++;
+          }
+        }
+      } catch (error) {
+        console.log('Error fetching registration events:', error);
+      }
+
+      console.log('Today stats result:', { todayEarnings, todayReferrals, todayActivations });
+      return { todayEarnings, todayReferrals, todayActivations };
+    } catch (error) {
+      console.log('Error getting today stats:', error);
+      return { todayEarnings: 0, todayReferrals: 0, todayActivations: 0 };
+    }
+  }, [walletState.address]);
+
+  // Get global game statistics with daily changes
+  const getGlobalStats = useCallback(async (): Promise<{
+    totalParticipants: number;
+    totalContractBalance: number;
+    activeLevelsCount: number;
+    gameStartDate: string;
+    dailyNewPlayers: number;
+    dailyVolumeChange: number;
+  }> => {
+    try {
+      const contract: any = await getQpcContract(false);
+      if (!contract)
+        return {
+          totalParticipants: 0,
+          totalContractBalance: 0,
+          activeLevelsCount: 0,
+          gameStartDate: 'Unknown',
+          dailyNewPlayers: 0,
+          dailyVolumeChange: 0,
+        };
+
+      // Get total participants from global stats
+      let totalParticipants = 0;
+      try {
+        if (typeof contract.getGlobalStats === 'function') {
+          const stats = await contract.getGlobalStats();
+          totalParticipants = Number(stats[0] || 0); // members is first returned value
+          console.log('Global stats:', stats);
+        }
+      } catch (error) {
+        console.log('Error fetching global stats:', error);
+      }
+
+      // Get contract balance or calculate total volume from activations
+      let totalContractBalance = 0;
+      try {
+        if (typeof contract.getContractBalance === 'function') {
+          const balance = await contract.getContractBalance();
+          totalContractBalance = Number(balance || 0) / 1e18;
+          console.log('Contract balance raw:', balance);
+          console.log('Contract balance parsed:', totalContractBalance);
+        } else {
+          console.log('getContractBalance method not found on contract');
+        }
+      } catch (error) {
+        console.log('Error fetching contract balance:', error);
+      }
+
+      // If contract balance is 0 (typical for test networks), calculate total volume from level prices and participants
+      if (totalContractBalance === 0 && totalParticipants > 0) {
+        // Estimate total volume: participants * average level cost (rough calculation)
+        // Level 1 = 0.1, Level 2 = 0.2, etc. Average of first few levels
+        const estimatedVolume = totalParticipants * 0.15; // Conservative estimate
+        totalContractBalance = estimatedVolume;
+        console.log(
+          'Using estimated volume:',
+          estimatedVolume,
+          'for',
+          totalParticipants,
+          'participants'
+        );
+      }
+
+      // Calculate active levels (levels that have been purchased by anyone)
+      let activeLevelsCount = 16; // Assume all levels are available for now
+
+      // Get game start date - use previous working logic
+      let gameStartDate = 'January 2025';
+      if (contractInfo?.registrationTimestamp) {
+        const date = new Date(contractInfo.registrationTimestamp);
+        gameStartDate = date.toLocaleDateString('en-US', {
+          month: 'long',
+          year: 'numeric',
+        });
+      }
+
+      // Calculate daily changes
+      let dailyNewPlayers = 0;
+      let dailyVolumeChange = 0;
+
+      try {
+        const blockNumber = await contract.provider?.getBlockNumber();
+        if (blockNumber) {
+          const now = Math.floor(Date.now() / 1000);
+          const oneDayAgo = now - 24 * 60 * 60;
+          const blocksPerDay = Math.floor((24 * 60 * 60) / 3); // BSC ~3 sec blocks
+          const fromBlock = Math.max(0, blockNumber - blocksPerDay);
+
+          // Count new registrations in last 24 hours
+          try {
+            const registrationFilter = contract.filters.UserRegistration();
+            const registrationEvents = await contract.queryFilter(
+              registrationFilter,
+              fromBlock,
+              blockNumber
+            );
+
+            for (const event of registrationEvents) {
+              const block = await contract.provider?.getBlock(event.blockNumber);
+              if (block && block.timestamp >= oneDayAgo) {
+                dailyNewPlayers++;
+              }
+            }
+          } catch (error) {
+            console.log('Error counting daily registrations:', error);
+          }
+
+          // Calculate daily volume from BuyLevel events
+          try {
+            const buyLevelFilter = contract.filters.BuyLevel();
+            const buyLevelEvents = await contract.queryFilter(
+              buyLevelFilter,
+              fromBlock,
+              blockNumber
+            );
+
+            for (const event of buyLevelEvents) {
+              const block = await contract.provider?.getBlock(event.blockNumber);
+              if (block && block.timestamp >= oneDayAgo) {
+                const level = Number(event.args?.level || 0);
+                // Level prices: 0.1, 0.2, 0.4, 0.8, 1.6, 3.2, 6.4, 12.8, 25.6, 51.2, 102.4, 204.8, 409.6, 819.2, 1638.4, 3276.8
+                const price = 0.1 * Math.pow(2, level - 1);
+                dailyVolumeChange += price;
+              }
+            }
+          } catch (error) {
+            console.log('Error calculating daily volume:', error);
+          }
+        }
+      } catch (error) {
+        console.log('Error calculating daily changes:', error);
+      }
+
+      return {
+        totalParticipants,
+        totalContractBalance,
+        activeLevelsCount,
+        gameStartDate,
+        dailyNewPlayers,
+        dailyVolumeChange,
+      };
+    } catch (error) {
+      console.log('Error getting global stats:', error);
+      return {
+        totalParticipants: 0,
+        totalContractBalance: 0,
+        activeLevelsCount: 0,
+        gameStartDate: 'Unknown',
+        dailyNewPlayers: 0,
+        dailyVolumeChange: 0,
+      };
+    }
+  }, [contractInfo]);
 
   return {
     walletState,
@@ -442,5 +751,7 @@ export const useWallet = () => {
     loadContractInfo,
     isWalletAvailable: isWalletAvailable(),
     BSC_NETWORK,
+    getTodayStats,
+    getGlobalStats,
   };
 };

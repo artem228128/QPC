@@ -2,8 +2,8 @@
   "_format": "hh-sol-cache-2",
   "files": {
     "/Users/macbookair/Desktop/smart game/quantum-profit-chain/chain/contracts/ImprovedMLM_BSC.sol": {
-      "lastModificationDate": 1755207702654,
-      "contentHash": "aaf8f84410e99e68071685d15b8363aa",
+      "lastModificationDate": 1755461474502,
+      "contentHash": "2c3d240e299647bf86153158c278af36",
       "sourceName": "contracts/ImprovedMLM_BSC.sol",
       "solcConfig": {
         "version": "0.8.20",

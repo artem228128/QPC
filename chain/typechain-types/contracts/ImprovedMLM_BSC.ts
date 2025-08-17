@@ -41,6 +41,7 @@ export interface ImprovedMLM_BSCInterface extends Interface {
       | "getUserLevels"
       | "globalStat"
       | "headIndex"
+      | "isLevelFrozen"
       | "isUserRegistered"
       | "levelPrices"
       | "levelQueue"
@@ -134,6 +135,10 @@ export interface ImprovedMLM_BSCInterface extends Interface {
   encodeFunctionData(
     functionFragment: "headIndex",
     values: [BigNumberish]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "isLevelFrozen",
+    values: [AddressLike, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "isUserRegistered",
@@ -231,6 +236,10 @@ export interface ImprovedMLM_BSCInterface extends Interface {
   ): Result;
   decodeFunctionResult(functionFragment: "globalStat", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "headIndex", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "isLevelFrozen",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "isUserRegistered",
     data: BytesLike
@@ -605,6 +614,12 @@ export interface ImprovedMLM_BSC extends BaseContract {
 
   headIndex: TypedContractMethod<[arg0: BigNumberish], [bigint], "view">;
 
+  isLevelFrozen: TypedContractMethod<
+    [userAddress: AddressLike, level: BigNumberish],
+    [boolean],
+    "view"
+  >;
+
   isUserRegistered: TypedContractMethod<
     [userAddress: AddressLike],
     [boolean],
@@ -778,6 +793,13 @@ export interface ImprovedMLM_BSC extends BaseContract {
   getFunction(
     nameOrSignature: "headIndex"
   ): TypedContractMethod<[arg0: BigNumberish], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "isLevelFrozen"
+  ): TypedContractMethod<
+    [userAddress: AddressLike, level: BigNumberish],
+    [boolean],
+    "view"
+  >;
   getFunction(
     nameOrSignature: "isUserRegistered"
   ): TypedContractMethod<[userAddress: AddressLike], [boolean], "view">;

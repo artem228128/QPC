@@ -4,15 +4,16 @@ import {
   Wallet,
   Copy,
   ExternalLink,
-  Shield,
-  Activity,
   Bell,
   LogOut,
   ChevronDown,
   Menu,
   X,
+  Activity,
+  Shield,
 } from 'lucide-react';
 import { useWallet } from '../../hooks/useWallet';
+import { useNotifications, AppNotification } from '../../hooks/useNotifications';
 import { useNavigate } from 'react-router-dom';
 import { useMobileMenuContext } from '../../contexts/MobileMenuContext';
 
@@ -28,39 +29,66 @@ interface ConnectedHeaderProps {
 // 🎮 QUANTUM LOGO COMPONENT (REUSABLE)
 // ===========================================
 
-const QuantumLogo: React.FC<{ className?: string }> = ({ className = '' }) => (
-  <motion.div
-    className={`flex items-center select-none ${className}`}
-    whileHover={{ scale: 1.02 }}
-    transition={{ duration: 0.3 }}
-  >
-    <div className="flex flex-col items-start select-none">
-      <motion.span
-        className="text-2xl lg:text-3xl font-bold font-cyberpunk bg-gradient-to-r from-neon-cyan to-neon-magenta bg-clip-text text-transparent select-none"
-        animate={{
-          textShadow: ['0 0 10px #00FFFF60', '0 0 20px #00FFFF80', '0 0 10px #00FFFF60'],
-        }}
-        transition={{ duration: 2, repeat: Infinity }}
-      >
-        QUANTUM
-      </motion.span>
-      <span className="text-sm lg:text-base font-terminal text-neon-green opacity-90 tracking-wider select-none">
-        PROFIT.CHAIN
-      </span>
-    </div>
-  </motion.div>
-);
+const QuantumLogo: React.FC<{ className?: string }> = ({ className = '' }) => {
+  const navigate = useNavigate();
+  
+  const handleLogoClick = () => {
+    navigate('/');
+  };
+
+  return (
+    <motion.button
+      className={`flex items-center select-none cursor-pointer ${className}`}
+      whileHover={{ scale: 1.02 }}
+      whileTap={{ scale: 0.98 }}
+      transition={{ duration: 0.3 }}
+      onClick={handleLogoClick}
+    >
+      <div className="flex flex-col items-start select-none">
+        <motion.span
+          className="text-2xl lg:text-3xl font-bold font-cyberpunk bg-gradient-to-r from-neon-cyan to-neon-magenta bg-clip-text text-transparent select-none"
+          animate={{
+            textShadow: ['0 0 10px #00FFFF60', '0 0 20px #00FFFF80', '0 0 10px #00FFFF60'],
+          }}
+          transition={{ duration: 2, repeat: Infinity }}
+        >
+          QUANTUM
+        </motion.span>
+        <span className="text-sm lg:text-base font-terminal text-neon-green opacity-90 tracking-wider select-none">
+          PROFIT.CHAIN
+        </span>
+      </div>
+    </motion.button>
+  );
+};
 
 // ===========================================
 // 🔔 NOTIFICATIONS COMPONENT
 // ===========================================
 
 const NotificationsButton: React.FC = () => {
-  const [hasNotifications] = useState(true);
+  const { notifications, unreadCount } = useNotifications();
   const [isOpen, setIsOpen] = useState(false);
 
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Element;
+      if (isOpen && !target.closest('.notifications-dropdown')) {
+        setIsOpen(false);
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+    
+    return undefined;
+  }, [isOpen]);
+
   return (
-    <div className="relative">
+    <div className="relative notifications-dropdown">
       <motion.button
         className="relative p-3 bg-black/40 border border-blue-400/50 rounded-lg hover:border-blue-400 transition-all duration-200"
         onClick={() => setIsOpen(!isOpen)}
@@ -68,7 +96,7 @@ const NotificationsButton: React.FC = () => {
         whileTap={{ scale: 0.95 }}
       >
         <Bell className="w-5 h-5 text-blue-400" />
-        {hasNotifications && (
+        {unreadCount > 0 && (
           <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse" />
         )}
       </motion.button>
@@ -84,17 +112,53 @@ const NotificationsButton: React.FC = () => {
           >
             <div className="p-4">
               <h3 className="text-white font-bold mb-4">Notifications</h3>
-              <div className="space-y-3">
-                <div className="p-3 bg-blue-500/10 border border-blue-400/20 rounded-lg">
-                  <div className="text-blue-400 text-sm font-medium">Level Activated</div>
-                  <div className="text-gray-300 text-xs">Level 16 successfully activated</div>
-                  <div className="text-gray-500 text-xs mt-1">2 minutes ago</div>
-                </div>
-                <div className="p-3 bg-green-500/10 border border-green-400/20 rounded-lg">
-                  <div className="text-green-400 text-sm font-medium">Reward Received</div>
-                  <div className="text-gray-300 text-xs">+0.15 BNB earned from matrix</div>
-                  <div className="text-gray-500 text-xs mt-1">1 hour ago</div>
-                </div>
+              <div className="max-h-40 overflow-y-auto space-y-3 pr-2" style={{
+                scrollbarWidth: 'thin',
+                scrollbarColor: '#3b82f6 #1f2937'
+              }}>
+                {notifications.length === 0 ? (
+                  <div className="text-center text-gray-400 py-4">
+                    <Bell className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                    <p className="text-sm">No notifications yet</p>
+                  </div>
+                ) : (
+                  notifications.slice(0, 10).map((notification) => (
+                    <div
+                      key={notification.id}
+                      className={`p-3 rounded-lg ${
+                        notification.type === 'success' ? 'bg-green-500/10 border border-green-400/20' :
+                        notification.type === 'error' ? 'bg-red-500/10 border border-red-400/20' :
+                        notification.type === 'warning' ? 'bg-yellow-500/10 border border-yellow-400/20' :
+                        'bg-blue-500/10 border border-blue-400/20'
+                      }`}
+                    >
+                      <div className={`text-sm font-medium ${
+                        notification.type === 'success' ? 'text-green-400' :
+                        notification.type === 'error' ? 'text-red-400' :
+                        notification.type === 'warning' ? 'text-yellow-400' :
+                        'text-blue-400'
+                      }`}>
+                        {notification.title}
+                      </div>
+                      <div className="text-gray-300 text-xs">
+                        {notification.message}
+                      </div>
+                      <div className="text-gray-500 text-xs mt-1">
+                        {(() => {
+                          const now = new Date();
+                          const diff = now.getTime() - notification.timestamp.getTime();
+                          const minutes = Math.floor(diff / (1000 * 60));
+                          const hours = Math.floor(diff / (1000 * 60 * 60));
+                          
+                          if (minutes < 1) return 'Just now';
+                          if (minutes < 60) return `${minutes}m ago`;
+                          if (hours < 24) return `${hours}h ago`;
+                          return notification.timestamp.toLocaleDateString();
+                        })()}
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
           </motion.div>

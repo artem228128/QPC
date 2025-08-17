@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { ConnectedHeader } from '../components/layout';
 import { NeuralBackground } from '../components/neural';
-import { ProgramViewGrid } from '../components/matrix';
+import { ProgramViewGrid, EarningsOverview } from '../components/matrix';
 import { GlassButton } from '../components/glass';
 import { useWallet } from '../hooks/useWallet';
 
@@ -31,34 +31,41 @@ const ProgramViewPage: React.FC = () => {
             transition={{ duration: 0.6 }}
             className="mt-4 mb-8"
           >
-            <div className="flex items-center gap-4 mb-4">
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                transition={{ duration: 0.2 }}
-              >
-                <GlassButton
-                  variant="secondary"
-                  onClick={handleBack}
-                  className="group px-4 py-3 bg-gradient-to-r from-gray-800/50 to-gray-700/50 border-2 border-gray-600/50 hover:border-cyan-400/60 rounded-xl backdrop-blur-lg transition-all duration-300 hover:shadow-lg hover:shadow-cyan-400/20"
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-4">
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  transition={{ duration: 0.2 }}
                 >
-                  <div className="flex items-center gap-2">
-                    <ArrowLeft 
-                      size={18} 
-                      className="text-gray-400 group-hover:text-cyan-400 transition-colors duration-300 group-hover:-translate-x-1 transform transition-transform"
-                    />
-                    <span className="text-gray-300 group-hover:text-white transition-colors duration-300 text-sm font-medium">
-                      Back
-                    </span>
-                  </div>
-                </GlassButton>
-              </motion.div>
-              
-              <h1 className="text-3xl md:text-4xl font-bold font-cyberpunk">
-                <span className="bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 bg-clip-text text-transparent">
-                  PROGRAM VIEW
-                </span>
-              </h1>
+                  <GlassButton
+                    variant="secondary"
+                    onClick={handleBack}
+                    className="group px-4 py-3 bg-gradient-to-r from-gray-800/50 to-gray-700/50 border-2 border-gray-600/50 hover:border-cyan-400/60 rounded-xl backdrop-blur-lg transition-all duration-300 hover:shadow-lg hover:shadow-cyan-400/20"
+                  >
+                    <div className="flex items-center gap-2">
+                      <ArrowLeft 
+                        size={18} 
+                        className="text-gray-400 group-hover:text-cyan-400 transition-colors duration-300 group-hover:-translate-x-1 transform transition-transform"
+                      />
+                      <span className="text-gray-300 group-hover:text-white transition-colors duration-300 text-sm font-medium">
+                        Back
+                      </span>
+                    </div>
+                  </GlassButton>
+                </motion.div>
+                
+                <h1 className="text-3xl md:text-4xl font-bold font-cyberpunk">
+                  <span className="bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 bg-clip-text text-transparent">
+                    PROGRAM VIEW
+                  </span>
+                </h1>
+              </div>
+
+              {/* Compact Earnings Overview */}
+              <div className="hidden lg:block">
+                <EarningsOverview userLevels={userLevels} />
+              </div>
             </div>
             
             <p className="text-gray-400 text-lg">
