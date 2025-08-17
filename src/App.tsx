@@ -23,24 +23,24 @@ function App() {
       <ToastProvider>
         <MobileMenuProvider>
           <Router>
-          <div className="App">
-            <Routes>
-              <Route path="/" element={<HomePage />} />
-              <Route path="/wallet" element={<WalletConnectPage />} />
-              <Route path="/game" element={<GamePage />} />
-              <Route path="/activate" element={<ActivateLevelPage />} />
-              <Route path="/dashboard" element={<DashboardPage />} />
-              <Route path="/stats" element={<StatsPage />} />
-              <Route path="/partner-bonus" element={<PartnerBonusPage />} />
-              <Route path="/information" element={<InformationPage />} />
-              <Route path="/program-view" element={<ProgramViewPage />} />
-              <Route path="/telegram-bots" element={<TelegramBotsPage />} />
-              <Route path="/promo" element={<PromoPage />} />
-              <Route path="/settings" element={<SettingsPage />} />
-              <Route path="*" element={<HomePage />} />
-            </Routes>
-          </div>
-        </Router>
+            <div className="App">
+              <Routes>
+                <Route path="/" element={<HomePage />} />
+                <Route path="/wallet" element={<WalletConnectPage />} />
+                <Route path="/game" element={<GamePage />} />
+                <Route path="/activate" element={<ActivateLevelPage />} />
+                <Route path="/dashboard" element={<DashboardPage />} />
+                <Route path="/stats" element={<StatsPage />} />
+                <Route path="/partner-bonus" element={<PartnerBonusPage />} />
+                <Route path="/information" element={<InformationPage />} />
+                <Route path="/program-view" element={<ProgramViewPage />} />
+                <Route path="/telegram-bots" element={<TelegramBotsPage />} />
+                <Route path="/promo" element={<PromoPage />} />
+                <Route path="/settings" element={<SettingsPage />} />
+                <Route path="*" element={<HomePage />} />
+              </Routes>
+            </div>
+          </Router>
         </MobileMenuProvider>
       </ToastProvider>
     </ErrorBoundary>

@@ -75,10 +75,17 @@ export const RecentActivationsTable: React.FC<{ className?: string }> = ({ class
   const [activations, setActivations] = React.useState<Activation[]>([]);
   const [filtered, setFiltered] = React.useState<Activation[]>([]);
   const [page, setPage] = React.useState(1);
-  const [filters, setFilters] = React.useState<TableFilters>({ status: 'all', level: 'all', timeRange: 'all' });
+  const [filters, setFilters] = React.useState<TableFilters>({
+    status: 'all',
+    level: 'all',
+    timeRange: 'all',
+  });
 
   const itemsPerPage = 8;
-  const explorer = (BSC_NETWORK.blockExplorerUrls?.[0] || 'https://testnet.bscscan.com/').replace(/\/$/, '');
+  const explorer = (BSC_NETWORK.blockExplorerUrls?.[0] || 'https://testnet.bscscan.com/').replace(
+    /\/$/,
+    ''
+  );
 
   const load = React.useCallback(async () => {
     setIsLoading(true);
@@ -88,13 +95,13 @@ export const RecentActivationsTable: React.FC<{ className?: string }> = ({ class
       const latestBlock = await provider.getBlockNumber();
       // Use smaller range to avoid rate limiting
       const fromBlock = Math.max(0, Number(latestBlock) - 100);
-      
+
       try {
         const filter = c.filters.BuyLevel();
         const logs = await c.queryFilter(filter, fromBlock, latestBlock);
         const recent = logs.slice(-20).reverse();
         const rows: Activation[] = [];
-        
+
         for (const l of recent) {
           const args = l.args as any[];
           const userId = String(args?.[0] ?? '0');
@@ -114,7 +121,10 @@ export const RecentActivationsTable: React.FC<{ className?: string }> = ({ class
         }
         setActivations(rows);
       } catch (logError) {
-        console.log('Log query failed, using fallback data:', (logError as Error)?.message || 'Unknown error');
+        console.log(
+          'Log query failed, using fallback data:',
+          (logError as Error)?.message || 'Unknown error'
+        );
         // Fallback: generate some mock data to show the UI works
         const mockData: Activation[] = [
           {
@@ -127,14 +137,14 @@ export const RecentActivationsTable: React.FC<{ className?: string }> = ({ class
             txHash: '0x0000000000000000000000000000000000000000000000000000000000000001',
           },
           {
-            id: 'mock-2', 
+            id: 'mock-2',
             userId: '#2',
             level: 2,
             amount: 0.07,
             timestamp: new Date(Date.now() - 1000 * 60 * 60), // 1 hour ago
             status: 'active',
             txHash: '0x0000000000000000000000000000000000000000000000000000000000000002',
-          }
+          },
         ];
         setActivations(mockData);
       }
@@ -191,7 +201,10 @@ export const RecentActivationsTable: React.FC<{ className?: string }> = ({ class
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
         >
-          <RefreshCw size={16} className={`text-neural-cyan ${isRefreshing ? 'animate-spin' : ''}`} />
+          <RefreshCw
+            size={16}
+            className={`text-neural-cyan ${isRefreshing ? 'animate-spin' : ''}`}
+          />
         </motion.button>
       </div>
 
@@ -212,7 +225,12 @@ export const RecentActivationsTable: React.FC<{ className?: string }> = ({ class
         </div>
         <select
           value={filters.level}
-          onChange={(e) => setFilters((f) => ({ ...f, level: e.target.value === 'all' ? 'all' : parseInt(e.target.value) }))}
+          onChange={(e) =>
+            setFilters((f) => ({
+              ...f,
+              level: e.target.value === 'all' ? 'all' : parseInt(e.target.value),
+            }))
+          }
           className="glass-panel-secondary px-3 py-2 rounded-lg text-white text-sm bg-transparent border-none focus:ring-2 focus:ring-neural-cyan"
         >
           <option value="all">All Levels</option>
@@ -261,12 +279,24 @@ export const RecentActivationsTable: React.FC<{ className?: string }> = ({ class
               </colgroup>
               <thead className="border-b border-white/20">
                 <tr className="text-left">
-                  <th className="px-4 py-3 text-xs font-semibold text-white/80 uppercase tracking-wider">User</th>
-                  <th className="px-4 py-3 text-xs font-semibold text-white/80 uppercase tracking-wider">Level</th>
-                  <th className="px-4 py-3 text-xs font-semibold text-white/80 uppercase tracking-wider text-right">Amount</th>
-                  <th className="px-4 py-3 text-xs font-semibold text-white/80 uppercase tracking-wider">Time</th>
-                  <th className="px-4 py-3 text-xs font-semibold text-white/80 uppercase tracking-wider">Status</th>
-                  <th className="px-4 py-3 text-xs font-semibold text-white/80 uppercase tracking-wider">Actions</th>
+                  <th className="px-4 py-3 text-xs font-semibold text-white/80 uppercase tracking-wider">
+                    User
+                  </th>
+                  <th className="px-4 py-3 text-xs font-semibold text-white/80 uppercase tracking-wider">
+                    Level
+                  </th>
+                  <th className="px-4 py-3 text-xs font-semibold text-white/80 uppercase tracking-wider text-right">
+                    Amount
+                  </th>
+                  <th className="px-4 py-3 text-xs font-semibold text-white/80 uppercase tracking-wider">
+                    Time
+                  </th>
+                  <th className="px-4 py-3 text-xs font-semibold text-white/80 uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th className="px-4 py-3 text-xs font-semibold text-white/80 uppercase tracking-wider">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -282,7 +312,13 @@ export const RecentActivationsTable: React.FC<{ className?: string }> = ({ class
                     >
                       <td className="px-4 py-3">
                         <div className="flex items-center space-x-2">
-                          <NeuralNode size="small" color="primary" status={a.isNew ? 'pulsing' : 'active'} disableHover className="w-3 h-3" />
+                          <NeuralNode
+                            size="small"
+                            color="primary"
+                            status={a.isNew ? 'pulsing' : 'active'}
+                            disableHover
+                            className="w-3 h-3"
+                          />
                           <span className="font-mono text-xs text-white">{a.userId}</span>
                         </div>
                       </td>
@@ -346,5 +382,3 @@ export const RecentActivationsTable: React.FC<{ className?: string }> = ({ class
 };
 
 export default RecentActivationsTable;
-
-

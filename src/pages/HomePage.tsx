@@ -17,9 +17,10 @@ const HomePage: React.FC = () => {
   const navigate = useNavigate();
   const { walletState, isUserRegistered } = useWallet();
 
-  const handleConnectWallet = useCallback(() => {
-    navigate('/wallet');
-  }, [navigate]);
+  // Wallet connection handler - currently unused but kept for future use
+  // const _handleConnectWallet = useCallback(() => {
+  //   navigate('/wallet');
+  // }, [navigate]);
 
   const handleStartGame = useCallback(async () => {
     // If wallet not connected, send to connect page

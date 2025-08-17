@@ -32,7 +32,9 @@ const TelegramBotsPage: React.FC = () => {
                     TELEGRAM BOTS
                   </span>
                 </h1>
-                <p className="text-gray-300">Stay connected with automated notifications and support</p>
+                <p className="text-gray-300">
+                  Stay connected with automated notifications and support
+                </p>
               </div>
             </div>
           </motion.div>
@@ -65,9 +67,10 @@ const TelegramBotsPage: React.FC = () => {
 
                   <div className="space-y-3 mb-6">
                     <p className="text-gray-300 text-sm">
-                      Get instant notifications about your matrix activity, earnings, and level activations directly to your Telegram.
+                      Get instant notifications about your matrix activity, earnings, and level
+                      activations directly to your Telegram.
                     </p>
-                    
+
                     <div className="grid grid-cols-2 gap-4">
                       <div className="bg-black/20 rounded-lg p-3">
                         <div className="flex items-center gap-2 mb-2">
@@ -125,9 +128,10 @@ const TelegramBotsPage: React.FC = () => {
 
                   <div className="space-y-3 mb-6">
                     <p className="text-gray-300 text-sm">
-                      Get instant help with questions, technical issues, and guidance through our automated support system.
+                      Get instant help with questions, technical issues, and guidance through our
+                      automated support system.
                     </p>
-                    
+
                     <div className="grid grid-cols-2 gap-4">
                       <div className="bg-black/20 rounded-lg p-3">
                         <div className="flex items-center gap-2 mb-2">
@@ -171,7 +175,7 @@ const TelegramBotsPage: React.FC = () => {
               >
                 <GlassCard className="p-6">
                   <h3 className="text-xl font-semibold text-white mb-4">Bot Features</h3>
-                  
+
                   <div className="space-y-4">
                     <div className="flex items-start gap-3">
                       <div className="w-6 h-6 bg-gradient-to-r from-cyan-400 to-blue-400 rounded-full flex items-center justify-center mt-0.5">
@@ -179,7 +183,10 @@ const TelegramBotsPage: React.FC = () => {
                       </div>
                       <div>
                         <div className="text-white font-medium">Matrix Notifications</div>
-                        <div className="text-gray-400 text-sm">Get notified when you receive payouts, level activations, and referral bonuses</div>
+                        <div className="text-gray-400 text-sm">
+                          Get notified when you receive payouts, level activations, and referral
+                          bonuses
+                        </div>
                       </div>
                     </div>
 
@@ -189,7 +196,9 @@ const TelegramBotsPage: React.FC = () => {
                       </div>
                       <div>
                         <div className="text-white font-medium">Referral Updates</div>
-                        <div className="text-gray-400 text-sm">Instant alerts when new users join your referral network</div>
+                        <div className="text-gray-400 text-sm">
+                          Instant alerts when new users join your referral network
+                        </div>
                       </div>
                     </div>
 
@@ -199,7 +208,9 @@ const TelegramBotsPage: React.FC = () => {
                       </div>
                       <div>
                         <div className="text-white font-medium">System Status</div>
-                        <div className="text-gray-400 text-sm">Smart contract updates, network status, and important announcements</div>
+                        <div className="text-gray-400 text-sm">
+                          Smart contract updates, network status, and important announcements
+                        </div>
                       </div>
                     </div>
 
@@ -209,7 +220,9 @@ const TelegramBotsPage: React.FC = () => {
                       </div>
                       <div>
                         <div className="text-white font-medium">Live Support</div>
-                        <div className="text-gray-400 text-sm">Chat with our support team and get help with technical issues</div>
+                        <div className="text-gray-400 text-sm">
+                          Chat with our support team and get help with technical issues
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -224,7 +237,7 @@ const TelegramBotsPage: React.FC = () => {
               >
                 <GlassCard className="p-6 border border-yellow-400/20 bg-gradient-to-br from-yellow-500/5 to-orange-500/5">
                   <h3 className="text-xl font-semibold text-white mb-4">Quick Setup</h3>
-                  
+
                   <div className="space-y-3">
                     <div className="flex items-center gap-3">
                       <div className="w-6 h-6 bg-gradient-to-r from-cyan-400 to-blue-400 rounded-full flex items-center justify-center text-white font-bold text-xs">
@@ -265,10 +278,11 @@ const TelegramBotsPage: React.FC = () => {
               >
                 <GlassCard className="p-6 border border-green-400/20 bg-gradient-to-br from-green-500/5 to-emerald-500/5">
                   <h3 className="text-xl font-semibold text-white mb-4">Join Community</h3>
-                  
+
                   <div className="space-y-4">
                     <p className="text-gray-300 text-sm">
-                      Connect with other Quantum Profit Chain users, share strategies, and get real-time updates from our official channels.
+                      Connect with other Quantum Profit Chain users, share strategies, and get
+                      real-time updates from our official channels.
                     </p>
 
                     <div className="flex gap-3">

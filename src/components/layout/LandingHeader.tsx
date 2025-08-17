@@ -16,7 +16,6 @@ interface LandingHeaderProps {
 
 const QuantumLogo: React.FC<{ className?: string }> = ({ className = '' }) => {
   const navigate = useNavigate();
-  
   const handleLogoClick = () => {
     navigate('/');
   };

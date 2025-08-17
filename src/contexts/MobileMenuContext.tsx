@@ -43,9 +43,5 @@ export const MobileMenuProvider: React.FC<MobileMenuProviderProps> = ({ children
     openMobileMenu,
   };
 
-  return (
-    <MobileMenuContext.Provider value={value}>
-      {children}
-    </MobileMenuContext.Provider>
-  );
+  return <MobileMenuContext.Provider value={value}>{children}</MobileMenuContext.Provider>;
 };

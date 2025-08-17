@@ -197,6 +197,9 @@ contract ImprovedMLM_BSC is ReentrancyGuard, Ownable, Pausable {
             users[msg.sender].levels[level].maxPayouts += REWARD_PAYOUTS;
             emit IncreaseLevelMaxPayouts(users[msg.sender].id, level, users[msg.sender].levels[level].maxPayouts);
         }
+        
+        // When activating a new level, check and reactivate all previously frozen levels
+        _reactivateFrozenLevels(msg.sender, level);
     }
 
     function _distributeLevelReward(uint8 level) private {
@@ -247,6 +250,29 @@ contract ImprovedMLM_BSC is ReentrancyGuard, Ownable, Pausable {
     function _updateUserLevelStats(address userAddress, uint8 level, uint256 reward) private {
         users[userAddress].levels[level].rewardSum += reward;
         users[userAddress].levelsRewardSum += reward;
+    }
+
+    function _reactivateFrozenLevels(address userAddress, uint8 newLevel) private {
+        // Check all levels below the newly activated level
+        for (uint8 i = 1; i < newLevel; i++) {
+            if (users[userAddress].levels[i].active && _wasLevelFrozenBefore(userAddress, i, newLevel)) {
+                // Level was frozen but should now be reactivated due to new level
+                levelQueue[i].push(userAddress);
+                // Note: we don't emit BuyLevel since this is just reactivation
+            }
+        }
+    }
+    
+    function _wasLevelFrozenBefore(address userAddress, uint8 level, uint8 newlyActivatedLevel) private view returns (bool) {
+        UserLevelInfo storage levelInfo = users[userAddress].levels[level];
+        if (!levelInfo.active) return false;
+        
+        // Level was frozen if it exceeded maxPayouts and the next level was not active before this purchase
+        if (levelInfo.payouts < levelInfo.maxPayouts) return false;
+        if (level >= MAX_LEVELS) return true; // Last level always freezes after maxPayouts
+        
+        // Check if the level that was just activated is the next level that unfreezes this one
+        return level + 1 == newlyActivatedLevel;
     }
 
     function _distributeReferralRewards(uint8 level) private {

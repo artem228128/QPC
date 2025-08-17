@@ -1,22 +1,16 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Download, 
-  Globe, 
-  Share2, 
-  Copy, 
-  ExternalLink, 
-  FileText, 
-  Video, 
+import {
+  Download,
+  Globe,
+  Share2,
+  Copy,
+  FileText,
+  Video,
   Image as ImageIcon,
-  Megaphone,
-  Users,
-  Star,
   Play,
   Languages,
-  Monitor,
-  Smartphone,
-  Palette
+  Palette,
 } from 'lucide-react';
 import { ConnectedHeader, DashboardSidebar } from '../components/layout';
 import { NeuralBackground } from '../components/neural';
@@ -46,7 +40,7 @@ const PROMO_MATERIALS: PromoMaterial[] = [
     languageCode: 'EN',
     flag: '🇺🇸',
     downloadUrl: '/downloads/qpc-presentation-en.pdf',
-    size: '2.3 MB'
+    size: '2.3 MB',
   },
   {
     id: 'pres-ru',
@@ -57,7 +51,7 @@ const PROMO_MATERIALS: PromoMaterial[] = [
     languageCode: 'RU',
     flag: '🇷🇺',
     downloadUrl: '/downloads/qpc-presentation-ru.pdf',
-    size: '2.1 MB'
+    size: '2.1 MB',
   },
   {
     id: 'pres-es',
@@ -68,7 +62,7 @@ const PROMO_MATERIALS: PromoMaterial[] = [
     languageCode: 'ES',
     flag: '🇪🇸',
     downloadUrl: '/downloads/qpc-presentation-es.pdf',
-    size: '2.2 MB'
+    size: '2.2 MB',
   },
   {
     id: 'pres-fr',
@@ -79,18 +73,19 @@ const PROMO_MATERIALS: PromoMaterial[] = [
     languageCode: 'FR',
     flag: '🇫🇷',
     downloadUrl: '/downloads/qpc-presentation-fr.pdf',
-    size: '2.4 MB'
+    size: '2.4 MB',
   },
   {
     id: 'pres-de',
     title: 'Offizielle Präsentation',
-    description: 'Vollständiger Überblick über die Quantum Profit Chain Plattform und das Matrix-System',
+    description:
+      'Vollständiger Überblick über die Quantum Profit Chain Plattform und das Matrix-System',
     type: 'presentation',
     language: 'Deutsch',
     languageCode: 'DE',
     flag: '🇩🇪',
     downloadUrl: '/downloads/qpc-presentation-de.pdf',
-    size: '2.3 MB'
+    size: '2.3 MB',
   },
   {
     id: 'pres-zh',
@@ -101,8 +96,8 @@ const PROMO_MATERIALS: PromoMaterial[] = [
     languageCode: 'ZH',
     flag: '🇨🇳',
     downloadUrl: '/downloads/qpc-presentation-zh.pdf',
-    size: '2.5 MB'
-  }
+    size: '2.5 MB',
+  },
 ];
 
 const MEDIA_ASSETS = [
@@ -112,7 +107,7 @@ const MEDIA_ASSETS = [
     description: 'High-resolution logos in various formats (PNG, SVG, AI)',
     type: 'image' as const,
     downloadUrl: '/downloads/qpc-logo-pack.zip',
-    size: '5.2 MB'
+    size: '5.2 MB',
   },
   {
     id: 'banner-pack',
@@ -120,7 +115,7 @@ const MEDIA_ASSETS = [
     description: 'Social media banners and web headers in multiple sizes',
     type: 'image' as const,
     downloadUrl: '/downloads/qpc-banners.zip',
-    size: '12.1 MB'
+    size: '12.1 MB',
   },
   {
     id: 'promo-video',
@@ -128,7 +123,7 @@ const MEDIA_ASSETS = [
     description: '2-minute overview video with subtitles in 6 languages',
     type: 'video' as const,
     downloadUrl: '/downloads/qpc-promo-video.mp4',
-    size: '89.3 MB'
+    size: '89.3 MB',
   },
   {
     id: 'whitepaper',
@@ -136,8 +131,8 @@ const MEDIA_ASSETS = [
     description: 'Detailed technical documentation and tokenomics',
     type: 'document' as const,
     downloadUrl: '/downloads/qpc-whitepaper.pdf',
-    size: '1.8 MB'
-  }
+    size: '1.8 MB',
+  },
 ];
 
 const TEMPLATES = [
@@ -146,31 +141,34 @@ const TEMPLATES = [
     title: 'Social Media Posts',
     description: 'Ready-to-use templates for Instagram, Twitter, Facebook',
     formats: ['Instagram Story', 'Twitter Post', 'Facebook Cover'],
-    downloadUrl: '/downloads/qpc-social-templates.zip'
+    downloadUrl: '/downloads/qpc-social-templates.zip',
   },
   {
     id: 'email-templates',
     title: 'Email Templates',
     description: 'Professional email templates for invitations and updates',
     formats: ['Invitation', 'Newsletter', 'Welcome'],
-    downloadUrl: '/downloads/qpc-email-templates.zip'
+    downloadUrl: '/downloads/qpc-email-templates.zip',
   },
   {
     id: 'web-widgets',
     title: 'Web Widgets',
     description: 'Embeddable widgets for websites and blogs',
     formats: ['Referral Banner', 'Stats Widget', 'Join Button'],
-    downloadUrl: '/downloads/qpc-web-widgets.zip'
-  }
+    downloadUrl: '/downloads/qpc-web-widgets.zip',
+  },
 ];
 
 const PromoPage: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'presentations' | 'media' | 'templates'>('presentations');
+  const [activeTab, setActiveTab] = useState<'presentations' | 'media' | 'templates'>(
+    'presentations'
+  );
   const [selectedLanguage, setSelectedLanguage] = useState<string>('all');
 
-  const filteredPresentations = selectedLanguage === 'all' 
-    ? PROMO_MATERIALS 
-    : PROMO_MATERIALS.filter(item => item.languageCode.toLowerCase() === selectedLanguage);
+  const filteredPresentations =
+    selectedLanguage === 'all'
+      ? PROMO_MATERIALS
+      : PROMO_MATERIALS.filter((item) => item.languageCode.toLowerCase() === selectedLanguage);
 
   const handleDownload = (url: string, title: string) => {
     // In real implementation, this would trigger actual download
@@ -186,24 +184,29 @@ const PromoPage: React.FC = () => {
   const shareOnSocial = (platform: string) => {
     const url = 'https://quantumprofitchain.com';
     const text = 'Join Quantum Profit Chain - Revolutionary Matrix Gaming Protocol! 🚀';
-    
+
     const shareUrls = {
       twitter: `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${url}`,
       facebook: `https://www.facebook.com/sharer/sharer.php?u=${url}`,
       telegram: `https://t.me/share/url?url=${url}&text=${encodeURIComponent(text)}`,
-      linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${url}`
+      linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${url}`,
     };
-    
+
     window.open(shareUrls[platform as keyof typeof shareUrls], '_blank');
   };
 
   const getTypeIcon = (type: string) => {
     switch (type) {
-      case 'presentation': return FileText;
-      case 'video': return Video;
-      case 'image': return ImageIcon;
-      case 'document': return FileText;
-      default: return FileText;
+      case 'presentation':
+        return FileText;
+      case 'video':
+        return Video;
+      case 'image':
+        return ImageIcon;
+      case 'document':
+        return FileText;
+      default:
+        return FileText;
     }
   };
 
@@ -229,7 +232,9 @@ const PromoPage: React.FC = () => {
                     PROMO MATERIALS
                   </span>
                 </h1>
-                <p className="text-gray-300">Professional marketing materials and assets for promotion</p>
+                <p className="text-gray-300">
+                  Professional marketing materials and assets for promotion
+                </p>
               </div>
             </div>
           </motion.div>
@@ -261,26 +266,34 @@ const PromoPage: React.FC = () => {
                     <div className="flex-1 bg-black/30 rounded-lg p-3 font-mono text-sm text-white border border-white/10">
                       https://quantumprofitchain.com?ref=YOUR_ID
                     </div>
-                    <GlassButton
-                      variant="secondary"
-                      onClick={copyReferralLink}
-                      className="px-4"
-                    >
+                    <GlassButton variant="secondary" onClick={copyReferralLink} className="px-4">
                       <Copy size={16} />
                     </GlassButton>
                   </div>
                 </div>
-                
+
                 <div>
                   <label className="text-gray-300 text-sm mb-2 block">Share on Social Media</label>
                   <div className="flex gap-2">
-                    <GlassButton variant="secondary" onClick={() => shareOnSocial('twitter')} className="flex-1">
+                    <GlassButton
+                      variant="secondary"
+                      onClick={() => shareOnSocial('twitter')}
+                      className="flex-1"
+                    >
                       Twitter
                     </GlassButton>
-                    <GlassButton variant="secondary" onClick={() => shareOnSocial('facebook')} className="flex-1">
+                    <GlassButton
+                      variant="secondary"
+                      onClick={() => shareOnSocial('facebook')}
+                      className="flex-1"
+                    >
                       Facebook
                     </GlassButton>
-                    <GlassButton variant="secondary" onClick={() => shareOnSocial('telegram')} className="flex-1">
+                    <GlassButton
+                      variant="secondary"
+                      onClick={() => shareOnSocial('telegram')}
+                      className="flex-1"
+                    >
                       Telegram
                     </GlassButton>
                   </div>
@@ -300,7 +313,7 @@ const PromoPage: React.FC = () => {
               {[
                 { id: 'presentations', label: 'Presentations', icon: FileText },
                 { id: 'media', label: 'Media Assets', icon: ImageIcon },
-                { id: 'templates', label: 'Templates', icon: Palette }
+                { id: 'templates', label: 'Templates', icon: Palette },
               ].map((tab) => {
                 const Icon = tab.icon;
                 return (
@@ -309,8 +322,8 @@ const PromoPage: React.FC = () => {
                     variant={activeTab === tab.id ? 'primary' : 'secondary'}
                     onClick={() => setActiveTab(tab.id as any)}
                     className={`px-6 py-3 ${
-                      activeTab === tab.id 
-                        ? 'bg-gradient-to-r from-cyan-500/30 to-purple-500/30 border-cyan-400/50 text-cyan-300' 
+                      activeTab === tab.id
+                        ? 'bg-gradient-to-r from-cyan-500/30 to-purple-500/30 border-cyan-400/50 text-cyan-300'
                         : ''
                     }`}
                   >
@@ -381,11 +394,15 @@ const PromoPage: React.FC = () => {
                           </div>
 
                           <div className="mb-4">
-                            <h4 className="text-lg font-semibold text-white mb-2">{material.title}</h4>
+                            <h4 className="text-lg font-semibold text-white mb-2">
+                              {material.title}
+                            </h4>
                             <p className="text-gray-300 text-sm mb-3">{material.description}</p>
                             <div className="flex items-center gap-2">
                               <Globe size={14} className="text-cyan-400" />
-                              <span className="text-cyan-400 text-sm font-medium">{material.language}</span>
+                              <span className="text-cyan-400 text-sm font-medium">
+                                {material.language}
+                              </span>
                             </div>
                           </div>
 
@@ -455,7 +472,9 @@ const PromoPage: React.FC = () => {
                             {asset.type === 'video' && (
                               <GlassButton
                                 variant="secondary"
-                                onClick={() => {/* Preview video */}}
+                                onClick={() => {
+                                  /* Preview video */
+                                }}
                                 className="px-4"
                               >
                                 <Play size={16} />
@@ -495,7 +514,7 @@ const PromoPage: React.FC = () => {
                             <h4 className="text-lg font-semibold text-white">{template.title}</h4>
                           </div>
                           <p className="text-gray-300 text-sm mb-3">{template.description}</p>
-                          
+
                           <div className="space-y-2">
                             <span className="text-gray-400 text-xs">Includes:</span>
                             {template.formats.map((format, idx) => (
@@ -534,7 +553,7 @@ const PromoPage: React.FC = () => {
           >
             <GlassCard className="p-6 border border-blue-400/20 bg-gradient-to-br from-blue-500/5 to-indigo-500/5">
               <h3 className="text-xl font-semibold text-white mb-4">Usage Guidelines</h3>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <h4 className="text-green-400 font-medium mb-2">✅ Allowed</h4>
@@ -545,7 +564,7 @@ const PromoPage: React.FC = () => {
                     <li>• Translate to other languages</li>
                   </ul>
                 </div>
-                
+
                 <div>
                   <h4 className="text-red-400 font-medium mb-2">❌ Not Allowed</h4>
                   <ul className="space-y-1 text-gray-300 text-sm">

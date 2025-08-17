@@ -5,7 +5,6 @@ import {
   Copy,
   ExternalLink,
   Bell,
-  LogOut,
   ChevronDown,
   Menu,
   X,
@@ -13,7 +12,7 @@ import {
   Shield,
 } from 'lucide-react';
 import { useWallet } from '../../hooks/useWallet';
-import { useNotifications, AppNotification } from '../../hooks/useNotifications';
+import { useNotifications } from '../../hooks/useNotifications';
 import { useNavigate } from 'react-router-dom';
 import { useMobileMenuContext } from '../../contexts/MobileMenuContext';
 
@@ -31,7 +30,7 @@ interface ConnectedHeaderProps {
 
 const QuantumLogo: React.FC<{ className?: string }> = ({ className = '' }) => {
   const navigate = useNavigate();
-  
+
   const handleLogoClick = () => {
     navigate('/');
   };
@@ -83,7 +82,7 @@ const NotificationsButton: React.FC = () => {
       document.addEventListener('mousedown', handleClickOutside);
       return () => document.removeEventListener('mousedown', handleClickOutside);
     }
-    
+
     return undefined;
   }, [isOpen]);
 
@@ -112,10 +111,13 @@ const NotificationsButton: React.FC = () => {
           >
             <div className="p-4">
               <h3 className="text-white font-bold mb-4">Notifications</h3>
-              <div className="max-h-40 overflow-y-auto space-y-3 pr-2" style={{
-                scrollbarWidth: 'thin',
-                scrollbarColor: '#3b82f6 #1f2937'
-              }}>
+              <div
+                className="max-h-40 overflow-y-auto space-y-3 pr-2"
+                style={{
+                  scrollbarWidth: 'thin',
+                  scrollbarColor: '#3b82f6 #1f2937',
+                }}
+              >
                 {notifications.length === 0 ? (
                   <div className="text-center text-gray-400 py-4">
                     <Bell className="w-8 h-8 mx-auto mb-2 opacity-50" />
@@ -126,30 +128,36 @@ const NotificationsButton: React.FC = () => {
                     <div
                       key={notification.id}
                       className={`p-3 rounded-lg ${
-                        notification.type === 'success' ? 'bg-green-500/10 border border-green-400/20' :
-                        notification.type === 'error' ? 'bg-red-500/10 border border-red-400/20' :
-                        notification.type === 'warning' ? 'bg-yellow-500/10 border border-yellow-400/20' :
-                        'bg-blue-500/10 border border-blue-400/20'
+                        notification.type === 'success'
+                          ? 'bg-green-500/10 border border-green-400/20'
+                          : notification.type === 'error'
+                            ? 'bg-red-500/10 border border-red-400/20'
+                            : notification.type === 'warning'
+                              ? 'bg-yellow-500/10 border border-yellow-400/20'
+                              : 'bg-blue-500/10 border border-blue-400/20'
                       }`}
                     >
-                      <div className={`text-sm font-medium ${
-                        notification.type === 'success' ? 'text-green-400' :
-                        notification.type === 'error' ? 'text-red-400' :
-                        notification.type === 'warning' ? 'text-yellow-400' :
-                        'text-blue-400'
-                      }`}>
+                      <div
+                        className={`text-sm font-medium ${
+                          notification.type === 'success'
+                            ? 'text-green-400'
+                            : notification.type === 'error'
+                              ? 'text-red-400'
+                              : notification.type === 'warning'
+                                ? 'text-yellow-400'
+                                : 'text-blue-400'
+                        }`}
+                      >
                         {notification.title}
                       </div>
-                      <div className="text-gray-300 text-xs">
-                        {notification.message}
-                      </div>
+                      <div className="text-gray-300 text-xs">{notification.message}</div>
                       <div className="text-gray-500 text-xs mt-1">
                         {(() => {
                           const now = new Date();
                           const diff = now.getTime() - notification.timestamp.getTime();
                           const minutes = Math.floor(diff / (1000 * 60));
                           const hours = Math.floor(diff / (1000 * 60 * 60));
-                          
+
                           if (minutes < 1) return 'Just now';
                           if (minutes < 60) return `${minutes}m ago`;
                           if (hours < 24) return `${hours}h ago`;
@@ -196,27 +204,28 @@ const MobileMenuButton: React.FC = () => {
 // 🚪 LOGOUT COMPONENT
 // ===========================================
 
-const LogoutButton: React.FC = () => {
-  const navigate = useNavigate();
-
-  const handleLogout = () => {
-    // Here you would typically clear wallet connection, user data, etc.
-    // For now, just navigate to home
-    navigate('/');
-  };
-
-  return (
-    <motion.button
-      className="p-3 bg-black/40 border border-red-400/50 rounded-lg hover:border-red-400 transition-all duration-200 group"
-      onClick={handleLogout}
-      whileHover={{ scale: 1.05 }}
-      whileTap={{ scale: 0.95 }}
-      title="Logout"
-    >
-      <LogOut className="w-5 h-5 text-red-400 group-hover:text-red-300 transition-colors" />
-    </motion.button>
-  );
-};
+// Unused for now - logout functionality disabled
+// const LogoutButton: React.FC = () => {
+//   const navigate = useNavigate();
+//
+//   const handleLogout = () => {
+//     // Here you would typically clear wallet connection, user data, etc.
+//     // For now, just navigate to home
+//     navigate('/');
+//   };
+//
+//   return (
+//     <motion.button
+//       className="p-3 bg-black/40 border border-red-400/50 rounded-lg hover:border-red-400 transition-all duration-200 group"
+//       onClick={handleLogout}
+//       whileHover={{ scale: 1.05 }}
+//       whileTap={{ scale: 0.95 }}
+//       title="Logout"
+//     >
+//       <LogOut className="w-5 h-5 text-red-400 group-hover:text-red-300 transition-colors" />
+//     </motion.button>
+//   );
+// };
 
 // ===========================================
 // 💰 WALLET INFO COMPONENT

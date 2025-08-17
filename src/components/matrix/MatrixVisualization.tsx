@@ -1,4 +1,3 @@
-/* eslint-disable prettier/prettier */
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Users, TrendingUp, Lock, Timer, Wallet, Award, Target, Snowflake } from 'lucide-react';
@@ -138,8 +137,8 @@ export const MatrixVisualization: React.FC<MatrixVisualizationProps> = ({
           <GlassButton
             variant="primary"
             className="w-full py-2 bg-gradient-to-r from-blue-500/30 to-cyan-500/30 border-blue-400/50 hover:border-blue-300 text-blue-300 hover:text-white shadow-lg shadow-blue-400/20 hover:shadow-blue-400/30 transition-all duration-300"
-              onClick={() => onActivate?.(matrixLevel.level, matrixLevel.priceBNB)}
-              disabled={isBusy}
+            onClick={() => onActivate?.(matrixLevel.level, matrixLevel.priceBNB)}
+            disabled={isBusy}
           >
             <span className="font-semibold">{isBusy ? 'Processing…' : 'Activate Level'}</span>
           </GlassButton>
@@ -167,7 +166,7 @@ export const MatrixVisualization: React.FC<MatrixVisualizationProps> = ({
         <span className="text-gray-400">
           {matrixLevel.nextLevelActive
             ? `Cycle: ${matrixLevel.currentCycle || 1}`
-            : `Cycle: ${matrixLevel.currentCycle || 1}/${matrixLevel.maxCycles || 2}`}
+            : `Cycle: ${matrixLevel.currentCycle || 1}/2`}
         </span>
         <span className="text-gray-400">Matrix: {matrixLevel.matrixFillPercent}%</span>
       </div>
@@ -264,28 +263,32 @@ const useProgramViewData = (userLevels: ContractUserLevelsData | null | undefine
     setFreezeUntil(next);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userLevels?.payouts]);
-  // Calculate total earnings and activated levels from real data
+  // Calculate totals from on-chain sums for accuracy
   let totalLevelProfit = 0;
   let totalPartnerBonus = 0;
   let activatedLevelsCount = 0;
 
-  if (userLevels?.active) {
-    const arr = userLevels.active;
-    for (let i = 1; i <= 16; i++) {
-      const isActive = arr.length >= 17 ? Boolean(arr[i]) : Boolean(arr[i - 1]);
-      if (isActive) {
-        activatedLevelsCount++;
-        const priceBNB = (LEVEL_PRICES as any)[i] ?? 0;
-        
-        // Get payout data for this level
-        const idx = arr.length >= 17 ? i : i - 1;
-        const pArr = userLevels.payouts;
-        
-        if (pArr && pArr[idx] !== undefined && pArr[idx] > 0) {
-          const payouts = Number(pArr[idx]);
-          totalLevelProfit += priceBNB * 0.74 * payouts; // 74% base reward per cycle
-          totalPartnerBonus += priceBNB * 0.26 * payouts; // 26% potential referral bonuses
-        }
+  if (userLevels) {
+    // Sum actual paid amounts from contract (already converted to BNB in hook)
+    if (Array.isArray(userLevels.rewardSum)) {
+      totalLevelProfit = userLevels.rewardSum.reduce(
+        (acc: number, v: any) => acc + (Number(v) || 0),
+        0
+      );
+    }
+    if (Array.isArray(userLevels.referralPayoutSum)) {
+      totalPartnerBonus = userLevels.referralPayoutSum.reduce(
+        (acc: number, v: any) => acc + (Number(v) || 0),
+        0
+      );
+    }
+
+    // Count active levels
+    if (Array.isArray(userLevels.active)) {
+      const arr = userLevels.active;
+      for (let i = 1; i <= 16; i++) {
+        const isActive = arr.length >= 17 ? Boolean(arr[i]) : Boolean(arr[i - 1]);
+        if (isActive) activatedLevelsCount++;
       }
     }
   }
@@ -376,6 +379,7 @@ export const ProgramViewGrid: React.FC<{
   const [queuePositions, setQueuePositions] = React.useState<
     Record<number, { place: number; total: number }>
   >({});
+  const [levelFrozen, setLevelFrozen] = React.useState<Record<number, boolean>>({});
 
   // Fetch queue positions for active levels
   React.useEffect(() => {
@@ -384,6 +388,7 @@ export const ProgramViewGrid: React.FC<{
         if (!walletState?.address) return;
         const contract: any = await getQpcContract(false);
         const result: Record<number, { place: number; total: number }> = {};
+        const frozenMap: Record<number, boolean> = {};
         const arr = userLevels?.active;
         if (!arr || !arr.length) return;
         for (let level = 1; level <= 16; level++) {
@@ -393,8 +398,17 @@ export const ProgramViewGrid: React.FC<{
             const [placeBn, totalBn] = await contract.getPlaceInQueue(walletState.address, level);
             result[level] = { place: Number(placeBn ?? 0), total: Number(totalBn ?? 0) };
           } catch {}
+          try {
+            if (typeof contract.isLevelFrozen === 'function') {
+              const fr = await contract.isLevelFrozen(walletState.address, level);
+              frozenMap[level] = Boolean(fr);
+            }
+          } catch {}
         }
         setQueuePositions(result);
+        if (Object.keys(frozenMap).length) {
+          setLevelFrozen((prev) => ({ ...prev, ...frozenMap }));
+        }
       } catch {}
     };
 
@@ -404,7 +418,7 @@ export const ProgramViewGrid: React.FC<{
     // subscribe to on-chain events to refresh immediately when queue moves
     let contractInstance: any;
     let intervalId: NodeJS.Timeout;
-    
+
     const setupEventListeners = async () => {
       try {
         contractInstance = await getQpcContract(false);
@@ -412,7 +426,7 @@ export const ProgramViewGrid: React.FC<{
           console.log('Contract event detected, refreshing queue positions...');
           fetchPositions();
         };
-        
+
         if (contractInstance?.filters) {
           // Listen for BuyLevel and LevelPayout events
           contractInstance.on(contractInstance.filters.BuyLevel(), handler);
@@ -422,9 +436,9 @@ export const ProgramViewGrid: React.FC<{
         console.log('Error setting up event listeners:', error);
       }
     };
-    
+
     setupEventListeners();
-    
+
     // Also poll every 10 seconds as fallback
     intervalId = setInterval(fetchPositions, 10000);
 
@@ -448,6 +462,7 @@ export const ProgramViewGrid: React.FC<{
         if (!walletState?.address) return;
         const contract: any = await getQpcContract(false);
         const result: Record<number, { place: number; total: number }> = {};
+        const frozenMap: Record<number, boolean> = {};
         const arr = userLevels?.active;
         if (!arr || !arr.length) return;
         for (let level = 1; level <= 16; level++) {
@@ -457,8 +472,17 @@ export const ProgramViewGrid: React.FC<{
             const [placeBn, totalBn] = await contract.getPlaceInQueue(walletState.address, level);
             result[level] = { place: Number(placeBn ?? 0), total: Number(totalBn ?? 0) };
           } catch {}
+          try {
+            if (typeof contract.isLevelFrozen === 'function') {
+              const fr = await contract.isLevelFrozen(walletState.address, level);
+              frozenMap[level] = Boolean(fr);
+            }
+          } catch {}
         }
         setQueuePositions(result);
+        if (Object.keys(frozenMap).length) {
+          setLevelFrozen((prev) => ({ ...prev, ...frozenMap }));
+        }
       } catch {}
     }, 5000);
     return () => clearInterval(id);
@@ -466,127 +490,139 @@ export const ProgramViewGrid: React.FC<{
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {Array.from({ length: 16 }, (_, index) => {
-          const level = 16 - index; // Start from level 16 down to 1
-          const priceBNB = (LEVEL_PRICES as any)[level] ?? 0;
-          const arr = userLevels?.active;
-          let isActive = false;
-          if (arr && arr.length) {
-            if (arr.length >= 17) {
-              isActive = Boolean(arr[level]);
-            } else {
-              isActive = Boolean(arr[level - 1]);
-            }
+      {Array.from({ length: 16 }, (_, index) => {
+        const level = 16 - index; // Start from level 16 down to 1
+        const priceBNB = (LEVEL_PRICES as any)[level] ?? 0;
+        const arr = userLevels?.active;
+        let isActive = false;
+        if (arr && arr.length) {
+          if (arr.length >= 17) {
+            isActive = Boolean(arr[level]);
+          } else {
+            isActive = Boolean(arr[level - 1]);
           }
-          // compute availability based on max active
-          let maxActive = 0;
-          if (arr && arr.length) {
-            const flags = arr.length >= 17 ? arr.slice(1, 17) : arr.slice(0, 16);
-            flags.forEach((v: any, idx: number) => {
-              if (v) maxActive = Math.max(maxActive, idx + 1);
-            });
-          }
-          const isAvailable = !isActive && (maxActive > 0 ? level <= maxActive + 1 : level === 1);
-          const isLocked = !(isActive || isAvailable);
+        }
+        // compute availability based on max active
+        let maxActive = 0;
+        if (arr && arr.length) {
+          const flags = arr.length >= 17 ? arr.slice(1, 17) : arr.slice(0, 16);
+          flags.forEach((v: any, idx: number) => {
+            if (v) maxActive = Math.max(maxActive, idx + 1);
+          });
+        }
+        const isAvailable = !isActive && (maxActive > 0 ? level <= maxActive + 1 : level === 1);
+        const isLocked = !(isActive || isAvailable);
 
-          // derive progress from on-chain payouts/maxPayouts
-          const getIdx = (lvl: number) =>
-            userLevels?.active && userLevels.active.length >= 17 ? lvl : lvl - 1;
-          const pArr = userLevels?.payouts;
-          const mArr = userLevels?.maxPayouts;
-          const idx = getIdx(level);
-          let progress = 0;
-          let nextCycleCount = 2; // Default 2 cycles
-          let rewardPosition: number | undefined = undefined;
-          if (pArr && mArr && pArr[idx] !== undefined && mArr[idx] !== undefined && mArr[idx] > 0) {
-            const p = Number(pArr[idx]);
-            const m = Number(mArr[idx]);
-            // Reward position is the exact point of payout trigger
-            // We align the bar to show current-cycle completion based on queue position
-            // If user is at place k of total T, payout occurs when place == 1 (front)
-            // Without on-chain queue here, approximate using payouts modulo maxPayouts
-            const cycleSize = m;
-            const peopleInCurrentCycle = p % cycleSize;
-            const now = Date.now();
-            const frozenPulse = freezeUntil[level] && now < (freezeUntil[level] as number);
-            // progress up to current state
-            progress = Math.max(
-              0,
-              Math.min(100, Math.round((peopleInCurrentCycle / cycleSize) * 100))
-            );
-            nextCycleCount = Math.max(0, cycleSize - peopleInCurrentCycle);
-            // The payout (reward) happens on next join if not at boundary; place marker at that trigger
-            const nextJoinProgress = Math.min(
-              100,
-              Math.round(((peopleInCurrentCycle + 1) / cycleSize) * 100)
-            );
-            rewardPosition = frozenPulse ? progress : nextJoinProgress;
+        // derive progress from on-chain payouts/maxPayouts
+        // Choose indices per-array to avoid mismatches (some arrays are 1-based length 17, some 0-based length 16)
+        const pArr = userLevels?.payouts;
+        const mArr = userLevels?.maxPayouts;
+        const aArr = userLevels?.active;
+        const idxFor = (lvl: number, arrLen: number | undefined) =>
+          arrLen && arrLen >= 17 ? lvl : lvl - 1;
+        const idxP = idxFor(level, pArr?.length);
+        const idxM = idxFor(level, mArr?.length);
+        const idxA = idxFor(level, aArr?.length);
+        let progress = 0;
+        let nextCycleCount = 2; // Default 2 cycles
+        let rewardPosition: number | undefined = undefined;
+        if (
+          pArr && mArr && pArr[idxP] !== undefined && mArr[idxM] !== undefined && mArr[idxM] > 0
+        ) {
+          const p = Number(pArr[idxP]);
+          const m = Number(mArr[idxM]);
+          // Reward position is the exact point of payout trigger
+          // We align the bar to show current-cycle completion based on queue position
+          // If user is at place k of total T, payout occurs when place == 1 (front)
+          // Without on-chain queue here, approximate using payouts modulo maxPayouts
+          const cycleSize = m;
+          const peopleInCurrentCycle = p % cycleSize;
+          const now = Date.now();
+          const frozenPulse = freezeUntil[level] && now < (freezeUntil[level] as number);
+          // progress up to current state
+          progress = Math.max(
+            0,
+            Math.min(100, Math.round((peopleInCurrentCycle / cycleSize) * 100))
+          );
+          nextCycleCount = Math.max(0, cycleSize - peopleInCurrentCycle);
+          // The payout (reward) happens on next join if not at boundary; place marker at that trigger
+          const nextJoinProgress = Math.min(
+            100,
+            Math.round(((peopleInCurrentCycle + 1) / cycleSize) * 100)
+          );
+          rewardPosition = frozenPulse ? progress : nextJoinProgress;
+        }
+
+        // Check if level is frozen first
+        const payouts = pArr && pArr[idxP] !== undefined ? Number(pArr[idxP]) : 0;
+        const maxPayouts = mArr && mArr[idxM] !== undefined ? Number(mArr[idxM]) : 2;
+        const isFrozen =
+          isActive &&
+          payouts >= maxPayouts &&
+          (level >= 16 || !arr || !Boolean(arr[level + (arr.length >= 17 ? 1 : 0)]));
+
+        // If we have precise queue data and level is NOT frozen, show progress until reward
+        const qp = queuePositions[level];
+        if (qp && qp.total > 0 && !isFrozen) {
+          const total = Math.max(1, qp.total);
+          const place = Math.max(1, qp.place || 1);
+
+          // Debug: log queue position for level 1
+          if (level === 1 && walletState?.address) {
+            console.log(`Level ${level} queue: place=${place}, total=${total}, frozen=${isFrozen}`);
           }
 
-          // Check if level is frozen first
-          const payouts = pArr && pArr[idx] !== undefined ? Number(pArr[idx]) : 0;
-          const maxPayouts = mArr && mArr[idx] !== undefined ? Number(mArr[idx]) : 2;
-          const isFrozen =
+          // Progress показывает, насколько близко к получению награды
+          // place=1 -> 100% (получит сразу), place=2 -> 75%, place=3 -> 50%, etc.
+          // If just unfrozen (contract reports not frozen) but previously frozen UI state lingered,
+          // ensure progress derives from place/total, never forced to 100%
+          progress = Math.max(0, Math.min(100, Math.round(((total - place + 1) / total) * 100)));
+
+          nextCycleCount = Math.max(0, place - 1);
+
+          // Убираем точку награды - теперь прогресс сам показывает близость к награде
+          rewardPosition = undefined;
+        } else if (isFrozen || levelFrozen[level]) {
+          // For frozen levels, show 100% progress to indicate completion
+          progress = 100;
+          nextCycleCount = 0;
+          rewardPosition = undefined;
+        }
+
+        // isFrozen уже рассчитан выше
+
+        const matrixLevel = {
+          level,
+          priceBNB,
+          isActivated: isActive,
+          isLocked,
+          isFrozen,
+          progress,
+          matrixFillPercent: progress,
+          nextCycleCount,
+          rewardPosition,
+          levelProfit:
+            isActive && userLevels?.rewardSum && userLevels.rewardSum[idxP] !== undefined
+              ? userLevels.rewardSum[idxP]
+              : 0,
+          partnerBonus:
             isActive &&
-            payouts >= maxPayouts &&
-            (level >= 16 || !arr || !Boolean(arr[level + (arr.length >= 17 ? 1 : 0)]));
-
-          // If we have precise queue data and level is NOT frozen, show progress until reward
-          const qp = queuePositions[level];
-          if (qp && qp.total > 0 && !isFrozen) {
-            const total = Math.max(1, qp.total);
-            const place = Math.max(1, qp.place || 1);
-            
-            // Debug: log queue position for level 1
-            if (level === 1 && walletState?.address) {
-              console.log(`Level ${level} queue: place=${place}, total=${total}, frozen=${isFrozen}`);
-            }
-            
-            // Progress показывает, насколько близко к получению награды
-            // place=1 -> 100% (получит сразу), place=2 -> 75%, place=3 -> 50%, etc.
-            progress = Math.round(((total - place + 1) / total) * 100);
-            
-            nextCycleCount = Math.max(0, place - 1);
-            
-            // Убираем точку награды - теперь прогресс сам показывает близость к награде
-            rewardPosition = undefined;
-          } else if (isFrozen) {
-            // For frozen levels, show 100% progress to indicate completion
-            progress = 100;
-            nextCycleCount = 0;
-            rewardPosition = undefined;
-          }
-
-          // isFrozen уже рассчитан выше
-
-          const matrixLevel = {
-            level,
-            priceBNB,
-            isActivated: isActive,
-            isLocked,
-            isFrozen,
-            progress,
-            matrixFillPercent: progress,
-            nextCycleCount,
-            rewardPosition,
-            levelProfit:
-              isActive && userLevels?.rewardSum && userLevels.rewardSum[idx] !== undefined
-                ? userLevels.rewardSum[idx]
-                : 0,
-            partnerBonus:
-              isActive &&
-              userLevels?.referralPayoutSum &&
-              userLevels.referralPayoutSum[idx] !== undefined
-                ? userLevels.referralPayoutSum[idx]
-                : 0,
-            currentCycle:
-              pArr && mArr && pArr[idx] !== undefined && mArr[idx] !== undefined
-                ? Math.min(Number(pArr[idx]) + 1, Number(mArr[idx]))
-                : 1,
-            maxCycles: mArr && mArr[idx] !== undefined ? Number(mArr[idx]) : 2,
-            nextLevelActive: Boolean(arr && (arr.length >= 17 ? arr[level + 1] : arr[level])),
-          };
-          return (
+            userLevels?.referralPayoutSum &&
+            userLevels.referralPayoutSum[idxP] !== undefined
+              ? userLevels.referralPayoutSum[idxP]
+              : 0,
+          // UI cycle numerator:
+          // - If next level is active (infinite), show payouts + 1 (after 1st payout → Cycle 2)
+          // - If next level is not active (finite), show payouts + 1, capped at 2 (Cycle 1/2 or 2/2)
+          currentCycle: ((): number => {
+            const nextActive = Boolean(arr && (arr.length >= 17 ? arr[level + 1] : arr[level]));
+            if (nextActive) return payouts + 1;
+            return Math.min(payouts + 1, 2);
+          })(),
+          maxCycles: mArr && mArr[idxM] !== undefined ? Number(mArr[idxM]) : 2,
+          nextLevelActive: Boolean(arr && (arr.length >= 17 ? arr[level + 1] : arr[level])),
+        };
+        return (
           <motion.div
             key={matrixLevel.level}
             initial={{ opacity: 0, y: 20 }}
@@ -598,7 +634,8 @@ export const ProgramViewGrid: React.FC<{
               onActivate={(lvl) => onActivate?.(lvl, priceBNB)}
             />
           </motion.div>
-        );})}
+        );
+      })}
     </div>
   );
 };

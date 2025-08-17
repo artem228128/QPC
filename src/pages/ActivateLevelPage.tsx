@@ -21,14 +21,13 @@ const ActivateLevelPage: React.FC = () => {
     return LEVEL_PRICES[selectedLevel] ?? 0;
   }, [selectedLevel]);
 
-
-  const isOnBSC = 
-    walletState.network === 'bsc' || 
-    (walletState.chainIdHex || '').toLowerCase() === '0x61' || 
+  const isOnBSC =
+    walletState.network === 'bsc' ||
+    (walletState.chainIdHex || '').toLowerCase() === '0x61' ||
     (walletState.chainIdHex || '').toLowerCase() === '0x38' ||
     Number(walletState.chainIdHex) === 97 ||
     Number(walletState.chainIdHex) === 56;
-    
+
   const hasSufficientBalance = (walletState.balance || 0) >= levelPrice;
   const isConnected = walletState.isConnected;
   const canActivate = isConnected && isOnBSC && hasSufficientBalance;
@@ -188,8 +187,6 @@ const ActivateLevelPage: React.FC = () => {
               </div>
             </div>
           </div>
-
-          
 
           {/* Status Checks */}
           <div className="mb-6">

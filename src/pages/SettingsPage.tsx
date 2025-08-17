@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  User, 
-  Bell, 
-  Palette, 
-  Shield, 
-  Network, 
-  Share2, 
-  Settings as SettingsIcon, 
+import {
+  User,
+  Bell,
+  Palette,
+  Shield,
+  Network,
+  Share2,
+  Settings as SettingsIcon,
   HelpCircle,
   Wallet,
   Mail,
@@ -28,8 +28,7 @@ import {
   Monitor,
   Smartphone,
   Save,
-  Check,
-  AlertTriangle
+  AlertTriangle,
 } from 'lucide-react';
 import { ConnectedHeader, DashboardSidebar } from '../components/layout';
 import { NeuralBackground } from '../components/neural';
@@ -41,7 +40,7 @@ interface SettingsState {
   // Account
   nickname: string;
   avatar: string;
-  
+
   // Notifications
   pushNotifications: {
     levelActivations: boolean;
@@ -58,23 +57,23 @@ interface SettingsState {
     connected: boolean;
     frequency: 'instant' | 'hourly' | 'daily';
   };
-  
+
   // Display
   theme: 'dark' | 'light';
   performanceMode: boolean;
   language: string;
   currencyDisplay: 'BNB' | 'USD';
   dashboardLayout: 'compact' | 'expanded';
-  
+
   // Security
   hideBalance: boolean;
   anonymousMode: boolean;
   autoLogout: number; // minutes
-  
+
   // Network
   preferredGasPrice: 'slow' | 'normal' | 'fast';
   slippageTolerance: number;
-  
+
   // Advanced
   developerMode: boolean;
 }
@@ -121,7 +120,16 @@ const LANGUAGE_OPTIONS = [
 
 const SettingsPage: React.FC = () => {
   const { walletState, contractInfo, disconnectWallet, BSC_NETWORK } = useWallet();
-  const [activeTab, setActiveTab] = useState<'account' | 'notifications' | 'display' | 'security' | 'network' | 'referral' | 'advanced' | 'support'>('account');
+  const [activeTab, setActiveTab] = useState<
+    | 'account'
+    | 'notifications'
+    | 'display'
+    | 'security'
+    | 'network'
+    | 'referral'
+    | 'advanced'
+    | 'support'
+  >('account');
   const [settings, setSettings] = useState<SettingsState>(DEFAULT_SETTINGS);
   const [hasChanges, setHasChanges] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -140,16 +148,16 @@ const SettingsPage: React.FC = () => {
   }, []);
 
   const updateSetting = (key: string, value: any) => {
-    setSettings(prev => {
+    setSettings((prev) => {
       const newSettings = { ...prev };
       const keys = key.split('.');
       let current: any = newSettings;
-      
+
       for (let i = 0; i < keys.length - 1; i++) {
         current = current[keys[i]];
       }
       current[keys[keys.length - 1]] = value;
-      
+
       return newSettings;
     });
     setHasChanges(true);
@@ -161,7 +169,7 @@ const SettingsPage: React.FC = () => {
       localStorage.setItem('qpc-settings', JSON.stringify(settings));
       setHasChanges(false);
       // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 1000));
     } catch (error) {
       console.error('Failed to save settings:', error);
     } finally {
@@ -187,7 +195,7 @@ const SettingsPage: React.FC = () => {
           <User className="text-cyan-400" size={24} />
           Profile Information
         </h3>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <label className="block text-gray-300 text-sm mb-2">Nickname</label>
@@ -199,28 +207,27 @@ const SettingsPage: React.FC = () => {
               className="w-full glass-panel-secondary p-3 rounded-lg text-white placeholder-gray-500 border border-white/10 focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400"
             />
           </div>
-          
+
           <div>
             <label className="block text-gray-300 text-sm mb-2">User ID</label>
             <div className="glass-panel-secondary p-3 rounded-lg text-gray-400 border border-white/10">
               #{contractInfo?.id || 'Not registered'}
             </div>
           </div>
-          
+
           <div>
             <label className="block text-gray-300 text-sm mb-2">Wallet Address</label>
             <div className="glass-panel-secondary p-3 rounded-lg text-gray-400 border border-white/10 font-mono text-sm">
               {walletState.address ? formatAddress(walletState.address) : 'Not connected'}
             </div>
           </div>
-          
+
           <div>
             <label className="block text-gray-300 text-sm mb-2">Registration Date</label>
             <div className="glass-panel-secondary p-3 rounded-lg text-gray-400 border border-white/10">
-              {contractInfo?.registrationTimestamp 
+              {contractInfo?.registrationTimestamp
                 ? new Date(contractInfo.registrationTimestamp * 1000).toLocaleDateString()
-                : 'Not registered'
-              }
+                : 'Not registered'}
             </div>
           </div>
         </div>
@@ -232,7 +239,7 @@ const SettingsPage: React.FC = () => {
           <Wallet className="text-purple-400" size={24} />
           Wallet Connection
         </h3>
-        
+
         <div className="space-y-4">
           <div className="flex items-center justify-between p-4 glass-panel-secondary rounded-lg border border-white/10">
             <div className="flex items-center gap-3">
@@ -261,7 +268,7 @@ const SettingsPage: React.FC = () => {
               </GlassButton>
             </div>
           </div>
-          
+
           <div className="grid grid-cols-2 gap-4">
             <div className="glass-panel-secondary p-3 rounded-lg border border-white/10">
               <div className="text-gray-400 text-sm">Network</div>
@@ -287,12 +294,17 @@ const SettingsPage: React.FC = () => {
           <Bell className="text-yellow-400" size={24} />
           Push Notifications
         </h3>
-        
+
         <div className="space-y-4">
           {Object.entries(settings.pushNotifications).map(([key, value]) => (
-            <div key={key} className="flex items-center justify-between p-3 glass-panel-secondary rounded-lg border border-white/10">
+            <div
+              key={key}
+              className="flex items-center justify-between p-3 glass-panel-secondary rounded-lg border border-white/10"
+            >
               <div>
-                <div className="text-white font-medium capitalize">{key.replace(/([A-Z])/g, ' $1')}</div>
+                <div className="text-white font-medium capitalize">
+                  {key.replace(/([A-Z])/g, ' $1')}
+                </div>
                 <div className="text-gray-400 text-sm">
                   {key === 'levelActivations' && 'Get notified when new levels are activated'}
                   {key === 'referralBonuses' && 'Receive alerts for referral bonus payments'}
@@ -320,12 +332,17 @@ const SettingsPage: React.FC = () => {
           <Mail className="text-blue-400" size={24} />
           Email Notifications
         </h3>
-        
+
         <div className="space-y-4">
           {Object.entries(settings.emailNotifications).map(([key, value]) => (
-            <div key={key} className="flex items-center justify-between p-3 glass-panel-secondary rounded-lg border border-white/10">
+            <div
+              key={key}
+              className="flex items-center justify-between p-3 glass-panel-secondary rounded-lg border border-white/10"
+            >
               <div>
-                <div className="text-white font-medium capitalize">{key.replace(/([A-Z])/g, ' $1')}</div>
+                <div className="text-white font-medium capitalize">
+                  {key.replace(/([A-Z])/g, ' $1')}
+                </div>
                 <div className="text-gray-400 text-sm">
                   {key === 'weeklyReports' && 'Weekly summary of your earnings and activity'}
                   {key === 'securityAlerts' && 'Security-related notifications and warnings'}
@@ -352,25 +369,29 @@ const SettingsPage: React.FC = () => {
           <MessageCircle className="text-green-400" size={24} />
           Telegram Bot Integration
         </h3>
-        
+
         <div className="space-y-4">
           <div className="flex items-center justify-between p-4 glass-panel-secondary rounded-lg border border-white/10">
             <div className="flex items-center gap-3">
-              <div className={`w-3 h-3 rounded-full ${settings.telegramBot.connected ? 'bg-green-400' : 'bg-gray-500'}`}></div>
+              <div
+                className={`w-3 h-3 rounded-full ${settings.telegramBot.connected ? 'bg-green-400' : 'bg-gray-500'}`}
+              ></div>
               <div>
                 <div className="text-white font-medium">Notification Bot</div>
                 <div className="text-gray-400 text-sm">@QuantumProfitNotifyBot</div>
               </div>
             </div>
             <GlassButton
-              variant={settings.telegramBot.connected ? "secondary" : "primary"}
-              onClick={() => updateSetting('telegramBot.connected', !settings.telegramBot.connected)}
+              variant={settings.telegramBot.connected ? 'secondary' : 'primary'}
+              onClick={() =>
+                updateSetting('telegramBot.connected', !settings.telegramBot.connected)
+              }
               className={`px-4 py-2 ${settings.telegramBot.connected ? 'border-red-500/50 text-red-400 hover:border-red-400' : ''}`}
             >
               {settings.telegramBot.connected ? 'Disconnect' : 'Connect'}
             </GlassButton>
           </div>
-          
+
           {settings.telegramBot.connected && (
             <div>
               <label className="block text-gray-300 text-sm mb-2">Notification Frequency</label>
@@ -398,14 +419,14 @@ const SettingsPage: React.FC = () => {
           <Palette className="text-purple-400" size={24} />
           Theme & Appearance
         </h3>
-        
+
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div
               onClick={() => updateSetting('theme', 'dark')}
               className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
-                settings.theme === 'dark' 
-                  ? 'border-cyan-400 bg-cyan-500/10' 
+                settings.theme === 'dark'
+                  ? 'border-cyan-400 bg-cyan-500/10'
                   : 'border-white/10 glass-panel-secondary hover:border-white/20'
               }`}
             >
@@ -415,12 +436,12 @@ const SettingsPage: React.FC = () => {
               </div>
               <div className="text-gray-400 text-sm">Current theme</div>
             </div>
-            
+
             <div
               onClick={() => updateSetting('theme', 'light')}
               className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
-                settings.theme === 'light' 
-                  ? 'border-yellow-400 bg-yellow-500/10' 
+                settings.theme === 'light'
+                  ? 'border-yellow-400 bg-yellow-500/10'
                   : 'border-white/10 glass-panel-secondary hover:border-white/20'
               }`}
             >
@@ -431,11 +452,13 @@ const SettingsPage: React.FC = () => {
               <div className="text-gray-400 text-sm">Coming soon</div>
             </div>
           </div>
-          
+
           <div className="flex items-center justify-between p-3 glass-panel-secondary rounded-lg border border-white/10">
             <div>
               <div className="text-white font-medium">Performance Mode</div>
-              <div className="text-gray-400 text-sm">Reduce animations and effects for better performance</div>
+              <div className="text-gray-400 text-sm">
+                Reduce animations and effects for better performance
+              </div>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
               <input
@@ -456,7 +479,7 @@ const SettingsPage: React.FC = () => {
           <Globe className="text-green-400" size={24} />
           Language & Currency
         </h3>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-gray-300 text-sm mb-2">Interface Language</label>
@@ -472,7 +495,7 @@ const SettingsPage: React.FC = () => {
               ))}
             </select>
           </div>
-          
+
           <div>
             <label className="block text-gray-300 text-sm mb-2">Currency Display</label>
             <select
@@ -493,13 +516,13 @@ const SettingsPage: React.FC = () => {
           <Monitor className="text-blue-400" size={24} />
           Dashboard Layout
         </h3>
-        
+
         <div className="grid grid-cols-2 gap-4">
           <div
             onClick={() => updateSetting('dashboardLayout', 'compact')}
             className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
-              settings.dashboardLayout === 'compact' 
-                ? 'border-blue-400 bg-blue-500/10' 
+              settings.dashboardLayout === 'compact'
+                ? 'border-blue-400 bg-blue-500/10'
                 : 'border-white/10 glass-panel-secondary hover:border-white/20'
             }`}
           >
@@ -509,12 +532,12 @@ const SettingsPage: React.FC = () => {
             </div>
             <div className="text-gray-400 text-sm">Dense layout with smaller widgets</div>
           </div>
-          
+
           <div
             onClick={() => updateSetting('dashboardLayout', 'expanded')}
             className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
-              settings.dashboardLayout === 'expanded' 
-                ? 'border-blue-400 bg-blue-500/10' 
+              settings.dashboardLayout === 'expanded'
+                ? 'border-blue-400 bg-blue-500/10'
                 : 'border-white/10 glass-panel-secondary hover:border-white/20'
             }`}
           >
@@ -537,14 +560,16 @@ const SettingsPage: React.FC = () => {
           <Shield className="text-red-400" size={24} />
           Privacy & Security
         </h3>
-        
+
         <div className="space-y-4">
           <div className="flex items-center justify-between p-3 glass-panel-secondary rounded-lg border border-white/10">
             <div className="flex items-center gap-3">
               <Eye className="text-gray-400" size={20} />
               <div>
                 <div className="text-white font-medium">Hide Balance</div>
-                <div className="text-gray-400 text-sm">Hide balance amounts from screenshots and screen sharing</div>
+                <div className="text-gray-400 text-sm">
+                  Hide balance amounts from screenshots and screen sharing
+                </div>
               </div>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
@@ -557,13 +582,15 @@ const SettingsPage: React.FC = () => {
               <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-lg peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-500"></div>
             </label>
           </div>
-          
+
           <div className="flex items-center justify-between p-3 glass-panel-secondary rounded-lg border border-white/10">
             <div className="flex items-center gap-3">
               <EyeOff className="text-gray-400" size={20} />
               <div>
                 <div className="text-white font-medium">Anonymous Mode</div>
-                <div className="text-gray-400 text-sm">Hide personal information in leaderboards and public stats</div>
+                <div className="text-gray-400 text-sm">
+                  Hide personal information in leaderboards and public stats
+                </div>
               </div>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
@@ -585,7 +612,7 @@ const SettingsPage: React.FC = () => {
           <RotateCcw className="text-orange-400" size={24} />
           Session Management
         </h3>
-        
+
         <div className="space-y-4">
           <div>
             <label className="block text-gray-300 text-sm mb-2">Auto-logout Timer</label>
@@ -600,9 +627,11 @@ const SettingsPage: React.FC = () => {
               <option value={240}>4 hours</option>
               <option value={0}>Never</option>
             </select>
-            <div className="text-gray-400 text-sm mt-1">Automatically disconnect wallet after inactivity</div>
+            <div className="text-gray-400 text-sm mt-1">
+              Automatically disconnect wallet after inactivity
+            </div>
           </div>
-          
+
           <div className="p-4 glass-panel-secondary rounded-lg border border-orange-400/20 bg-orange-500/5">
             <div className="flex items-start gap-3">
               <AlertTriangle className="text-orange-400 mt-1" size={20} />
@@ -627,7 +656,7 @@ const SettingsPage: React.FC = () => {
           <Network className="text-blue-400" size={24} />
           Network Configuration
         </h3>
-        
+
         <div className="space-y-4">
           <div className="p-4 glass-panel-secondary rounded-lg border border-white/10">
             <div className="flex items-center justify-between mb-2">
@@ -648,7 +677,7 @@ const SettingsPage: React.FC = () => {
           <SettingsIcon className="text-green-400" size={24} />
           Transaction Settings
         </h3>
-        
+
         <div className="space-y-4">
           <div>
             <label className="block text-gray-300 text-sm mb-2">Preferred Gas Price</label>
@@ -662,7 +691,7 @@ const SettingsPage: React.FC = () => {
               <option value="fast">Fast (Higher fees, quick confirmation)</option>
             </select>
           </div>
-          
+
           <div>
             <label className="block text-gray-300 text-sm mb-2">Slippage Tolerance</label>
             <div className="flex items-center gap-2">
@@ -679,7 +708,9 @@ const SettingsPage: React.FC = () => {
                 {settings.slippageTolerance}%
               </div>
             </div>
-            <div className="text-gray-400 text-sm mt-1">Maximum price movement tolerance for transactions</div>
+            <div className="text-gray-400 text-sm mt-1">
+              Maximum price movement tolerance for transactions
+            </div>
           </div>
         </div>
       </GlassCard>
@@ -694,7 +725,7 @@ const SettingsPage: React.FC = () => {
           <Share2 className="text-cyan-400" size={24} />
           Referral Tools
         </h3>
-        
+
         <div className="space-y-4">
           <div>
             <label className="block text-gray-300 text-sm mb-2">Your Referral Link</label>
@@ -702,20 +733,18 @@ const SettingsPage: React.FC = () => {
               <div className="flex-1 glass-panel-secondary p-3 rounded-lg text-white font-mono text-sm border border-white/10">
                 https://quantumprofitchain.com?ref={contractInfo?.id || 'YOUR_ID'}
               </div>
-              <GlassButton
-                variant="secondary"
-                onClick={copyReferralLink}
-                className="px-4"
-              >
+              <GlassButton variant="secondary" onClick={copyReferralLink} className="px-4">
                 <Copy size={16} />
               </GlassButton>
             </div>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <GlassButton
               variant="primary"
-              onClick={() => {/* Generate QR code */}}
+              onClick={() => {
+                /* Generate QR code */
+              }}
               className="py-3"
             >
               <div className="flex items-center justify-center gap-2">
@@ -723,7 +752,7 @@ const SettingsPage: React.FC = () => {
                 <span>Generate QR Code</span>
               </div>
             </GlassButton>
-            
+
             <GlassButton
               variant="secondary"
               onClick={() => window.open('/promo', '_blank')}
@@ -744,7 +773,7 @@ const SettingsPage: React.FC = () => {
           <SettingsIcon className="text-purple-400" size={24} />
           Statistics Visibility
         </h3>
-        
+
         <div className="space-y-4">
           <div className="flex items-center justify-between p-3 glass-panel-secondary rounded-lg border border-white/10">
             <div>
@@ -752,26 +781,18 @@ const SettingsPage: React.FC = () => {
               <div className="text-gray-400 text-sm">Display your referral count publicly</div>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                defaultChecked={true}
-                className="sr-only peer"
-              />
+              <input type="checkbox" defaultChecked={true} className="sr-only peer" />
               <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-cyan-500"></div>
             </label>
           </div>
-          
+
           <div className="flex items-center justify-between p-3 glass-panel-secondary rounded-lg border border-white/10">
             <div>
               <div className="text-white font-medium">Show Earnings</div>
               <div className="text-gray-400 text-sm">Display your earnings in leaderboards</div>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                defaultChecked={false}
-                className="sr-only peer"
-              />
+              <input type="checkbox" defaultChecked={false} className="sr-only peer" />
               <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-cyan-500"></div>
             </label>
           </div>
@@ -788,7 +809,7 @@ const SettingsPage: React.FC = () => {
           <Download className="text-green-400" size={24} />
           Data Export
         </h3>
-        
+
         <div className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <GlassButton
@@ -801,7 +822,7 @@ const SettingsPage: React.FC = () => {
                 <span>Transactions</span>
               </div>
             </GlassButton>
-            
+
             <GlassButton
               variant="secondary"
               onClick={() => exportData('earnings')}
@@ -812,19 +833,15 @@ const SettingsPage: React.FC = () => {
                 <span>Earnings</span>
               </div>
             </GlassButton>
-            
-            <GlassButton
-              variant="secondary"
-              onClick={() => exportData('all')}
-              className="py-3"
-            >
+
+            <GlassButton variant="secondary" onClick={() => exportData('all')} className="py-3">
               <div className="flex items-center justify-center gap-2">
                 <Download size={16} />
                 <span>All Data</span>
               </div>
             </GlassButton>
           </div>
-          
+
           <div className="text-gray-400 text-sm">
             Export your transaction history, earnings reports, and account data in CSV format.
           </div>
@@ -837,12 +854,14 @@ const SettingsPage: React.FC = () => {
           <Code className="text-purple-400" size={24} />
           Developer Options
         </h3>
-        
+
         <div className="space-y-4">
           <div className="flex items-center justify-between p-3 glass-panel-secondary rounded-lg border border-white/10">
             <div>
               <div className="text-white font-medium">Developer Mode</div>
-              <div className="text-gray-400 text-sm">Show contract interaction logs and debug information</div>
+              <div className="text-gray-400 text-sm">
+                Show contract interaction logs and debug information
+              </div>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
               <input
@@ -854,12 +873,14 @@ const SettingsPage: React.FC = () => {
               <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-500"></div>
             </label>
           </div>
-          
+
           {settings.developerMode && (
             <div className="p-4 glass-panel-secondary rounded-lg border border-purple-400/20 bg-purple-500/5">
               <div className="text-purple-400 font-medium mb-2">Debug Information</div>
               <div className="space-y-1 text-sm text-gray-300 font-mono">
-                <div>Contract: {process.env.REACT_APP_CONTRACT_ADDRESS_TESTNET || 'Not configured'}</div>
+                <div>
+                  Contract: {process.env.REACT_APP_CONTRACT_ADDRESS_TESTNET || 'Not configured'}
+                </div>
                 <div>Network: {BSC_NETWORK.chainName}</div>
                 <div>Chain ID: {BSC_NETWORK.chainId}</div>
                 <div>App Version: 1.0.0</div>
@@ -879,7 +900,7 @@ const SettingsPage: React.FC = () => {
           <HelpCircle className="text-blue-400" size={24} />
           Help & Support
         </h3>
-        
+
         <div className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <GlassButton
@@ -892,7 +913,7 @@ const SettingsPage: React.FC = () => {
                 <span>FAQ</span>
               </div>
             </GlassButton>
-            
+
             <GlassButton
               variant="secondary"
               onClick={() => window.open('/telegram-bots', '_blank')}
@@ -913,23 +934,23 @@ const SettingsPage: React.FC = () => {
           <Info className="text-gray-400" size={24} />
           System Information
         </h3>
-        
+
         <div className="space-y-3">
           <div className="flex justify-between items-center p-3 glass-panel-secondary rounded-lg border border-white/10">
             <span className="text-gray-300">App Version</span>
             <span className="text-white">1.0.0</span>
           </div>
-          
+
           <div className="flex justify-between items-center p-3 glass-panel-secondary rounded-lg border border-white/10">
             <span className="text-gray-300">Contract Version</span>
             <span className="text-white">2.0.0</span>
           </div>
-          
+
           <div className="flex justify-between items-center p-3 glass-panel-secondary rounded-lg border border-white/10">
             <span className="text-gray-300">Last Sync</span>
             <span className="text-white">{new Date().toLocaleTimeString()}</span>
           </div>
-          
+
           <div className="flex justify-between items-center p-3 glass-panel-secondary rounded-lg border border-white/10">
             <span className="text-gray-300">Network Status</span>
             <div className="flex items-center gap-2">
@@ -977,7 +998,7 @@ const SettingsPage: React.FC = () => {
                 </h1>
                 <p className="text-gray-300">Customize your experience and preferences</p>
               </div>
-              
+
               {hasChanges && (
                 <GlassButton
                   variant="primary"
@@ -1014,8 +1035,8 @@ const SettingsPage: React.FC = () => {
                     variant={activeTab === tab.id ? 'primary' : 'secondary'}
                     onClick={() => setActiveTab(tab.id as any)}
                     className={`px-4 py-3 whitespace-nowrap ${
-                      activeTab === tab.id 
-                        ? 'bg-gradient-to-r from-cyan-500/30 to-purple-500/30 border-cyan-400/50 text-cyan-300' 
+                      activeTab === tab.id
+                        ? 'bg-gradient-to-r from-cyan-500/30 to-purple-500/30 border-cyan-400/50 text-cyan-300'
                         : ''
                     }`}
                   >

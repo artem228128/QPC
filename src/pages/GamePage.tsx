@@ -62,13 +62,13 @@ const GamePage: React.FC = () => {
     },
   ]);
 
-  const handleLevelActivation = async (levelNumber: number) => {
-    console.warn(`Activating level ${levelNumber}`);
+  const handleLevelActivation = async (_levelNumber: number) => {
+    console.warn(`Activating level ${_levelNumber}`);
     // This would interact with the smart contract
   };
 
-  const handlePositionClick = (position: number) => {
-    console.warn(`Position ${position} clicked`);
+  const handlePositionClick = (_position: number) => {
+    console.warn(`Position ${_position} clicked`);
     // Handle position selection/activation
   };
 
