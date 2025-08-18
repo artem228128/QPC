@@ -17,7 +17,6 @@ export const useWalletGuard = () => {
       const protectedRoutes = [
         '/dashboard',
         '/game',
-        '/activate',
         '/stats',
         '/partner-bonus',
         '/information',

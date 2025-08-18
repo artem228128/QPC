@@ -36,7 +36,7 @@ function App() {
 // Separate component to use hooks inside Router context
 function AppContent() {
   // This hook will monitor wallet changes and redirect if needed
-  // useWalletGuard(); // Temporarily disabled to avoid conflicts
+  useWalletGuard();
 
   return (
             <div className="App">
@@ -51,14 +51,7 @@ function AppContent() {
                     </ProtectedRoute>
                   } 
                 />
-                <Route 
-                  path="/activate" 
-                  element={
-                    <ProtectedRoute>
-                      <ActivateLevelPage />
-                    </ProtectedRoute>
-                  } 
-                />
+                <Route path="/activate" element={<ActivateLevelPage />} />
                 <Route 
                   path="/dashboard" 
                   element={
