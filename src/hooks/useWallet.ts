@@ -359,7 +359,8 @@ export const useWallet = () => {
       try {
         const contract: any = await getQpcContract(false);
         return await contract.isUserRegistered(userAddress);
-      } catch {
+      } catch (error) {
+        console.error('Error checking user registration:', error);
         return false;
       }
     },

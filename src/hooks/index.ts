@@ -8,3 +8,4 @@ export {
   getPerformanceLevel,
 } from './usePerformanceMode';
 export { useMobileMenu } from './useMobileMenu';
+export { useWalletGuard } from './useWalletGuard';

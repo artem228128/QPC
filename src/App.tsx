@@ -1,7 +1,9 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { ErrorBoundary, ToastProvider } from './components/common';
+import { ProtectedRoute } from './components/auth';
 import { MobileMenuProvider } from './contexts/MobileMenuContext';
+import { useWalletGuard } from './hooks';
 import {
   HomePage,
   WalletConnectPage,
@@ -23,27 +25,107 @@ function App() {
       <ToastProvider>
         <MobileMenuProvider>
           <Router>
-            <div className="App">
-              <Routes>
-                <Route path="/" element={<HomePage />} />
-                <Route path="/wallet" element={<WalletConnectPage />} />
-                <Route path="/game" element={<GamePage />} />
-                <Route path="/activate" element={<ActivateLevelPage />} />
-                <Route path="/dashboard" element={<DashboardPage />} />
-                <Route path="/stats" element={<StatsPage />} />
-                <Route path="/partner-bonus" element={<PartnerBonusPage />} />
-                <Route path="/information" element={<InformationPage />} />
-                <Route path="/program-view" element={<ProgramViewPage />} />
-                <Route path="/telegram-bots" element={<TelegramBotsPage />} />
-                <Route path="/promo" element={<PromoPage />} />
-                <Route path="/settings" element={<SettingsPage />} />
-                <Route path="*" element={<HomePage />} />
-              </Routes>
-            </div>
+            <AppContent />
           </Router>
         </MobileMenuProvider>
       </ToastProvider>
     </ErrorBoundary>
+  );
+}
+
+// Separate component to use hooks inside Router context
+function AppContent() {
+  // This hook will monitor wallet changes and redirect if needed
+  // useWalletGuard(); // Temporarily disabled to avoid conflicts
+
+  return (
+            <div className="App">
+              <Routes>
+                <Route path="/" element={<HomePage />} />
+                <Route path="/wallet" element={<WalletConnectPage />} />
+                <Route 
+                  path="/game" 
+                  element={
+                    <ProtectedRoute>
+                      <GamePage />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/activate" 
+                  element={
+                    <ProtectedRoute>
+                      <ActivateLevelPage />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/dashboard" 
+                  element={
+                    <ProtectedRoute>
+                      <DashboardPage />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/stats" 
+                  element={
+                    <ProtectedRoute>
+                      <StatsPage />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/partner-bonus" 
+                  element={
+                    <ProtectedRoute>
+                      <PartnerBonusPage />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/information" 
+                  element={
+                    <ProtectedRoute>
+                      <InformationPage />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/program-view" 
+                  element={
+                    <ProtectedRoute>
+                      <ProgramViewPage />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/telegram-bots" 
+                  element={
+                    <ProtectedRoute>
+                      <TelegramBotsPage />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/promo" 
+                  element={
+                    <ProtectedRoute>
+                      <PromoPage />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/settings" 
+                  element={
+                    <ProtectedRoute>
+                      <SettingsPage />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route path="*" element={<HomePage />} />
+              </Routes>
+            </div>
   );
 }
 
