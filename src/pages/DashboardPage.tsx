@@ -222,24 +222,58 @@ const DashboardPage: React.FC = () => {
     }
   }, [contractInfo?.id, generateReferralLink]);
 
-  // Функция для определения статуса уровня
+  // Функция для определения статуса уровня (синхронизировано с Program View)
   const getLevelStatus = (level: number, activeSet: Set<number>): 'active' | 'available' | 'locked' | 'frozen' => {
     const isActivated = activeSet.has(level);
-    if (isActivated) return 'active';
     
-    const maxActive = activeSet.size ? Math.max(...Array.from(activeSet)) : 0;
+    // Если уровень не активирован, определяем доступность
+    if (!isActivated) {
+      const maxActive = activeSet.size ? Math.max(...Array.from(activeSet)) : 0;
+      
+      // Если это первый уровень и нет активных - доступен
+      if (level === 1 && maxActive === 0) return 'available';
+      
+      // Следующий уровень после максимального активного - доступен
+      if (level === maxActive + 1) return 'available';
+      
+      // Все остальные уровни заблокированы
+      return 'locked';
+    }
     
-    // Если это первый уровень и нет активных - доступен
-    if (level === 1 && maxActive === 0) return 'available';
+    // Уровень активирован - проверяем заморожен ли он
+    // Используем точно ту же логику что в Program View MatrixVisualization.tsx:676-679
+    if (userLevels?.payouts && userLevels?.maxPayouts && userLevels?.active) {
+      const arr = userLevels.active;
+      
+      // Определяем правильный индекс для данных (как в Program View)
+      const idxP = arr.length >= 17 ? level : level - 1;
+      const idxM = arr.length >= 17 ? level : level - 1;
+      
+      if (idxP >= 0 && idxM >= 0 && 
+          userLevels.payouts[idxP] !== undefined && 
+          userLevels.maxPayouts[idxM] !== undefined) {
+        
+        const payouts = Number(userLevels.payouts[idxP] || 0);
+        const maxPayouts = Number(userLevels.maxPayouts[idxM] || 2);
+        
+        // Точная логика из Program View:
+        // isFrozen = isActive && payouts >= maxPayouts && 
+        //           (level >= 16 || !arr || !Boolean(arr[level + (arr.length >= 17 ? 1 : 0)]))
+        const nextLevelIndex = level + (arr.length >= 17 ? 1 : 0);
+        const nextLevelActive = arr && nextLevelIndex < arr.length ? Boolean(arr[nextLevelIndex]) : false;
+        
+        const isFrozen = isActivated && 
+                        payouts >= maxPayouts && 
+                        (level >= 16 || !nextLevelActive);
+        
+        if (isFrozen) {
+          return 'frozen';
+        }
+      }
+    }
     
-    // Следующий уровень после максимального активного - доступен
-    if (level === maxActive + 1) return 'available';
-    
-    // Пример замороженных уровней (если нужно)
-    // if (level > 16) return 'frozen';
-    
-    // Все остальные уровни заблокированы
-    return 'locked';
+    // Если активирован но не заморожен - активный
+    return 'active';
   };
 
   // Функция для открытия модального окна уровня
@@ -293,9 +327,9 @@ const DashboardPage: React.FC = () => {
         toast.error(`Insufficient funds. You need ${formatBNB(LEVEL_PRICES[level])} BNB to activate Level ${level}`);
       } else if (error.message?.includes('user rejected')) {
         toast.error('Transaction was cancelled');
-      } else {
+    } else {
         toast.error(error.message || `Failed to activate Level ${level}`);
-      }
+    }
     } finally {
       setIsActivatingLevel(false);
     }
@@ -360,9 +394,9 @@ const DashboardPage: React.FC = () => {
               <div className="absolute -top-1 -right-1 w-5 h-5 flex items-center justify-center">
                 {status === 'active' && (
                   <div className="w-4 h-4 bg-green-400 rounded-full border-2 border-black flex items-center justify-center">
-                    <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
-                  </div>
-                )}
+                  <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
+                </div>
+              )}
                 {status === 'locked' && (
                   <div className="w-4 h-4 bg-gray-500 rounded-full border-2 border-black flex items-center justify-center">
                     <Lock size={8} className="text-white" />
@@ -827,9 +861,54 @@ const DashboardPage: React.FC = () => {
                       <div className="space-y-4">
                         <div className="bg-cyan-500/10 rounded-lg p-4 border border-cyan-500/20">
                           <div className="text-cyan-400 text-sm font-medium mb-2">Level Frozen</div>
-                          <div className="text-white">
-                            Level {selectedLevel} is temporarily unavailable. Check back later.
+                          <div className="text-white mb-3">
+                            Level {selectedLevel} has completed all cycles and is temporarily frozen.
                           </div>
+                          <div className="text-cyan-300 text-sm mb-4">
+                            💡 <strong>To unfreeze:</strong> Activate Level {selectedLevel + 1} to continue earning from this level.
+                          </div>
+                          
+                          {/* Кнопка активации следующего уровня, если он доступен */}
+                          {(() => {
+                            const nextLevel = selectedLevel + 1;
+                            const nextLevelAvailable = nextLevel <= 16 && getLevelStatus(nextLevel, activeSet) === 'available';
+                            const nextLevelPrice = LEVEL_PRICES[nextLevel];
+                            const canAfford = walletState.balance >= nextLevelPrice;
+                            
+                            return nextLevelAvailable ? (
+                              <div className="space-y-3">
+                                <div className="bg-black/30 rounded-lg p-3">
+                                  <div className="text-xs text-gray-400 mb-1">Next Level Cost</div>
+                                  <div className="text-white font-mono">{formatBNB(nextLevelPrice)}</div>
+                                  <div className="text-xs text-gray-400 mt-1">Balance: {walletState.balance.toFixed(4)} BNB</div>
+                                  {!canAfford && (
+                                    <div className="text-red-400 text-xs mt-1">⚠️ Insufficient funds</div>
+                                  )}
+                                </div>
+                                
+                                <motion.button
+                                  onClick={() => handleActivateLevel(nextLevel)}
+                                  disabled={isActivatingLevel || !canAfford}
+                                  className={`w-full py-3 rounded-lg font-semibold transition-all duration-300 ${
+                                    canAfford && !isActivatingLevel
+                                      ? 'bg-cyan-500 hover:bg-cyan-600 text-white'
+                                      : 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                                  }`}
+                                  whileHover={canAfford && !isActivatingLevel ? { scale: 1.02 } : {}}
+                                  whileTap={canAfford && !isActivatingLevel ? { scale: 0.98 } : {}}
+                                >
+                                  {isActivatingLevel ? (
+                                    <div className="flex items-center justify-center space-x-2">
+                                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                      <span>Activating...</span>
+                                    </div>
+                                  ) : (
+                                    `Activate Level ${nextLevel} to Unfreeze`
+                                  )}
+                                </motion.button>
+                              </div>
+                            ) : null;
+                          })()}
                         </div>
                       </div>
                     )}
@@ -869,11 +948,11 @@ const DashboardPage: React.FC = () => {
             {/* Left Column - Main Info */}
             <div className="lg:col-span-3 space-y-8">
               {/* User Profile - Premium Design */}
-              <motion.div
+                <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2, duration: 0.6 }}
-              >
+                  transition={{ delay: 0.2, duration: 0.6 }}
+                >
                 <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900/90 via-gray-900/95 to-black/90 backdrop-blur-xl border border-white/20 shadow-2xl shadow-black/20">
                   {/* Animated background elements */}
                   <div className="absolute inset-0 bg-gradient-to-br from-gray-500/3 via-slate-500/3 to-gray-600/5"></div>
@@ -887,21 +966,21 @@ const DashboardPage: React.FC = () => {
                         <div className="relative">
                                                      <div className="w-20 h-20 rounded-2xl border-2 border-white/30 bg-gradient-to-br from-gray-700/60 via-slate-700/60 to-gray-800/60 flex items-center justify-center text-white font-bold text-xl shadow-2xl shadow-black/30 backdrop-blur-sm">
                              {(walletState.address || '#').slice(2, 4).toUpperCase()}
-                           </div>
+                      </div>
                            <div className="absolute -top-1 -right-1 w-6 h-6 bg-gradient-to-br from-green-500 to-green-600 rounded-full border-2 border-slate-900 flex items-center justify-center">
                              <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
-                           </div>
+                    </div>
                         </div>
                         <div className="space-y-1">
                           <div className="flex items-center gap-4">
                             <span className="text-white font-mono font-black text-3xl">
                               #{formatUserId(contractInfo?.id)}
-                            </span>
+                          </span>
                             <div className="px-3 py-1 bg-green-500/20 rounded-full border border-green-500/40 flex items-center gap-2">
                               <div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></div>
                               <span className="text-green-300 text-xs font-semibold">ACTIVE</span>
-                            </div>
-                          </div>
+                        </div>
+                      </div>
                           <div className="text-white/60 font-mono text-sm bg-black/20 px-3 py-1 rounded-lg backdrop-blur-sm">
                             {walletState.address ? `${walletState.address.slice(0, 14)}...${walletState.address.slice(-10)}` : '—'}
                           </div>
@@ -910,7 +989,7 @@ const DashboardPage: React.FC = () => {
                       <div className="text-right bg-black/30 p-4 rounded-xl border border-white/20 backdrop-blur-sm">
                         <div className="text-gray-400 text-xs font-medium mb-1">TOTAL EARNINGS</div>
                         <div className="text-green-400 font-bold font-mono text-2xl">
-                          {formatBNB(contractInfo?.levelsRewardSum ?? 0)} BNB
+                            {formatBNB(contractInfo?.levelsRewardSum ?? 0)} BNB
                         </div>
                       </div>
                     </div>
@@ -930,14 +1009,14 @@ const DashboardPage: React.FC = () => {
                                 year: 'numeric' 
                               })
                             : '—'}
-                        </div>
                       </div>
-                      
+                    </div>
+
                       <div className="group relative bg-black/40 rounded-xl p-4 border border-white/10 hover:border-white/20 transition-all duration-300 backdrop-blur-sm">
                         <div className="flex items-center gap-2 mb-2">
                           <Users className="text-gray-400" size={14} />
                           <span className="text-gray-400 text-xs font-medium">INVITED BY</span>
-                        </div>
+                      </div>
                         <div className="text-white font-mono text-sm font-semibold">
                           {contractInfo?.referrerId && contractInfo.referrerId > 0
                             ? `#${formatUserId(contractInfo.referrerId)}`
@@ -972,55 +1051,55 @@ const DashboardPage: React.FC = () => {
                           </div>
                         </div>
                         <div className="flex gap-3">
-                          <motion.button
-                            onClick={copyReferralLink}
+                        <motion.button
+                          onClick={copyReferralLink}
                             className={`flex-1 p-4 rounded-xl transition-all duration-300 border text-sm font-semibold overflow-hidden relative backdrop-blur-sm ${
-                              referralCopied
+                            referralCopied
                                 ? 'bg-green-500/20 border-green-400/40 text-green-300'
                                 : 'bg-cyan-500/20 hover:bg-cyan-500/30 border-cyan-400/40 hover:border-cyan-400/60 text-cyan-300'
-                            }`}
+                          }`}
                             whileHover={{ scale: 1.02, y: -2 }}
                             whileTap={{ scale: 0.98 }}
+                        >
+                          <motion.div
+                              className="absolute inset-0 bg-green-400/20 rounded-xl"
+                            initial={{ scale: 0, opacity: 1 }}
+                            animate={referralCopied ? {
+                              scale: [0, 1.5],
+                              opacity: [1, 0],
+                              transition: { duration: 0.6, ease: "easeOut" }
+                            } : { scale: 0, opacity: 0 }}
+                          />
+                          <motion.div 
+                              className="inline-flex items-center relative z-10 gap-2"
+                            initial={false}
+                            animate={referralCopied ? {
+                                y: [-15, 0],
+                              opacity: [0, 1],
+                              transition: { duration: 0.4, ease: "easeOut" }
+                              } : { y: 0, opacity: 1 }}
                           >
                             <motion.div
-                              className="absolute inset-0 bg-green-400/20 rounded-xl"
-                              initial={{ scale: 0, opacity: 1 }}
-                              animate={referralCopied ? {
-                                scale: [0, 1.5],
-                                opacity: [1, 0],
-                                transition: { duration: 0.6, ease: "easeOut" }
-                              } : { scale: 0, opacity: 0 }}
-                            />
-                            <motion.div 
-                              className="inline-flex items-center relative z-10 gap-2"
                               initial={false}
                               animate={referralCopied ? {
-                                y: [-15, 0],
-                                opacity: [0, 1],
-                                transition: { duration: 0.4, ease: "easeOut" }
-                              } : { y: 0, opacity: 1 }}
-                            >
-                              <motion.div
-                                initial={false}
-                                animate={referralCopied ? {
-                                  rotate: [0, -10, 10, 0],
-                                  scale: [1, 1.2, 1],
-                                  transition: { duration: 0.5, ease: "easeInOut" }
-                                } : {}}
+                                rotate: [0, -10, 10, 0],
+                                scale: [1, 1.2, 1],
+                                transition: { duration: 0.5, ease: "easeInOut" }
+                              } : {}}
                               >
                                 {referralCopied ? <Check size={18} /> : <Copy size={18} />}
-                              </motion.div>
-                              <motion.span
-                                initial={false}
-                                animate={referralCopied ? {
-                                  scale: [1, 1.1, 1],
-                                  transition: { duration: 0.3, delay: 0.1 }
-                                } : {}}
-                              >
-                                {referralCopied ? 'Successfully Copied!' : 'Copy Referral Link'}
-                              </motion.span>
                             </motion.div>
-                          </motion.button>
+                            <motion.span
+                              initial={false}
+                              animate={referralCopied ? {
+                                scale: [1, 1.1, 1],
+                                transition: { duration: 0.3, delay: 0.1 }
+                              } : {}}
+                            >
+                                {referralCopied ? 'Successfully Copied!' : 'Copy Referral Link'}
+                            </motion.span>
+                          </motion.div>
+                        </motion.button>
                           <motion.button
                             onClick={openQrModal}
                             className="px-6 py-4 bg-purple-500/20 hover:bg-purple-500/30 rounded-xl transition-all duration-300 border border-purple-400/40 hover:border-purple-400/60 text-purple-300 text-sm font-semibold flex items-center gap-2 backdrop-blur-sm"
@@ -1030,11 +1109,11 @@ const DashboardPage: React.FC = () => {
                             <QrCode size={18} />
                             QR Code
                           </motion.button>
-                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </motion.div>
+                </motion.div>
 
               {/* Level Visualization */}
               <motion.div
@@ -1056,7 +1135,7 @@ const DashboardPage: React.FC = () => {
                       <Eye size={18} className="mr-1" />
                       <span className="font-semibold">Program View</span>
                     </GlassButton>
-                  </div>
+              </div>
 
                   <div className="mb-6">
                     <div className="flex items-center gap-6 text-sm">
@@ -1177,7 +1256,7 @@ const DashboardPage: React.FC = () => {
                     <div className="flex items-center gap-3">
                       <div className="p-2 bg-gradient-to-br from-purple-400/20 to-pink-400/20 rounded-lg border border-purple-400/30">
                         <BookOpen className="text-purple-400" size={20} />
-                      </div>
+                  </div>
                       <div>
                         <h3 className="text-lg font-semibold text-white">HOW GAME WORKS</h3>
                         <p className="text-gray-400 text-xs">Understanding the Quantum Profit Chain mechanics</p>
@@ -1224,8 +1303,8 @@ const DashboardPage: React.FC = () => {
                                 <p>
                                   <span className="text-cyan-400 font-medium">Progression:</span> Higher levels unlock as you activate lower levels.
                                 </p>
-                              </div>
-                            </div>
+                      </div>
+                      </div>
 
                             {/* Referral System */}
                             <div className="space-y-4">
@@ -1246,7 +1325,7 @@ const DashboardPage: React.FC = () => {
                                   <p>
                                   <span className="text-purple-400 font-medium">No Limits:</span> Unlimited referral earnings potential.
                                 </p>
-                              </div>
+                      </div>
                             </div>
 
                             {/* Rewards System */}
@@ -1268,8 +1347,8 @@ const DashboardPage: React.FC = () => {
                                 <p>
                                   <span className="text-green-400 font-medium">Instant Payouts:</span> Rewards paid immediately upon completion.
                                 </p>
-                              </div>
-                            </div>
+                    </div>
+                  </div>
 
                             {/* Security & Transparency */}
                             <div className="space-y-4">

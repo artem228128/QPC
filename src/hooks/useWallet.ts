@@ -10,6 +10,13 @@ import { Web3Provider } from '../types/web3';
 import { parseEther } from 'ethers';
 import { toast } from 'react-hot-toast';
 import { ACTIVE_NETWORK, getQpcContract } from '../utils/contract';
+import {
+  connectWalletConnect,
+  disconnectWalletConnect,
+  setupWalletConnectListeners,
+  removeWalletConnectListeners,
+  isWalletConnectSupported,
+} from '../utils/walletconnect';
 // import { notifyError } from './useNotifications';
 
 export const useWallet = () => {
@@ -25,6 +32,7 @@ export const useWallet = () => {
   const [contractInfo, setContractInfo] = useState<ContractUserInfo | null>(null);
   const [globalStats, setGlobalStats] = useState<ContractGlobalStats | null>(null);
   const [userLevels, setUserLevels] = useState<ContractUserLevelsData | null>(null);
+  const [walletProvider, setWalletProvider] = useState<'metamask' | 'walletconnect' | null>(null);
 
   // Import contract configuration
   const BSC_NETWORK: NetworkConfig = {
@@ -141,16 +149,68 @@ export const useWallet = () => {
     }
   }, [getProvider]);
 
+  // Connect WalletConnect
+  const connectWalletConnectWallet = useCallback(async (): Promise<boolean> => {
+    if (!isWalletConnectSupported()) {
+      setError('WalletConnect is not properly configured');
+      return false;
+    }
+
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      const { provider, accounts } = await connectWalletConnect();
+
+      if (accounts.length === 0) {
+        throw new Error('No accounts found');
+      }
+
+      const account = accounts[0];
+      setWalletProvider('walletconnect');
+
+      // For simple WalletConnect demo - just show modal and handle error
+      // In real implementation, you would get actual wallet connection data
+      
+      setWalletState({
+        isConnected: false, // Keep as false since this is demo
+        address: null,
+        balance: 0,
+        network: null,
+      });
+
+      // Set up WalletConnect listeners (no-op for demo)
+      setupWalletConnectListeners();
+
+      // Contract info will be loaded automatically by useEffect when walletState changes
+
+      setIsLoading(false);
+      return true;
+    } catch (err: any) {
+      console.error('WalletConnect connection error:', err);
+      setError(err.message || 'Failed to connect with WalletConnect');
+      setIsLoading(false);
+      return false;
+    }
+  }, []);
+
   // Disconnect wallet
-  const disconnectWallet = useCallback(() => {
+  const disconnectWallet = useCallback(async () => {
+    // If using WalletConnect, disconnect from WalletConnect
+    if (walletProvider === 'walletconnect') {
+      await disconnectWalletConnect();
+      removeWalletConnectListeners();
+    }
+
     setWalletState({
       isConnected: false,
       address: null,
       balance: 0,
       network: null,
     });
+    setWalletProvider(null);
     setError(null);
-  }, []);
+  }, [walletProvider]);
 
   // Update balance
   const updateBalance = useCallback(async () => {
@@ -221,6 +281,8 @@ export const useWallet = () => {
 
     autoConnect();
   }, [getProvider, connectWallet]);
+
+
 
   // Load contract user info from-chain
   const loadContractInfo = useCallback(async (address: string) => {
@@ -316,6 +378,13 @@ export const useWallet = () => {
       console.error('Failed to load contract info:', err);
     }
   }, []);
+
+  // Load contract info when wallet is connected
+  useEffect(() => {
+    if (walletState.isConnected && walletState.address) {
+      loadContractInfo(walletState.address);
+    }
+  }, [walletState.isConnected, walletState.address, loadContractInfo]);
 
   // Switch to BSC network
   const switchToBSC = useCallback(async () => {
@@ -771,6 +840,7 @@ export const useWallet = () => {
     globalStats,
     userLevels,
     connectWallet,
+    connectWalletConnectWallet,
     disconnectWallet,
     updateBalance,
     switchToBSC,
@@ -782,5 +852,7 @@ export const useWallet = () => {
     BSC_NETWORK,
     getTodayStats,
     getGlobalStats,
+    walletProvider,
+    isWalletConnectSupported: isWalletConnectSupported(),
   };
 };

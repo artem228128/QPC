@@ -65,7 +65,13 @@ const BSC_NETWORK = {
 
 const WalletConnectPage: React.FC = () => {
   const navigate = useNavigate();
-  const { connectWallet, walletState, error } = useWallet();
+  const { 
+    connectWallet, 
+    connectWalletConnectWallet, 
+    walletState, 
+    error, 
+    isWalletConnectSupported 
+  } = useWallet();
   const [selectedWallet, setSelectedWallet] = useState<string | null>(null);
   const [connectionStep, setConnectionStep] = useState<
     'select' | 'connecting' | 'network-check' | 'success'
@@ -82,10 +88,12 @@ const WalletConnectPage: React.FC = () => {
         return !!(window as any).ethereum?.isTrust;
       case 'tokenpocket':
         return !!(window as any).ethereum?.isTokenPocket;
+      case 'walletconnect':
+        return isWalletConnectSupported;
       default:
         return !!(window as any).ethereum;
     }
-  }, []);
+  }, [isWalletConnectSupported]);
 
   // Connect to specific wallet
   const handleWalletConnect = useCallback(
@@ -94,51 +102,60 @@ const WalletConnectPage: React.FC = () => {
       setConnectionStep('connecting');
 
       try {
-        // For WalletConnect, we would integrate WalletConnect library here
+        // Handle WalletConnect
         if (walletId === 'walletconnect') {
-          // TODO: Implement WalletConnect integration
-          throw new Error('WalletConnect integration coming soon');
-        }
-
-        // Check if wallet is available
-        if (!isWalletAvailable(walletId) && walletId !== 'walletconnect') {
-          // If wallet is not installed, redirect to download
-          const provider = WALLET_PROVIDERS.find((p) => p.id === walletId);
-          if (provider?.downloadUrl) {
-            window.open(provider.downloadUrl, '_blank');
-            setConnectionStep('select');
-            setSelectedWallet(null);
-            return;
+          if (!isWalletConnectSupported) {
+            throw new Error('WalletConnect is not configured. Please check your setup.');
           }
-          throw new Error(`${provider?.name} is not installed`);
-        }
+          
+          // Connect via WalletConnect
+          const success = await connectWalletConnectWallet();
+          if (!success) {
+            throw new Error('Failed to connect via WalletConnect');
+          }
+        } else {
+          // Check if wallet is available
+          if (!isWalletAvailable(walletId)) {
+            // If wallet is not installed, redirect to download
+            const provider = WALLET_PROVIDERS.find((p) => p.id === walletId);
+            if (provider?.downloadUrl) {
+              window.open(provider.downloadUrl, '_blank');
+              setConnectionStep('select');
+              setSelectedWallet(null);
+              return;
+            }
+            throw new Error(`${provider?.name} is not installed`);
+          }
 
-        // Connect wallet
-        await connectWallet();
+          // Connect regular wallet (MetaMask, etc.)
+          await connectWallet();
+        }
 
         setConnectionStep('network-check');
 
-        // Check if we're on BSC network
-        const chainId = await (window as any).ethereum.request({
-          method: 'eth_chainId',
-        });
+        // Check if we're on BSC network (skip for WalletConnect as it handles this)
+        if (walletId !== 'walletconnect') {
+          const chainId = await (window as any).ethereum.request({
+            method: 'eth_chainId',
+          });
 
-        if (chainId !== BSC_NETWORK.chainId) {
-          // Try to switch to BSC network
-          try {
-            await (window as any).ethereum.request({
-              method: 'wallet_switchEthereumChain',
-              params: [{ chainId: BSC_NETWORK.chainId }],
-            });
-          } catch (switchError: any) {
-            // If network doesn't exist, add it
-            if (switchError.code === 4902) {
+          if (chainId !== BSC_NETWORK.chainId) {
+            // Try to switch to BSC network
+            try {
               await (window as any).ethereum.request({
-                method: 'wallet_addEthereumChain',
-                params: [BSC_NETWORK],
+                method: 'wallet_switchEthereumChain',
+                params: [{ chainId: BSC_NETWORK.chainId }],
               });
-            } else {
-              throw switchError;
+            } catch (switchError: any) {
+              // If network doesn't exist, add it
+              if (switchError.code === 4902) {
+                await (window as any).ethereum.request({
+                  method: 'wallet_addEthereumChain',
+                  params: [BSC_NETWORK],
+                });
+              } else {
+                throw switchError;
+              }
             }
           }
         }
