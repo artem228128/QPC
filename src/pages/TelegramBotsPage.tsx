@@ -48,10 +48,10 @@ const TelegramBotsPage: React.FC = () => {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.2, duration: 0.6 }}
               >
-                <GlassCard className="p-6 border border-cyan-400/20 bg-gradient-to-br from-cyan-500/5 to-blue-500/5">
+                <GlassCard className="p-6 border border-cyan-400/20 bg-gradient-to-br from-cyan-500/5 to-blue-500/5 rounded-xl">
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-3">
-                      <div className="p-3 bg-cyan-500/20 rounded-lg">
+                      <div className="p-3 bg-cyan-500/20 rounded-xl">
                         <Bell className="text-cyan-400" size={24} />
                       </div>
                       <div>
@@ -72,14 +72,14 @@ const TelegramBotsPage: React.FC = () => {
                     </p>
 
                     <div className="grid grid-cols-2 gap-4">
-                      <div className="bg-black/20 rounded-lg p-3">
+                      <div className="bg-black/20 rounded-xl p-3">
                         <div className="flex items-center gap-2 mb-2">
                           <Zap className="text-yellow-400" size={16} />
                           <span className="text-yellow-400 text-xs font-medium">Real-time</span>
                         </div>
                         <div className="text-white text-sm">Instant Alerts</div>
                       </div>
-                      <div className="bg-black/20 rounded-lg p-3">
+                      <div className="bg-black/20 rounded-xl p-3">
                         <div className="flex items-center gap-2 mb-2">
                           <Shield className="text-green-400" size={16} />
                           <span className="text-green-400 text-xs font-medium">Secure</span>
@@ -109,10 +109,10 @@ const TelegramBotsPage: React.FC = () => {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.3, duration: 0.6 }}
               >
-                <GlassCard className="p-6 border border-purple-400/20 bg-gradient-to-br from-purple-500/5 to-pink-500/5">
+                <GlassCard className="p-6 border border-purple-400/20 bg-gradient-to-br from-purple-500/5 to-pink-500/5 rounded-xl">
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-3">
-                      <div className="p-3 bg-purple-500/20 rounded-lg">
+                      <div className="p-3 bg-purple-500/20 rounded-xl">
                         <MessageCircle className="text-purple-400" size={24} />
                       </div>
                       <div>
@@ -133,14 +133,14 @@ const TelegramBotsPage: React.FC = () => {
                     </p>
 
                     <div className="grid grid-cols-2 gap-4">
-                      <div className="bg-black/20 rounded-lg p-3">
+                      <div className="bg-black/20 rounded-xl p-3">
                         <div className="flex items-center gap-2 mb-2">
                           <Clock className="text-blue-400" size={16} />
                           <span className="text-blue-400 text-xs font-medium">24/7</span>
                         </div>
                         <div className="text-white text-sm">Always Available</div>
                       </div>
-                      <div className="bg-black/20 rounded-lg p-3">
+                      <div className="bg-black/20 rounded-xl p-3">
                         <div className="flex items-center gap-2 mb-2">
                           <Users className="text-purple-400" size={16} />
                           <span className="text-purple-400 text-xs font-medium">Community</span>
@@ -173,12 +173,12 @@ const TelegramBotsPage: React.FC = () => {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.4, duration: 0.6 }}
               >
-                <GlassCard className="p-6">
+                <GlassCard className="p-6 rounded-xl">
                   <h3 className="text-xl font-semibold text-white mb-4">Bot Features</h3>
 
                   <div className="space-y-4">
                     <div className="flex items-start gap-3">
-                      <div className="w-6 h-6 bg-gradient-to-r from-cyan-400 to-blue-400 rounded-full flex items-center justify-center mt-0.5">
+                      <div className="w-6 h-6 bg-gradient-to-r from-cyan-400 to-blue-400 rounded-xl flex items-center justify-center mt-0.5">
                         <Bell size={12} className="text-white" />
                       </div>
                       <div>
@@ -191,7 +191,7 @@ const TelegramBotsPage: React.FC = () => {
                     </div>
 
                     <div className="flex items-start gap-3">
-                      <div className="w-6 h-6 bg-gradient-to-r from-green-400 to-emerald-400 rounded-full flex items-center justify-center mt-0.5">
+                      <div className="w-6 h-6 bg-gradient-to-r from-green-400 to-emerald-400 rounded-xl flex items-center justify-center mt-0.5">
                         <Users size={12} className="text-white" />
                       </div>
                       <div>
@@ -203,7 +203,7 @@ const TelegramBotsPage: React.FC = () => {
                     </div>
 
                     <div className="flex items-start gap-3">
-                      <div className="w-6 h-6 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full flex items-center justify-center mt-0.5">
+                      <div className="w-6 h-6 bg-gradient-to-r from-purple-400 to-pink-400 rounded-xl flex items-center justify-center mt-0.5">
                         <Zap size={12} className="text-white" />
                       </div>
                       <div>
@@ -215,7 +215,7 @@ const TelegramBotsPage: React.FC = () => {
                     </div>
 
                     <div className="flex items-start gap-3">
-                      <div className="w-6 h-6 bg-gradient-to-r from-orange-400 to-red-400 rounded-full flex items-center justify-center mt-0.5">
+                      <div className="w-6 h-6 bg-gradient-to-r from-orange-400 to-red-400 rounded-xl flex items-center justify-center mt-0.5">
                         <MessageCircle size={12} className="text-white" />
                       </div>
                       <div>
@@ -235,33 +235,33 @@ const TelegramBotsPage: React.FC = () => {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.5, duration: 0.6 }}
               >
-                <GlassCard className="p-6 border border-yellow-400/20 bg-gradient-to-br from-yellow-500/5 to-orange-500/5">
+                <GlassCard className="p-6 border border-yellow-400/20 bg-gradient-to-br from-yellow-500/5 to-orange-500/5 rounded-xl">
                   <h3 className="text-xl font-semibold text-white mb-4">Quick Setup</h3>
 
                   <div className="space-y-3">
                     <div className="flex items-center gap-3">
-                      <div className="w-6 h-6 bg-gradient-to-r from-cyan-400 to-blue-400 rounded-full flex items-center justify-center text-white font-bold text-xs">
+                      <div className="w-6 h-6 bg-gradient-to-r from-cyan-400 to-blue-400 rounded-xl flex items-center justify-center text-white font-bold text-xs">
                         1
                       </div>
                       <div className="text-gray-300 text-sm">Click on the bot button above</div>
                     </div>
 
                     <div className="flex items-center gap-3">
-                      <div className="w-6 h-6 bg-gradient-to-r from-cyan-400 to-blue-400 rounded-full flex items-center justify-center text-white font-bold text-xs">
+                      <div className="w-6 h-6 bg-gradient-to-r from-cyan-400 to-blue-400 rounded-xl flex items-center justify-center text-white font-bold text-xs">
                         2
                       </div>
                       <div className="text-gray-300 text-sm">Start the bot in Telegram</div>
                     </div>
 
                     <div className="flex items-center gap-3">
-                      <div className="w-6 h-6 bg-gradient-to-r from-cyan-400 to-blue-400 rounded-full flex items-center justify-center text-white font-bold text-xs">
+                      <div className="w-6 h-6 bg-gradient-to-r from-cyan-400 to-blue-400 rounded-xl flex items-center justify-center text-white font-bold text-xs">
                         3
                       </div>
                       <div className="text-gray-300 text-sm">Connect your wallet address</div>
                     </div>
 
                     <div className="flex items-center gap-3">
-                      <div className="w-6 h-6 bg-gradient-to-r from-cyan-400 to-blue-400 rounded-full flex items-center justify-center text-white font-bold text-xs">
+                      <div className="w-6 h-6 bg-gradient-to-r from-cyan-400 to-blue-400 rounded-xl flex items-center justify-center text-white font-bold text-xs">
                         4
                       </div>
                       <div className="text-gray-300 text-sm">Receive instant notifications!</div>
@@ -276,7 +276,7 @@ const TelegramBotsPage: React.FC = () => {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.6, duration: 0.6 }}
               >
-                <GlassCard className="p-6 border border-green-400/20 bg-gradient-to-br from-green-500/5 to-emerald-500/5">
+                <GlassCard className="p-6 border border-green-400/20 bg-gradient-to-br from-green-500/5 to-emerald-500/5 rounded-xl">
                   <h3 className="text-xl font-semibold text-white mb-4">Join Community</h3>
 
                   <div className="space-y-4">

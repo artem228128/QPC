@@ -246,10 +246,10 @@ const PromoPage: React.FC = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1, duration: 0.6 }}
           >
-            <GlassCard className="p-6 border border-yellow-400/20 bg-gradient-to-br from-yellow-500/5 to-orange-500/5">
+            <GlassCard className="p-6 border border-yellow-400/20 bg-gradient-to-br from-yellow-500/5 to-orange-500/5 rounded-xl">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3">
-                  <div className="p-3 bg-yellow-500/20 rounded-lg">
+                  <div className="p-3 bg-yellow-500/20 rounded-xl">
                     <Share2 className="text-yellow-400" size={24} />
                   </div>
                   <div>
@@ -263,7 +263,7 @@ const PromoPage: React.FC = () => {
                 <div>
                   <label className="text-gray-300 text-sm mb-2 block">Your Referral Link</label>
                   <div className="flex gap-2">
-                    <div className="flex-1 bg-black/30 rounded-lg p-3 font-mono text-sm text-white border border-white/10">
+                    <div className="flex-1 bg-black/30 rounded-xl p-3 font-mono text-sm text-white border border-white/10">
                       https://quantumprofitchain.com?ref=YOUR_ID
                     </div>
                     <GlassButton variant="secondary" onClick={copyReferralLink} className="px-4">
@@ -357,7 +357,7 @@ const PromoPage: React.FC = () => {
                     <select
                       value={selectedLanguage}
                       onChange={(e) => setSelectedLanguage(e.target.value)}
-                      className="glass-panel-secondary px-4 py-2 rounded-lg text-white text-sm bg-transparent border-none focus:ring-2 focus:ring-cyan-400"
+                      className="glass-panel-secondary px-4 py-2 rounded-xl text-white text-sm bg-transparent border-none focus:ring-2 focus:ring-cyan-400"
                     >
                       <option value="all">All Languages</option>
                       <option value="en">English</option>
@@ -380,15 +380,15 @@ const PromoPage: React.FC = () => {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: index * 0.1 }}
                       >
-                        <GlassCard className="p-6 h-full">
+                        <GlassCard className="p-6 h-full rounded-xl">
                           <div className="flex items-start justify-between mb-4">
                             <div className="flex items-center gap-3">
-                              <div className="p-3 bg-cyan-500/20 rounded-lg">
+                              <div className="p-3 bg-cyan-500/20 rounded-xl">
                                 <Icon className="text-cyan-400" size={20} />
                               </div>
                               <div className="text-2xl">{material.flag}</div>
                             </div>
-                            <div className="text-xs text-gray-400 bg-black/30 px-2 py-1 rounded">
+                            <div className="text-xs text-gray-400 bg-black/30 px-2 py-1 rounded-lg">
                               {material.size}
                             </div>
                           </div>
@@ -442,10 +442,10 @@ const PromoPage: React.FC = () => {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: index * 0.1 }}
                       >
-                        <GlassCard className="p-6">
+                        <GlassCard className="p-6 rounded-xl">
                           <div className="flex items-start justify-between mb-4">
                             <div className="flex items-center gap-3">
-                              <div className="p-3 bg-purple-500/20 rounded-lg">
+                              <div className="p-3 bg-purple-500/20 rounded-xl">
                                 <Icon className="text-purple-400" size={24} />
                               </div>
                               <div>
@@ -453,7 +453,7 @@ const PromoPage: React.FC = () => {
                                 <p className="text-gray-300 text-sm">{asset.description}</p>
                               </div>
                             </div>
-                            <div className="text-xs text-gray-400 bg-black/30 px-2 py-1 rounded">
+                            <div className="text-xs text-gray-400 bg-black/30 px-2 py-1 rounded-lg">
                               {asset.size}
                             </div>
                           </div>
@@ -505,10 +505,10 @@ const PromoPage: React.FC = () => {
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: index * 0.1 }}
                     >
-                      <GlassCard className="p-6">
+                      <GlassCard className="p-6 rounded-xl">
                         <div className="mb-4">
                           <div className="flex items-center gap-3 mb-3">
-                            <div className="p-3 bg-green-500/20 rounded-lg">
+                            <div className="p-3 bg-green-500/20 rounded-xl">
                               <Palette className="text-green-400" size={20} />
                             </div>
                             <h4 className="text-lg font-semibold text-white">{template.title}</h4>
@@ -519,7 +519,7 @@ const PromoPage: React.FC = () => {
                             <span className="text-gray-400 text-xs">Includes:</span>
                             {template.formats.map((format, idx) => (
                               <div key={idx} className="flex items-center gap-2">
-                                <div className="w-1.5 h-1.5 bg-green-400 rounded-full"></div>
+                                <div className="w-1.5 h-1.5 bg-green-400 rounded-lg"></div>
                                 <span className="text-green-400 text-sm">{format}</span>
                               </div>
                             ))}
@@ -551,7 +551,7 @@ const PromoPage: React.FC = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4, duration: 0.6 }}
           >
-            <GlassCard className="p-6 border border-blue-400/20 bg-gradient-to-br from-blue-500/5 to-indigo-500/5">
+            <GlassCard className="p-6 border border-blue-400/20 bg-gradient-to-br from-blue-500/5 to-indigo-500/5 rounded-xl">
               <h3 className="text-xl font-semibold text-white mb-4">Usage Guidelines</h3>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

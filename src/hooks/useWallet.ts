@@ -139,6 +139,9 @@ export const useWallet = () => {
         provider: walletProvider,
       });
 
+      // Clear manual disconnect flag on successful connect
+      localStorage.removeItem('wallet_manually_disconnected');
+
       // Load contract info if user is registered
       await loadContractInfo(address);
     } catch (err: any) {
@@ -196,20 +199,40 @@ export const useWallet = () => {
 
   // Disconnect wallet
   const disconnectWallet = useCallback(async () => {
-    // If using WalletConnect, disconnect from WalletConnect
-    if (walletProvider === 'walletconnect') {
-      await disconnectWalletConnect();
-      removeWalletConnectListeners();
-    }
+    try {
+      // If using WalletConnect, disconnect from WalletConnect
+      if (walletProvider === 'walletconnect') {
+        await disconnectWalletConnect();
+        removeWalletConnectListeners();
+      }
 
-    setWalletState({
-      isConnected: false,
-      address: null,
-      balance: 0,
-      network: null,
-    });
-    setWalletProvider(null);
-    setError(null);
+      // Clear wallet state immediately
+      setWalletState({
+        isConnected: false,
+        address: null,
+        balance: 0,
+        network: null,
+      });
+      setWalletProvider(null);
+      setError(null);
+      setContractInfo(null);
+      setUserLevels(null);
+
+      // Clear localStorage to prevent auto-reconnect
+      localStorage.removeItem('walletconnect');
+      localStorage.removeItem('WEB3_CONNECT_CACHED_PROVIDER');
+      localStorage.removeItem('wallet_connected');
+
+      // Mark as manually disconnected to prevent auto-reconnect
+      localStorage.setItem('wallet_manually_disconnected', 'true');
+
+      // Show success message
+      toast.success('Disconnected from app (wallet remains connected in browser)');
+      
+    } catch (error) {
+      console.error('Error disconnecting wallet:', error);
+      toast.error('Failed to disconnect from app');
+    }
   }, [walletProvider]);
 
   // Update balance
@@ -260,11 +283,18 @@ export const useWallet = () => {
     };
   }, [getProvider, walletState.address, connectWallet, disconnectWallet]);
 
-  // Auto-connect if previously connected
+  // Auto-connect if previously connected (but not manually disconnected)
   useEffect(() => {
     const autoConnect = async () => {
       const provider = getProvider();
       if (!provider) return;
+
+      // Check if user manually disconnected
+      const manuallyDisconnected = localStorage.getItem('wallet_manually_disconnected');
+      if (manuallyDisconnected === 'true') {
+        console.log('Auto-connect skipped: wallet was manually disconnected');
+        return;
+      }
 
       try {
         const accounts = await provider.request({

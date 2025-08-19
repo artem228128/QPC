@@ -46,7 +46,13 @@ export const PartnerBonusTable: React.FC = () => {
         let events: any[] = [];
         
         try {
-          events = await contract.queryFilter(filter, -1000); // Only last 1k blocks
+          // Use much smaller block range to avoid rate limits
+          events = await contract.queryFilter(filter, -100); // Only last 100 blocks
+          
+          // If no events found, try without filter to see if any events exist
+          if (events.length === 0) {
+            const allEvents = await contract.queryFilter(contract.filters.ReferralPayout(), -100);
+          }
         } catch (rpcError: any) {
           // RPC rate limit - use contract data fallback
         }
@@ -100,6 +106,8 @@ export const PartnerBonusTable: React.FC = () => {
   const partnersCountFromContract = contractInfo?.referrals || 0;
   const totalBonusFromContract = contractInfo?.referralPayoutSum || 0; // Already in BNB
 
+
+
   // Check if we're on testnet and user has no referrals yet
   const isTestnet = window.location.hostname === 'localhost' || process.env.NODE_ENV === 'development';
   const hasRealData = partnersCountFromContract > 0 || totalBonusFromContract > 0;
@@ -137,7 +145,7 @@ export const PartnerBonusTable: React.FC = () => {
     <div className="space-y-6">
       {/* Stats Overview */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <GlassCard className="p-4 border border-purple-400/20">
+        <GlassCard className="p-4 border border-purple-400/20 rounded-xl">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-purple-500/20 rounded-lg">
               <Users className="text-purple-400" size={20} />
@@ -151,7 +159,7 @@ export const PartnerBonusTable: React.FC = () => {
           </div>
         </GlassCard>
 
-        <GlassCard className="p-4 border border-green-400/20">
+        <GlassCard className="p-4 border border-green-400/20 rounded-xl">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-green-500/20 rounded-lg">
               <TrendingUp className="text-green-400" size={20} />
@@ -165,7 +173,7 @@ export const PartnerBonusTable: React.FC = () => {
           </div>
         </GlassCard>
 
-        <GlassCard className="p-4 border border-blue-400/20">
+        <GlassCard className="p-4 border border-blue-400/20 rounded-xl">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-blue-500/20 rounded-lg">
               <Calendar className="text-blue-400" size={20} />
@@ -181,7 +189,7 @@ export const PartnerBonusTable: React.FC = () => {
       </div>
 
       {/* Referral Link Section */}
-      <GlassCard className="p-6 border border-cyan-400/20 bg-gradient-to-br from-cyan-500/5 to-blue-500/5">
+      <GlassCard className="p-6 border border-cyan-400/20 bg-gradient-to-br from-cyan-500/5 to-blue-500/5 rounded-xl">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-xl font-semibold text-white">Your Referral Link</h3>
           <div className="p-2 bg-cyan-500/20 rounded-lg">
@@ -189,7 +197,7 @@ export const PartnerBonusTable: React.FC = () => {
           </div>
         </div>
         <div className="space-y-4">
-          <div className="bg-black/30 rounded-lg p-3 font-mono text-sm text-white border border-white/10">
+          <div className="bg-black/30 rounded-xl p-3 font-mono text-sm text-white border border-white/10">
             <div className="break-all">{userReferralLink || 'Loading...'}</div>
           </div>
           <div className="flex gap-3">
@@ -214,7 +222,7 @@ export const PartnerBonusTable: React.FC = () => {
       </GlassCard>
 
       {/* Partner Bonus Table */}
-      <GlassCard className="p-6">
+      <GlassCard className="p-6 rounded-xl">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-xl font-semibold text-white flex items-center gap-2">
             <Users className="text-purple-400" size={20} />
@@ -248,7 +256,7 @@ export const PartnerBonusTable: React.FC = () => {
                     <td className="py-3 text-gray-300 font-mono text-xs">{bonus.date}</td>
                     <td className="py-3 text-gray-300 font-mono text-xs">{bonus.wallet}</td>
                     <td className="py-3">
-                      <span className="px-2 py-1 bg-blue-500/20 text-blue-400 rounded text-xs font-medium">
+                      <span className="px-2 py-1 bg-blue-500/20 text-blue-400 rounded-lg text-xs font-medium">
                         Level {bonus.level}
                       </span>
                     </td>
@@ -267,6 +275,40 @@ export const PartnerBonusTable: React.FC = () => {
               </tbody>
             </table>
           </div>
+        ) : partnersCountFromContract > 0 ? (
+          /* Show contract data when events are unavailable */
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center py-8"
+          >
+            <div className="mb-4">
+              <div className="w-16 h-16 bg-gradient-to-br from-green-500/20 to-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <TrendingUp className="text-green-400" size={32} />
+              </div>
+              <h4 className="text-lg text-white font-semibold mb-2">Contract Data Available</h4>
+              <p className="text-gray-400 mb-4">
+                RPC rate limit reached. Showing data from contract storage.
+              </p>
+            </div>
+            
+            <div className="bg-black/30 rounded-xl p-4 border border-white/10">
+              <div className="grid grid-cols-2 gap-4 text-center">
+                <div>
+                  <div className="text-green-400 text-xl font-bold">{partnersCountFromContract}</div>
+                  <div className="text-gray-400 text-sm">Active Partners</div>
+                </div>
+                <div>
+                  <div className="text-purple-400 text-xl font-bold">{formatBNB(totalBonusFromContract)} BNB</div>
+                  <div className="text-gray-400 text-sm">Total Bonus Earned</div>
+                </div>
+              </div>
+            </div>
+            
+            <p className="text-gray-500 text-sm mt-4">
+              Detailed transaction history temporarily unavailable due to RPC limits.
+            </p>
+          </motion.div>
         ) : (
           /* No Bonuses State */
           <motion.div
@@ -275,7 +317,7 @@ export const PartnerBonusTable: React.FC = () => {
             className="text-center py-12"
           >
             <div className="mb-6">
-              <div className="w-20 h-20 bg-gradient-to-br from-purple-500/20 to-pink-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+              <div className="w-20 h-20 bg-gradient-to-br from-purple-500/20 to-pink-500/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
                 <Users className="text-purple-400" size={40} />
               </div>
               <h4 className="text-xl text-white font-semibold mb-2">No bonuses yet</h4>

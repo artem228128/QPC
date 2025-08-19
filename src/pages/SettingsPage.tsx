@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { formatUserId } from '../utils/format';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -20,6 +21,7 @@ import {
   Download,
   ExternalLink,
   Copy,
+  Check,
   QrCode,
   LogOut,
   RotateCcw,
@@ -34,6 +36,7 @@ import {
 import { ConnectedHeader, DashboardSidebar } from '../components/layout';
 import { NeuralBackground } from '../components/neural';
 import { GlassCard, GlassButton } from '../components/glass';
+import { DisconnectModal } from '../components/common';
 import { useWallet } from '../hooks/useWallet';
 import { formatAddress, formatBNB } from '../utils/format';
 
@@ -120,6 +123,7 @@ const LANGUAGE_OPTIONS = [
 ];
 
 const SettingsPage: React.FC = () => {
+  const navigate = useNavigate();
   const { walletState, contractInfo, disconnectWallet, BSC_NETWORK } = useWallet();
   const [activeTab, setActiveTab] = useState<
     | 'account'
@@ -134,6 +138,9 @@ const SettingsPage: React.FC = () => {
   const [settings, setSettings] = useState<SettingsState>(DEFAULT_SETTINGS);
   const [hasChanges, setHasChanges] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [disconnecting, setDisconnecting] = useState(false);
+  const [showDisconnectModal, setShowDisconnectModal] = useState(false);
+  const [addressCopied, setAddressCopied] = useState(false);
 
   // Load settings from localStorage on mount
   useEffect(() => {
@@ -188,10 +195,32 @@ const SettingsPage: React.FC = () => {
     console.log(`Exporting ${type} data...`);
   };
 
+  const handleDisconnectConfirm = async () => {
+    setDisconnecting(true);
+    try {
+      await disconnectWallet();
+      setShowDisconnectModal(false);
+      // Redirect to home page after successful disconnection
+      navigate('/');
+    } finally {
+      setDisconnecting(false);
+    }
+  };
+
+  const handleDisconnectCancel = () => {
+    setShowDisconnectModal(false);
+  };
+
+  const copyAddress = useCallback(async () => {
+    await navigator.clipboard.writeText(walletState.address || '');
+    setAddressCopied(true);
+    setTimeout(() => setAddressCopied(false), 2000);
+  }, [walletState.address]);
+
   const renderAccountSettings = () => (
     <div className="space-y-6">
       {/* Profile Information */}
-      <GlassCard className="p-6">
+      <GlassCard className="p-6 rounded-xl">
         <h3 className="text-xl font-semibold text-white mb-4 flex items-center gap-3">
           <User className="text-cyan-400" size={24} />
           Profile Information
@@ -205,44 +234,46 @@ const SettingsPage: React.FC = () => {
               value={settings.nickname}
               onChange={(e) => updateSetting('nickname', e.target.value)}
               placeholder="Enter your nickname"
-              className="w-full glass-panel-secondary p-3 rounded-lg text-white placeholder-gray-500 border border-white/10 focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400"
+              className="w-full glass-panel-secondary p-3 rounded-xl text-white placeholder-gray-500 border border-white/10 focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400"
             />
           </div>
 
           <div>
             <label className="block text-gray-300 text-sm mb-2">User ID</label>
-            <div className="glass-panel-secondary p-3 rounded-lg text-gray-400 border border-white/10">
-              #{formatUserId(contractInfo?.id) || 'Not registered'}
+            <div className="glass-panel-secondary p-3 rounded-xl text-gray-400 border border-white/10">
+              {contractInfo?.id ? `#${formatUserId(contractInfo.id)}` : 'Not registered'}
             </div>
           </div>
 
           <div>
             <label className="block text-gray-300 text-sm mb-2">Wallet Address</label>
-            <div className="glass-panel-secondary p-3 rounded-lg text-gray-400 border border-white/10 font-mono text-sm">
+            <div className="glass-panel-secondary p-3 rounded-xl text-gray-400 border border-white/10 font-mono text-sm">
               {walletState.address ? formatAddress(walletState.address) : 'Not connected'}
             </div>
           </div>
 
           <div>
             <label className="block text-gray-300 text-sm mb-2">Registration Date</label>
-            <div className="glass-panel-secondary p-3 rounded-lg text-gray-400 border border-white/10">
+            <div className="glass-panel-secondary p-3 rounded-xl text-gray-400 border border-white/10">
               {contractInfo?.registrationTimestamp
-                ? new Date(contractInfo.registrationTimestamp * 1000).toLocaleDateString()
+                ? new Date(Number(contractInfo.registrationTimestamp)).toLocaleDateString()
                 : 'Not registered'}
             </div>
           </div>
+
+
         </div>
       </GlassCard>
 
       {/* Wallet Connection */}
-      <GlassCard className="p-6">
+      <GlassCard className="p-6 rounded-xl">
         <h3 className="text-xl font-semibold text-white mb-4 flex items-center gap-3">
           <Wallet className="text-purple-400" size={24} />
           Wallet Connection
         </h3>
 
         <div className="space-y-4">
-          <div className="flex items-center justify-between p-4 glass-panel-secondary rounded-lg border border-white/10">
+          <div className="flex items-center justify-between p-4 glass-panel-secondary rounded-xl border border-white/10">
             <div className="flex items-center gap-3">
               <div className="w-3 h-3 bg-green-400 rounded-full"></div>
               <div>
@@ -253,17 +284,29 @@ const SettingsPage: React.FC = () => {
               </div>
             </div>
             <div className="flex gap-2">
-              <GlassButton
-                variant="secondary"
-                onClick={() => navigator.clipboard.writeText(walletState.address || '')}
-                className="px-3 py-2"
+              <motion.button
+                onClick={copyAddress}
+                className="px-3 py-2 bg-gradient-to-r from-blue-500/20 to-cyan-500/20 hover:from-blue-500/30 hover:to-cyan-500/30 rounded-xl transition-all duration-300 border border-blue-400/40 hover:border-blue-400/60 text-blue-300 hover:text-white backdrop-blur-sm"
+                whileHover={{ scale: 1.05, y: -1 }}
+                whileTap={{ scale: 0.95 }}
+                disabled={addressCopied}
               >
-                <Copy size={16} />
-              </GlassButton>
+                <motion.div
+                  initial={false}
+                  animate={addressCopied ? {
+                    rotate: [0, -10, 10, 0],
+                    scale: [1, 1.2, 1],
+                    transition: { duration: 0.5, ease: "easeInOut" }
+                  } : {}}
+                >
+                  {addressCopied ? <Check size={16} /> : <Copy size={16} />}
+                </motion.div>
+              </motion.button>
               <GlassButton
                 variant="secondary"
-                onClick={disconnectWallet}
-                className="px-3 py-2 border-red-500/50 text-red-400 hover:border-red-400"
+                onClick={() => setShowDisconnectModal(true)}
+                className="px-3 py-2 border-red-500/50 text-red-400 hover:border-red-400 hover:bg-red-500/10 hover:rounded-xl transition-all duration-300"
+                disabled={disconnecting}
               >
                 <LogOut size={16} />
               </GlassButton>
@@ -271,11 +314,11 @@ const SettingsPage: React.FC = () => {
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <div className="glass-panel-secondary p-3 rounded-lg border border-white/10">
+            <div className="glass-panel-secondary p-3 rounded-xl border border-white/10">
               <div className="text-gray-400 text-sm">Network</div>
               <div className="text-white font-medium">{BSC_NETWORK.chainName}</div>
             </div>
-            <div className="glass-panel-secondary p-3 rounded-lg border border-white/10">
+            <div className="glass-panel-secondary p-3 rounded-xl border border-white/10">
               <div className="text-gray-400 text-sm">Balance</div>
               <div className="text-white font-medium">
                 {settings.hideBalance ? '••••••' : formatBNB(walletState.balance)} BNB
@@ -290,7 +333,7 @@ const SettingsPage: React.FC = () => {
   const renderNotificationSettings = () => (
     <div className="space-y-6">
       {/* Push Notifications */}
-      <GlassCard className="p-6">
+      <GlassCard className="p-6 rounded-xl">
         <h3 className="text-xl font-semibold text-white mb-4 flex items-center gap-3">
           <Bell className="text-yellow-400" size={24} />
           Push Notifications
@@ -300,7 +343,7 @@ const SettingsPage: React.FC = () => {
           {Object.entries(settings.pushNotifications).map(([key, value]) => (
             <div
               key={key}
-              className="flex items-center justify-between p-3 glass-panel-secondary rounded-lg border border-white/10"
+              className="flex items-center justify-between p-3 glass-panel-secondary rounded-xl border border-white/10"
             >
               <div>
                 <div className="text-white font-medium capitalize">
@@ -328,7 +371,7 @@ const SettingsPage: React.FC = () => {
       </GlassCard>
 
       {/* Email Notifications */}
-      <GlassCard className="p-6">
+      <GlassCard className="p-6 rounded-xl">
         <h3 className="text-xl font-semibold text-white mb-4 flex items-center gap-3">
           <Mail className="text-blue-400" size={24} />
           Email Notifications
@@ -338,7 +381,7 @@ const SettingsPage: React.FC = () => {
           {Object.entries(settings.emailNotifications).map(([key, value]) => (
             <div
               key={key}
-              className="flex items-center justify-between p-3 glass-panel-secondary rounded-lg border border-white/10"
+              className="flex items-center justify-between p-3 glass-panel-secondary rounded-xl border border-white/10"
             >
               <div>
                 <div className="text-white font-medium capitalize">
@@ -357,7 +400,7 @@ const SettingsPage: React.FC = () => {
                   onChange={(e) => updateSetting(`emailNotifications.${key}`, e.target.checked)}
                   className="sr-only peer"
                 />
-                <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-500"></div>
+                <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[.*] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-500"></div>
               </label>
             </div>
           ))}
@@ -365,17 +408,17 @@ const SettingsPage: React.FC = () => {
       </GlassCard>
 
       {/* Telegram Bot */}
-      <GlassCard className="p-6">
+      <GlassCard className="p-6 rounded-xl">
         <h3 className="text-xl font-semibold text-white mb-4 flex items-center gap-3">
           <MessageCircle className="text-green-400" size={24} />
           Telegram Bot Integration
         </h3>
 
         <div className="space-y-4">
-          <div className="flex items-center justify-between p-4 glass-panel-secondary rounded-lg border border-white/10">
+          <div className="flex items-center justify-between p-4 glass-panel-secondary rounded-xl border border-white/10">
             <div className="flex items-center gap-3">
               <div
-                className={`w-3 h-3 rounded-full ${settings.telegramBot.connected ? 'bg-green-400' : 'bg-gray-500'}`}
+                className={`w-3 h-3 rounded-xl ${settings.telegramBot.connected ? 'bg-green-400' : 'bg-gray-500'}`}
               ></div>
               <div>
                 <div className="text-white font-medium">Notification Bot</div>
@@ -399,7 +442,7 @@ const SettingsPage: React.FC = () => {
               <select
                 value={settings.telegramBot.frequency}
                 onChange={(e) => updateSetting('telegramBot.frequency', e.target.value)}
-                className="w-full glass-panel-secondary p-3 rounded-lg text-white border border-white/10 focus:border-green-400 focus:ring-1 focus:ring-green-400"
+                className="w-full glass-panel-secondary p-3 rounded-xl text-white border border-white/10 focus:border-green-400 focus:ring-1 focus:ring-green-400"
               >
                 <option value="instant">Instant</option>
                 <option value="hourly">Hourly Summary</option>
@@ -415,7 +458,7 @@ const SettingsPage: React.FC = () => {
   const renderDisplaySettings = () => (
     <div className="space-y-6">
       {/* Theme Settings */}
-      <GlassCard className="p-6">
+      <GlassCard className="p-6 rounded-xl">
         <h3 className="text-xl font-semibold text-white mb-4 flex items-center gap-3">
           <Palette className="text-purple-400" size={24} />
           Theme & Appearance
@@ -425,7 +468,7 @@ const SettingsPage: React.FC = () => {
           <div className="grid grid-cols-2 gap-4">
             <div
               onClick={() => updateSetting('theme', 'dark')}
-              className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
+              className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
                 settings.theme === 'dark'
                   ? 'border-cyan-400 bg-cyan-500/10'
                   : 'border-white/10 glass-panel-secondary hover:border-white/20'
@@ -440,7 +483,7 @@ const SettingsPage: React.FC = () => {
 
             <div
               onClick={() => updateSetting('theme', 'light')}
-              className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
+              className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
                 settings.theme === 'light'
                   ? 'border-yellow-400 bg-yellow-500/10'
                   : 'border-white/10 glass-panel-secondary hover:border-white/20'
@@ -454,7 +497,7 @@ const SettingsPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex items-center justify-between p-3 glass-panel-secondary rounded-lg border border-white/10">
+          <div className="flex items-center justify-between p-3 glass-panel-secondary rounded-xl border border-white/10">
             <div>
               <div className="text-white font-medium">Performance Mode</div>
               <div className="text-gray-400 text-sm">
@@ -468,14 +511,14 @@ const SettingsPage: React.FC = () => {
                 onChange={(e) => updateSetting('performanceMode', e.target.checked)}
                 className="sr-only peer"
               />
-              <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-500"></div>
+              <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[.*] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-500"></div>
             </label>
           </div>
         </div>
       </GlassCard>
 
       {/* Language & Currency */}
-      <GlassCard className="p-6">
+      <GlassCard className="p-6 rounded-xl">
         <h3 className="text-xl font-semibold text-white mb-4 flex items-center gap-3">
           <Globe className="text-green-400" size={24} />
           Language & Currency
@@ -487,7 +530,7 @@ const SettingsPage: React.FC = () => {
             <select
               value={settings.language}
               onChange={(e) => updateSetting('language', e.target.value)}
-              className="w-full glass-panel-secondary p-3 rounded-lg text-white border border-white/10 focus:border-green-400 focus:ring-1 focus:ring-green-400"
+              className="w-full glass-panel-secondary p-3 rounded-xl text-white border border-white/10 focus:border-green-400 focus:ring-1 focus:ring-green-400"
             >
               {LANGUAGE_OPTIONS.map((lang) => (
                 <option key={lang.code} value={lang.code}>
@@ -502,7 +545,7 @@ const SettingsPage: React.FC = () => {
             <select
               value={settings.currencyDisplay}
               onChange={(e) => updateSetting('currencyDisplay', e.target.value)}
-              className="w-full glass-panel-secondary p-3 rounded-lg text-white border border-white/10 focus:border-green-400 focus:ring-1 focus:ring-green-400"
+              className="w-full glass-panel-secondary p-3 rounded-xl text-white border border-white/10 focus:border-green-400 focus:ring-1 focus:ring-green-400"
             >
               <option value="BNB">BNB</option>
               <option value="USD">USD (approx.)</option>
@@ -512,7 +555,7 @@ const SettingsPage: React.FC = () => {
       </GlassCard>
 
       {/* Dashboard Layout */}
-      <GlassCard className="p-6">
+      <GlassCard className="p-6 rounded-xl">
         <h3 className="text-xl font-semibold text-white mb-4 flex items-center gap-3">
           <Monitor className="text-blue-400" size={24} />
           Dashboard Layout
@@ -521,7 +564,7 @@ const SettingsPage: React.FC = () => {
         <div className="grid grid-cols-2 gap-4">
           <div
             onClick={() => updateSetting('dashboardLayout', 'compact')}
-            className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
+            className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
               settings.dashboardLayout === 'compact'
                 ? 'border-blue-400 bg-blue-500/10'
                 : 'border-white/10 glass-panel-secondary hover:border-white/20'
@@ -536,7 +579,7 @@ const SettingsPage: React.FC = () => {
 
           <div
             onClick={() => updateSetting('dashboardLayout', 'expanded')}
-            className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
+            className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
               settings.dashboardLayout === 'expanded'
                 ? 'border-blue-400 bg-blue-500/10'
                 : 'border-white/10 glass-panel-secondary hover:border-white/20'
@@ -556,14 +599,14 @@ const SettingsPage: React.FC = () => {
   const renderSecuritySettings = () => (
     <div className="space-y-6">
       {/* Privacy Settings */}
-      <GlassCard className="p-6">
+      <GlassCard className="p-6 rounded-xl">
         <h3 className="text-xl font-semibold text-white mb-4 flex items-center gap-3">
           <Shield className="text-red-400" size={24} />
           Privacy & Security
         </h3>
 
         <div className="space-y-4">
-          <div className="flex items-center justify-between p-3 glass-panel-secondary rounded-lg border border-white/10">
+          <div className="flex items-center justify-between p-3 glass-panel-secondary rounded-xl border border-white/10">
             <div className="flex items-center gap-3">
               <Eye className="text-gray-400" size={20} />
               <div>
@@ -580,11 +623,11 @@ const SettingsPage: React.FC = () => {
                 onChange={(e) => updateSetting('hideBalance', e.target.checked)}
                 className="sr-only peer"
               />
-              <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-lg peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-500"></div>
+              <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[.*] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-500"></div>
             </label>
           </div>
 
-          <div className="flex items-center justify-between p-3 glass-panel-secondary rounded-lg border border-white/10">
+          <div className="flex items-center justify-between p-3 glass-panel-secondary rounded-xl border border-white/10">
             <div className="flex items-center gap-3">
               <EyeOff className="text-gray-400" size={20} />
               <div>
@@ -601,14 +644,14 @@ const SettingsPage: React.FC = () => {
                 onChange={(e) => updateSetting('anonymousMode', e.target.checked)}
                 className="sr-only peer"
               />
-              <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-lg peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-500"></div>
+              <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[.*] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-500"></div>
             </label>
           </div>
         </div>
       </GlassCard>
 
       {/* Session Management */}
-      <GlassCard className="p-6">
+      <GlassCard className="p-6 rounded-xl">
         <h3 className="text-xl font-semibold text-white mb-4 flex items-center gap-3">
           <RotateCcw className="text-orange-400" size={24} />
           Session Management
@@ -620,7 +663,7 @@ const SettingsPage: React.FC = () => {
             <select
               value={settings.autoLogout}
               onChange={(e) => updateSetting('autoLogout', parseInt(e.target.value))}
-              className="w-full glass-panel-secondary p-3 rounded-lg text-white border border-white/10 focus:border-orange-400 focus:ring-1 focus:ring-orange-400"
+              className="w-full glass-panel-secondary p-3 rounded-xl text-white border border-white/10 focus:border-orange-400 focus:ring-1 focus:ring-orange-400"
             >
               <option value={15}>15 minutes</option>
               <option value={30}>30 minutes</option>
@@ -633,7 +676,7 @@ const SettingsPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="p-4 glass-panel-secondary rounded-lg border border-orange-400/20 bg-orange-500/5">
+          <div className="p-4 glass-panel-secondary rounded-xl border border-orange-400/20 bg-orange-500/5">
             <div className="flex items-start gap-3">
               <AlertTriangle className="text-orange-400 mt-1" size={20} />
               <div>
@@ -652,14 +695,14 @@ const SettingsPage: React.FC = () => {
   const renderNetworkSettings = () => (
     <div className="space-y-6">
       {/* Network Configuration */}
-      <GlassCard className="p-6">
+      <GlassCard className="p-6 rounded-xl">
         <h3 className="text-xl font-semibold text-white mb-4 flex items-center gap-3">
           <Network className="text-blue-400" size={24} />
           Network Configuration
         </h3>
 
         <div className="space-y-4">
-          <div className="p-4 glass-panel-secondary rounded-lg border border-white/10">
+          <div className="p-4 glass-panel-secondary rounded-xl border border-white/10">
             <div className="flex items-center justify-between mb-2">
               <div className="text-white font-medium">Current Network</div>
               <div className="flex items-center gap-2">
@@ -673,7 +716,7 @@ const SettingsPage: React.FC = () => {
       </GlassCard>
 
       {/* Transaction Settings */}
-      <GlassCard className="p-6">
+      <GlassCard className="p-6 rounded-xl">
         <h3 className="text-xl font-semibold text-white mb-4 flex items-center gap-3">
           <SettingsIcon className="text-green-400" size={24} />
           Transaction Settings
@@ -685,7 +728,7 @@ const SettingsPage: React.FC = () => {
             <select
               value={settings.preferredGasPrice}
               onChange={(e) => updateSetting('preferredGasPrice', e.target.value)}
-              className="w-full glass-panel-secondary p-3 rounded-lg text-white border border-white/10 focus:border-green-400 focus:ring-1 focus:ring-green-400"
+              className="w-full glass-panel-secondary p-3 rounded-xl text-white border border-white/10 focus:border-green-400 focus:ring-1 focus:ring-green-400"
             >
               <option value="slow">Slow (Lower fees, longer confirmation)</option>
               <option value="normal">Normal (Balanced)</option>
@@ -703,9 +746,9 @@ const SettingsPage: React.FC = () => {
                 step="0.1"
                 value={settings.slippageTolerance}
                 onChange={(e) => updateSetting('slippageTolerance', parseFloat(e.target.value))}
-                className="flex-1 h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer slider"
+                className="flex-1 h-2 bg-gray-700 rounded-full appearance-none cursor-pointer slider"
               />
-              <div className="glass-panel-secondary px-3 py-2 rounded-lg text-white text-sm min-w-[60px] text-center">
+              <div className="glass-panel-secondary px-3 py-2 rounded-xl text-white text-sm min-w-[60px] text-center">
                 {settings.slippageTolerance}%
               </div>
             </div>
@@ -721,7 +764,7 @@ const SettingsPage: React.FC = () => {
   const renderReferralSettings = () => (
     <div className="space-y-6">
       {/* Referral Tools */}
-      <GlassCard className="p-6">
+      <GlassCard className="p-6 rounded-xl">
         <h3 className="text-xl font-semibold text-white mb-4 flex items-center gap-3">
           <Share2 className="text-cyan-400" size={24} />
           Referral Tools
@@ -731,7 +774,7 @@ const SettingsPage: React.FC = () => {
           <div>
             <label className="block text-gray-300 text-sm mb-2">Your Referral Link</label>
             <div className="flex gap-2">
-              <div className="flex-1 glass-panel-secondary p-3 rounded-lg text-white font-mono text-sm border border-white/10">
+              <div className="flex-1 glass-panel-secondary p-3 rounded-xl text-white font-mono text-sm border border-white/10">
                 https://quantumprofitchain.com?ref={formatUserId(contractInfo?.id) || 'YOUR_ID'}
               </div>
               <GlassButton variant="secondary" onClick={copyReferralLink} className="px-4">
@@ -769,32 +812,32 @@ const SettingsPage: React.FC = () => {
       </GlassCard>
 
       {/* Referral Statistics */}
-      <GlassCard className="p-6">
+      <GlassCard className="p-6 rounded-xl">
         <h3 className="text-xl font-semibold text-white mb-4 flex items-center gap-3">
           <SettingsIcon className="text-purple-400" size={24} />
           Statistics Visibility
         </h3>
 
         <div className="space-y-4">
-          <div className="flex items-center justify-between p-3 glass-panel-secondary rounded-lg border border-white/10">
+          <div className="flex items-center justify-between p-3 glass-panel-secondary rounded-xl border border-white/10">
             <div>
               <div className="text-white font-medium">Show Referral Count</div>
               <div className="text-gray-400 text-sm">Display your referral count publicly</div>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
               <input type="checkbox" defaultChecked={true} className="sr-only peer" />
-              <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-cyan-500"></div>
+              <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[.*] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-cyan-500"></div>
             </label>
           </div>
 
-          <div className="flex items-center justify-between p-3 glass-panel-secondary rounded-lg border border-white/10">
+          <div className="flex items-center justify-between p-3 glass-panel-secondary rounded-xl border border-white/10">
             <div>
               <div className="text-white font-medium">Show Earnings</div>
               <div className="text-gray-400 text-sm">Display your earnings in leaderboards</div>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
               <input type="checkbox" defaultChecked={false} className="sr-only peer" />
-              <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-cyan-500"></div>
+              <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[.*] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-cyan-500"></div>
             </label>
           </div>
         </div>
@@ -805,7 +848,7 @@ const SettingsPage: React.FC = () => {
   const renderAdvancedSettings = () => (
     <div className="space-y-6">
       {/* Data Export */}
-      <GlassCard className="p-6">
+      <GlassCard className="p-6 rounded-xl">
         <h3 className="text-xl font-semibold text-white mb-4 flex items-center gap-3">
           <Download className="text-green-400" size={24} />
           Data Export
@@ -850,14 +893,14 @@ const SettingsPage: React.FC = () => {
       </GlassCard>
 
       {/* Developer Mode */}
-      <GlassCard className="p-6">
+      <GlassCard className="p-6 rounded-xl">
         <h3 className="text-xl font-semibold text-white mb-4 flex items-center gap-3">
           <Code className="text-purple-400" size={24} />
           Developer Options
         </h3>
 
         <div className="space-y-4">
-          <div className="flex items-center justify-between p-3 glass-panel-secondary rounded-lg border border-white/10">
+          <div className="flex items-center justify-between p-3 glass-panel-secondary rounded-xl border border-white/10">
             <div>
               <div className="text-white font-medium">Developer Mode</div>
               <div className="text-gray-400 text-sm">
@@ -871,12 +914,12 @@ const SettingsPage: React.FC = () => {
                 onChange={(e) => updateSetting('developerMode', e.target.checked)}
                 className="sr-only peer"
               />
-              <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-500"></div>
+              <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[.*] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-500"></div>
             </label>
           </div>
 
           {settings.developerMode && (
-            <div className="p-4 glass-panel-secondary rounded-lg border border-purple-400/20 bg-purple-500/5">
+            <div className="p-4 glass-panel-secondary rounded-xl border border-purple-400/20 bg-purple-500/5">
               <div className="text-purple-400 font-medium mb-2">Debug Information</div>
               <div className="space-y-1 text-sm text-gray-300 font-mono">
                 <div>
@@ -896,7 +939,7 @@ const SettingsPage: React.FC = () => {
   const renderSupportSettings = () => (
     <div className="space-y-6">
       {/* Help & Support */}
-      <GlassCard className="p-6">
+      <GlassCard className="p-6 rounded-xl">
         <h3 className="text-xl font-semibold text-white mb-4 flex items-center gap-3">
           <HelpCircle className="text-blue-400" size={24} />
           Help & Support
@@ -930,29 +973,29 @@ const SettingsPage: React.FC = () => {
       </GlassCard>
 
       {/* System Information */}
-      <GlassCard className="p-6">
+      <GlassCard className="p-6 rounded-xl">
         <h3 className="text-xl font-semibold text-white mb-4 flex items-center gap-3">
           <Info className="text-gray-400" size={24} />
           System Information
         </h3>
 
         <div className="space-y-3">
-          <div className="flex justify-between items-center p-3 glass-panel-secondary rounded-lg border border-white/10">
+          <div className="flex justify-between items-center p-3 glass-panel-secondary rounded-xl border border-white/10">
             <span className="text-gray-300">App Version</span>
             <span className="text-white">1.0.0</span>
           </div>
 
-          <div className="flex justify-between items-center p-3 glass-panel-secondary rounded-lg border border-white/10">
+          <div className="flex justify-between items-center p-3 glass-panel-secondary rounded-xl border border-white/10">
             <span className="text-gray-300">Contract Version</span>
             <span className="text-white">2.0.0</span>
           </div>
 
-          <div className="flex justify-between items-center p-3 glass-panel-secondary rounded-lg border border-white/10">
+          <div className="flex justify-between items-center p-3 glass-panel-secondary rounded-xl border border-white/10">
             <span className="text-gray-300">Last Sync</span>
             <span className="text-white">{new Date().toLocaleTimeString()}</span>
           </div>
 
-          <div className="flex justify-between items-center p-3 glass-panel-secondary rounded-lg border border-white/10">
+          <div className="flex justify-between items-center p-3 glass-panel-secondary rounded-xl border border-white/10">
             <span className="text-gray-300">Network Status</span>
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 bg-green-400 rounded-full"></div>
@@ -1009,7 +1052,7 @@ const SettingsPage: React.FC = () => {
                 >
                   <div className="flex items-center gap-2">
                     {saving ? (
-                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                      <div className="animate-spin rounded-xl h-4 w-4 border-2 border-white border-t-transparent"></div>
                     ) : (
                       <Save size={16} />
                     )}
@@ -1078,6 +1121,14 @@ const SettingsPage: React.FC = () => {
           </motion.div>
         </div>
       </main>
+
+      {/* Disconnect Modal */}
+      <DisconnectModal
+        isOpen={showDisconnectModal}
+        onConfirm={handleDisconnectConfirm}
+        onCancel={handleDisconnectCancel}
+        isDisconnecting={disconnecting}
+      />
     </div>
   );
 };

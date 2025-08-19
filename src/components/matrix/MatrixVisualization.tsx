@@ -247,19 +247,19 @@ export const MatrixVisualization: React.FC<MatrixVisualizationProps> = ({
       {/* Compact Earnings */}
       <div className="grid grid-cols-2 gap-2 mt-auto p-6 -mx-6">
         <div className="bg-black/20 rounded-xl p-3 hover:bg-black/30 hover:scale-105 transition-all duration-200">
-                      <div className="flex items-center gap-1 mb-1">
-              <TrendingUp className="text-green-400" size={12} />
+          <div className="flex items-center gap-1 mb-1">
+            <TrendingUp className="text-green-400" size={12} />
               <span className="text-gray-400 text-xs select-none">Matrix</span>
-            </div>
+          </div>
           <div className="text-green-400 font-bold text-sm font-mono">
             {formatBNB(matrixLevel.levelProfit)}
           </div>
         </div>
         <div className="bg-black/20 rounded-xl p-3 hover:bg-black/30 hover:scale-105 transition-all duration-200">
-                      <div className="flex items-center gap-1 mb-1">
-              <Users className="text-purple-400" size={12} />
+          <div className="flex items-center gap-1 mb-1">
+            <Users className="text-purple-400" size={12} />
               <span className="text-gray-400 text-xs select-none">Bonus</span>
-            </div>
+          </div>
           <div className="text-purple-400 font-bold text-sm font-mono">
             {formatBNB(matrixLevel.partnerBonus)}
           </div>
@@ -345,12 +345,12 @@ export const EarningsOverview: React.FC<{
   const nextLevelCost = activatedLevelsCount < 16 ? (0.05 * Math.pow(2, activatedLevelsCount)) : 0;
 
   return (
-    <motion.div
+      <motion.div
       className="relative bg-gradient-to-br from-black/40 to-gray-900/60 backdrop-blur-xl rounded-2xl border border-cyan-400/20 overflow-hidden"
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.6 }}
-    >
+        transition={{ duration: 0.6 }}
+      >
       {/* Glowing border effect */}
       <div className="absolute inset-0 bg-gradient-to-r from-cyan-400/10 via-blue-500/10 to-purple-600/10 rounded-2xl opacity-50"></div>
       
@@ -389,20 +389,20 @@ export const EarningsOverview: React.FC<{
 
         {/* Main stats grid */}
         <div className="grid grid-cols-4 gap-4 mb-6">
-          {/* Total Earnings */}
-          <motion.div
+              {/* Total Earnings */}
+              <motion.div
             className="relative group cursor-pointer"
             whileHover={{ y: -2 }}
-            transition={{ duration: 0.2 }}
-          >
+                transition={{ duration: 0.2 }}
+              >
             <div className="bg-gradient-to-br from-cyan-500/10 to-blue-500/10 rounded-xl p-4 border border-cyan-400/20 group-hover:border-cyan-400/40 transition-all duration-300">
               <div className="flex items-center gap-2 mb-2">
                 <Wallet className="text-cyan-400" size={16} />
                 <span className="text-gray-400 text-xs font-medium">TOTAL EARNINGS</span>
-              </div>
+                    </div>
               <div className="text-cyan-400 text-xl font-bold font-mono">
-                {formatBNB(totalEarnings)}
-              </div>
+                      {formatBNB(totalEarnings)}
+                    </div>
               <div className="text-gray-500 text-xs">BNB</div>
             </div>
           </motion.div>
@@ -420,54 +420,54 @@ export const EarningsOverview: React.FC<{
               </div>
               <div className="text-green-400 text-xl font-bold font-mono">
                 {formatBNB(totalEarnings - totalPartnerBonus)}
-              </div>
+                  </div>
               <div className="text-gray-500 text-xs">BNB</div>
-            </div>
-          </motion.div>
+                </div>
+              </motion.div>
 
           {/* Referral Bonus */}
-          <motion.div
+              <motion.div
             className="relative group cursor-pointer"
             whileHover={{ y: -2 }}
-            transition={{ duration: 0.2 }}
-          >
+                transition={{ duration: 0.2 }}
+              >
             <div className="bg-gradient-to-br from-purple-500/10 to-pink-500/10 rounded-xl p-4 border border-purple-400/20 group-hover:border-purple-400/40 transition-all duration-300">
               <div className="flex items-center gap-2 mb-2">
                 <Award className="text-purple-400" size={16} />
                 <span className="text-gray-400 text-xs font-medium">REFERRAL BONUS</span>
-              </div>
+                    </div>
               <div className="text-purple-400 text-xl font-bold font-mono">
-                {formatBNB(totalPartnerBonus)}
-              </div>
+                      {formatBNB(totalPartnerBonus)}
+                    </div>
               <div className="text-gray-500 text-xs">BNB</div>
-            </div>
-          </motion.div>
+                </div>
+              </motion.div>
 
-          {/* Active Levels */}
-          <motion.div
+              {/* Active Levels */}
+              <motion.div
             className="relative group cursor-pointer"
             whileHover={{ y: -2 }}
-            transition={{ duration: 0.2 }}
-          >
+                transition={{ duration: 0.2 }}
+              >
             <div className="bg-gradient-to-br from-blue-500/10 to-indigo-500/10 rounded-xl p-4 border border-blue-400/20 group-hover:border-blue-400/40 transition-all duration-300">
               <div className="flex items-center gap-2 mb-2">
                 <Activity className="text-blue-400" size={16} />
                 <span className="text-gray-400 text-xs font-medium">ACTIVE LEVELS</span>
-              </div>
+                    </div>
               <div className="text-blue-400 text-xl font-bold">
-                <span className="bg-gradient-to-r from-blue-300 to-blue-500 bg-clip-text text-transparent">
-                  {activatedLevelsCount}
-                </span>
+                      <span className="bg-gradient-to-r from-blue-300 to-blue-500 bg-clip-text text-transparent">
+                        {activatedLevelsCount}
+                      </span>
                 <span className="text-gray-500 text-sm">/{totalLevels}</span>
-              </div>
+                    </div>
               <div className="text-gray-500 text-xs">Matrices</div>
+                </div>
+              </motion.div>
             </div>
-          </motion.div>
-        </div>
 
 
-      </div>
-    </motion.div>
+          </div>
+      </motion.div>
   );
 };
 
@@ -727,7 +727,7 @@ export const ProgramViewGrid: React.FC<{
           const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
           
           // Force recalculation by using timeUpdate
-          timeUpdate; // eslint-disable-line no-unused-expressions
+          void timeUpdate;
           
           if (diffHours >= 24) {
             const days = Math.floor(diffHours / 24);

@@ -280,8 +280,8 @@ const UserDashboard: React.FC<{ userData: UserData }> = ({ userData }) => {
           {userData.levels
             .sort((a, b) => a.level - b.level) // Ensure levels are sorted by level number
             .map((level) => (
-              <LevelStatus key={level.level} levelData={level} />
-            ))}
+            <LevelStatus key={level.level} levelData={level} />
+          ))}
         </div>
         
 
@@ -303,7 +303,7 @@ export const AccountLookup: React.FC<AccountLookupProps> = ({ className = '' }) 
   // Real blockchain data fetcher
   const fetchUserDataFromBlockchain = async (searchInput: string): Promise<UserData> => {
     let userAddress: string;
-    let displayId: string; // Store the display ID for showing to user
+    let displayId: string = ''; // Store the display ID for showing to user
     
     // Determine if input is user ID or wallet address
     if (searchInput.startsWith('0x') && searchInput.length === 42) {
@@ -323,11 +323,6 @@ export const AccountLookup: React.FC<AccountLookupProps> = ({ className = '' }) 
       throw new Error('Invalid format. Enter User ID (numeric) or Wallet Address (0x...)');
     }
 
-    // If searching by wallet address, we need to calculate display ID
-    if (!displayId) {
-      displayId = formatUserId(id.toString());
-    }
-
     const contract = await getQpcContract(false); // Read-only
 
     // Check if user is registered
@@ -339,6 +334,11 @@ export const AccountLookup: React.FC<AccountLookupProps> = ({ className = '' }) 
     // Get user basic info
     const [id, registrationTimestamp, referrerId, referrer, referrals, referralPayoutSum, levelsRewardSum, missedReferralPayoutSum] = 
       await contract.getUser(userAddress);
+
+    // If searching by wallet address, we need to calculate display ID
+    if (!displayId) {
+      displayId = formatUserId(id.toString());
+    }
 
     // Get user levels data
     const [active, payouts, maxPayouts, activationTimes, rewardSum, referralPayoutSumByLevel] = 

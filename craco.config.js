@@ -22,7 +22,14 @@ module.exports = {
 				"assert": require.resolve("assert"),
 				"buffer": require.resolve("buffer"),
 				"process": require.resolve("process/browser"),
+				"process/browser": require.resolve("process/browser"),
 				"util": require.resolve("util")
+			};
+
+			// Add alias for process/browser without extension
+			webpackConfig.resolve.alias = {
+				...webpackConfig.resolve.alias,
+				"process/browser": require.resolve("process/browser"),
 			};
 
 			// Provide process and Buffer globally

@@ -34,7 +34,9 @@ export const LiveActivationsTable: React.FC<LiveActivationsTableProps> = ({ clas
       if (!contract) return;
 
       // Get recent events from the last 1000 blocks (~50 minutes on BSC)
-      const currentBlock = await contract.provider?.getBlockNumber();
+      const provider = contract.runner?.provider;
+      if (!provider) return;
+      const currentBlock = await provider.getBlockNumber();
       const fromBlock = Math.max(0, currentBlock - 1000);
 
       const events: LiveActivation[] = [];
