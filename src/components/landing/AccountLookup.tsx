@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, User, Eye, Award, TrendingUp, Wallet, Activity } from 'lucide-react';
+import { getQpcContract, formatBNB, LEVEL_PRICES } from '../../utils/contract';
+import { toast } from 'react-hot-toast';
 
 // ===========================================
 // 🎨 TYPE DEFINITIONS
@@ -12,6 +14,7 @@ interface AccountLookupProps {
 
 interface UserData {
   id: string;
+  address: string;
   joinDate: Date;
   currentLevel: number;
   totalEarnings: number;
@@ -20,12 +23,16 @@ interface UserData {
   activeMatrices: number;
   completedCycles: number;
   lastActivity: Date;
+  referralEarnings: number;
+  missedReferralEarnings: number;
   levels: {
     level: number;
     isActive: boolean;
     cyclesCompleted: number;
     earnings: number;
-    joinDate: Date;
+    referralEarnings: number;
+    maxPayouts: number;
+    activationTimes: number;
   }[];
 }
 
@@ -53,7 +60,7 @@ const SearchInput: React.FC<{
           value={value}
           onChange={(e) => onChange(e.target.value)}
           onKeyPress={handleKeyPress}
-          placeholder="Enter User ID (e.g. 1234567)"
+          placeholder="Enter User ID (e.g. 1234) or Wallet Address (0x...)"
           className="w-full bg-black/60 border border-neon-cyan/30 rounded-lg p-4 pr-12 text-white font-mono placeholder-white/40 focus:border-neon-cyan focus:outline-none transition-colors"
         />
         <motion.button
@@ -143,7 +150,10 @@ const LevelStatus: React.FC<{ levelData: UserData['levels'][0] }> = ({ levelData
         <div>
           <div className="text-white font-cyberpunk text-sm">Level {levelData.level}</div>
           <div className="text-white/60 text-xs">
-            {levelData.cyclesCompleted} cycles • {levelData.earnings.toFixed(4)} BNB
+            {levelData.cyclesCompleted}/{levelData.maxPayouts} cycles • {formatBNB(levelData.earnings)} BNB
+          </div>
+          <div className="text-white/40 text-xs">
+            Ref: {formatBNB(levelData.referralEarnings)} BNB • Activations: {levelData.activationTimes}
           </div>
         </div>
       </div>
@@ -200,8 +210,13 @@ const UserDashboard: React.FC<{ userData: UserData }> = ({ userData }) => {
             <h3 className="text-xl font-cyberpunk text-white mb-1">USER.PROFILE</h3>
             <p className="text-neon-cyan font-mono text-sm">{formatUserId(userData.id)}</p>
             <p className="text-white/60 text-xs font-terminal">
-              Joined: {formatDate(userData.joinDate)} • Last Activity:{' '}
-              {formatDate(userData.lastActivity)}
+              Address: {userData.address.slice(0, 6)}...{userData.address.slice(-4)}
+            </p>
+            <p className="text-white/60 text-xs font-terminal">
+              Joined: {formatDate(userData.joinDate)}
+              {userData.missedReferralEarnings > 0 && (
+                <span className="text-red-400"> • Missed: {formatBNB(userData.missedReferralEarnings)} BNB</span>
+              )}
             </p>
           </div>
         </div>
@@ -211,30 +226,30 @@ const UserDashboard: React.FC<{ userData: UserData }> = ({ userData }) => {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <StatCard
           icon={TrendingUp}
-          label="TOTAL EARNINGS"
-          value={`${userData.totalEarnings.toFixed(4)}`}
-          subValue="BNB"
+          label="MATRIX EARNINGS"
+          value={formatBNB(userData.totalEarnings)}
+          subValue="BNB from levels"
           color="green"
         />
         <StatCard
           icon={Wallet}
-          label="TOTAL INVESTED"
-          value={`${userData.totalInvested.toFixed(4)}`}
-          subValue="BNB"
+          label="REFERRAL EARNINGS"
+          value={formatBNB(userData.referralEarnings)}
+          subValue="BNB from referrals"
           color="cyan"
         />
         <StatCard
           icon={Award}
-          label="CURRENT LEVEL"
+          label="HIGHEST LEVEL"
           value={userData.currentLevel.toString()}
-          subValue={`${userData.activeMatrices} active`}
+          subValue={`${userData.activeMatrices}/16 active`}
           color="magenta"
         />
         <StatCard
           icon={Activity}
-          label="REFERRALS"
+          label="TOTAL REFERRALS"
           value={userData.referrals.toString()}
-          subValue={`${userData.completedCycles} cycles`}
+          subValue={`${userData.completedCycles} payouts received`}
           color="cyan"
         />
       </div>
@@ -253,11 +268,15 @@ const UserDashboard: React.FC<{ userData: UserData }> = ({ userData }) => {
           <Eye size={20} className="text-neon-cyan" />
           <span>MATRIX.LEVELS.STATUS</span>
         </h4>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {userData.levels.map((level) => (
-            <LevelStatus key={level.level} levelData={level} />
-          ))}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+          {userData.levels
+            .sort((a, b) => a.level - b.level) // Ensure levels are sorted by level number
+            .map((level) => (
+              <LevelStatus key={level.level} levelData={level} />
+            ))}
         </div>
+        
+
       </div>
     </motion.div>
   );
@@ -273,37 +292,110 @@ export const AccountLookup: React.FC<AccountLookupProps> = ({ className = '' }) 
   const [userData, setUserData] = useState<UserData | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Mock user data generator
-  const generateMockUserData = (id: string): UserData => {
-    const joinDate = new Date(Date.now() - Math.random() * 365 * 24 * 60 * 60 * 1000);
-    const levels = Array.from({ length: 16 }, (_, i) => {
-      const level = i + 1;
-      const isActive = Math.random() > 0.6; // 40% chance of being active
-      return {
-        level,
-        isActive,
-        cyclesCompleted: isActive ? Math.floor(Math.random() * 10) + 1 : 0,
-        earnings: isActive ? Math.random() * 5 : 0,
-        joinDate: new Date(joinDate.getTime() + Math.random() * 30 * 24 * 60 * 60 * 1000),
-      };
-    });
+  // Real blockchain data fetcher
+  const fetchUserDataFromBlockchain = async (searchInput: string): Promise<UserData> => {
+    let userAddress: string;
+    
+    // Determine if input is user ID or wallet address
+    if (searchInput.startsWith('0x') && searchInput.length === 42) {
+      // It's a wallet address
+      userAddress = searchInput.toLowerCase();
+    } else if (/^\d+$/.test(searchInput)) {
+      // It's a user ID, get address from contract
+      const contract = await getQpcContract(false); // Read-only
+      userAddress = await contract.usersAddressById(searchInput);
+      
+      if (!userAddress || userAddress === '0x0000000000000000000000000000000000000000') {
+        throw new Error('User ID not found in the system');
+      }
+    } else {
+      throw new Error('Invalid format. Enter User ID (numeric) or Wallet Address (0x...)');
+    }
 
-    const activeLevels = levels.filter((l) => l.isActive);
-    const totalEarnings = levels.reduce((sum, l) => sum + l.earnings, 0);
-    const totalInvested = activeLevels.length * 0.5; // Mock investment
+    const contract = await getQpcContract(false); // Read-only
 
-    return {
-      id,
-      joinDate,
-      currentLevel: Math.max(...activeLevels.map((l) => l.level), 1),
-      totalEarnings,
-      totalInvested,
-      referrals: Math.floor(Math.random() * 100) + 5,
-      activeMatrices: activeLevels.length,
-      completedCycles: levels.reduce((sum, l) => sum + l.cyclesCompleted, 0),
-      lastActivity: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000),
-      levels,
+    // Check if user is registered
+    const isRegistered = await contract.isUserRegistered(userAddress);
+    if (!isRegistered) {
+      throw new Error('User is not registered in the system');
+    }
+
+    // Get user basic info
+    const [id, registrationTimestamp, referrerId, referrer, referrals, referralPayoutSum, levelsRewardSum, missedReferralPayoutSum] = 
+      await contract.getUser(userAddress);
+
+    // Get user levels data
+    const [active, payouts, maxPayouts, activationTimes, rewardSum, referralPayoutSumByLevel] = 
+      await contract.getUserLevels(userAddress);
+
+    // Convert BigInt values to numbers
+    const userData: UserData = {
+      id: id.toString(),
+      address: userAddress,
+      joinDate: new Date(Number(registrationTimestamp) * 1000),
+      referrals: Number(referrals),
+      referralEarnings: Number(referralPayoutSum) / Math.pow(10, 18), // Convert from wei to BNB
+      totalEarnings: Number(levelsRewardSum) / Math.pow(10, 18), // Convert from wei to BNB
+      missedReferralEarnings: Number(missedReferralPayoutSum) / Math.pow(10, 18),
+      lastActivity: new Date(), // We'll use current time as we don't track this in contract
+      activeMatrices: 0,
+      completedCycles: 0,
+      currentLevel: 1,
+      totalInvested: 0,
+      levels: []
     };
+
+    // Process levels data
+    const levels = [];
+    let activeMatricesCount = 0;
+    let totalCycles = 0;
+    let currentLevel = 1;
+    let totalInvested = 0;
+
+    for (let level = 1; level <= 16; level++) {
+      // Contract returns arrays where index matches level number (index 0 is unused)
+      const isActive = active[level];
+      const levelPayouts = Number(payouts[level]);
+      const levelMaxPayouts = Number(maxPayouts[level]);
+      const levelActivationTimes = Number(activationTimes[level]);
+      const levelEarnings = Number(rewardSum[level]) / Math.pow(10, 18);
+      const levelReferralEarnings = Number(referralPayoutSumByLevel[level]) / Math.pow(10, 18);
+
+      if (isActive) {
+        activeMatricesCount++;
+        totalInvested += LEVEL_PRICES[level];
+        if (level > currentLevel) {
+          currentLevel = level;
+        }
+      }
+
+      totalCycles += levelPayouts;
+
+      // Show all 16 levels
+      const shouldShowLevel = true;
+      
+      if (shouldShowLevel) {
+        levels.push({
+          level, // Now correctly: level 1 has data from active[1], level 2 from active[2], etc.
+          isActive,
+          cyclesCompleted: levelPayouts,
+          earnings: levelEarnings,
+          referralEarnings: levelReferralEarnings,
+          maxPayouts: levelMaxPayouts,
+          activationTimes: levelActivationTimes,
+        });
+      }
+    }
+
+    userData.activeMatrices = activeMatricesCount;
+    userData.completedCycles = totalCycles;
+    userData.currentLevel = currentLevel;
+    userData.totalInvested = totalInvested;
+    userData.levels = levels;
+
+
+
+    return userData;
   };
 
   const handleSearch = async () => {
@@ -314,19 +406,24 @@ export const AccountLookup: React.FC<AccountLookupProps> = ({ className = '' }) 
     setUserData(null);
 
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-
-      // Validate ID format (basic check)
-      if (!/^\d+$/.test(searchValue) || searchValue.length < 4) {
-        throw new Error('Invalid ID format. Use numeric ID (e.g. 1234567)');
-      }
-
-      // Generate mock data
-      const mockData = generateMockUserData(searchValue);
-      setUserData(mockData);
+      // Fetch real data from blockchain
+      const realUserData = await fetchUserDataFromBlockchain(searchValue.trim());
+      setUserData(realUserData);
+      
+      // Show success toast
+      toast.success(`User ${realUserData.id} data loaded successfully!`, {
+        duration: 3000,
+        position: 'top-center',
+      });
     } catch (err: any) {
-      setError(err.message || 'User not found');
+      const errorMessage = err.message || 'Failed to fetch user data';
+      setError(errorMessage);
+      
+      // Show error toast
+      toast.error(errorMessage, {
+        duration: 4000,
+        position: 'top-center',
+      });
     } finally {
       setIsLoading(false);
     }
@@ -371,6 +468,7 @@ export const AccountLookup: React.FC<AccountLookupProps> = ({ className = '' }) 
             onSearch={handleSearch}
             isLoading={isLoading}
           />
+
         </motion.div>
 
         {/* Results */}
@@ -380,7 +478,7 @@ export const AccountLookup: React.FC<AccountLookupProps> = ({ className = '' }) 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              className="max-w-md mx-auto"
+              className="max-w-lg mx-auto"
             >
               <div
                 className="hud-panel hud-panel-secondary p-6 rounded-lg text-center"
@@ -390,8 +488,11 @@ export const AccountLookup: React.FC<AccountLookupProps> = ({ className = '' }) 
                   backdropFilter: 'blur(4px)',
                 }}
               >
-                <div className="text-red-400 text-lg font-cyberpunk mb-2">ERROR.404</div>
-                <div className="text-white/80">{error}</div>
+                <div className="text-red-400 text-lg font-cyberpunk mb-2">SEARCH.ERROR</div>
+                <div className="text-white/80 mb-3">{error}</div>
+                <div className="text-white/60 text-xs font-terminal">
+                  Try entering a valid User ID (e.g. 1, 2, 3...) or Wallet Address (0x...)
+                </div>
               </div>
             </motion.div>
           )}
