@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { formatUserId } from '../utils/format';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   User,
@@ -178,7 +179,7 @@ const SettingsPage: React.FC = () => {
   };
 
   const copyReferralLink = () => {
-    const link = `https://quantumprofitchain.com?ref=${contractInfo?.id || 'YOUR_ID'}`;
+    const link = `https://quantumprofitchain.com?ref=${formatUserId(contractInfo?.id) || 'YOUR_ID'}`;
     navigator.clipboard.writeText(link);
   };
 
@@ -211,7 +212,7 @@ const SettingsPage: React.FC = () => {
           <div>
             <label className="block text-gray-300 text-sm mb-2">User ID</label>
             <div className="glass-panel-secondary p-3 rounded-lg text-gray-400 border border-white/10">
-              #{contractInfo?.id || 'Not registered'}
+              #{formatUserId(contractInfo?.id) || 'Not registered'}
             </div>
           </div>
 
@@ -731,7 +732,7 @@ const SettingsPage: React.FC = () => {
             <label className="block text-gray-300 text-sm mb-2">Your Referral Link</label>
             <div className="flex gap-2">
               <div className="flex-1 glass-panel-secondary p-3 rounded-lg text-white font-mono text-sm border border-white/10">
-                https://quantumprofitchain.com?ref={contractInfo?.id || 'YOUR_ID'}
+                https://quantumprofitchain.com?ref={formatUserId(contractInfo?.id) || 'YOUR_ID'}
               </div>
               <GlassButton variant="secondary" onClick={copyReferralLink} className="px-4">
                 <Copy size={16} />

@@ -81,3 +81,10 @@ export const formatFileSize = (bytes: number): string => {
   const i = Math.floor(Math.log(bytes) / Math.log(1024));
   return Math.round((bytes / Math.pow(1024, i)) * 100) / 100 + ' ' + sizes[i];
 };
+
+export const formatUserId = (id: number | string | undefined | null): string => {
+  if (!id) return '—';
+  const numericId = typeof id === 'string' ? parseInt(id, 10) : id;
+  if (isNaN(numericId)) return '—';
+  return (36145 + numericId).toString();
+};

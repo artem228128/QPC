@@ -2,7 +2,15 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, User, Eye, Award, TrendingUp, Wallet, Activity } from 'lucide-react';
 import { getQpcContract, formatBNB, LEVEL_PRICES } from '../../utils/contract';
+import { formatUserId } from '../../utils/format';
 import { toast } from 'react-hot-toast';
+
+// Convert display ID (36145+) to real contract ID
+const parseDisplayId = (displayId: string): string => {
+  const numId = parseInt(displayId, 10);
+  if (isNaN(numId) || numId < 36146) return displayId; // Keep as is if not our format
+  return (numId - 36145).toString();
+};
 
 // ===========================================
 // 🎨 TYPE DEFINITIONS
@@ -60,7 +68,7 @@ const SearchInput: React.FC<{
           value={value}
           onChange={(e) => onChange(e.target.value)}
           onKeyPress={handleKeyPress}
-          placeholder="Enter User ID (e.g. 1234) or Wallet Address (0x...)"
+          placeholder="Enter User ID (e.g. 36146) or Wallet Address (0x...)"
           className="w-full bg-black/60 border border-neon-cyan/30 rounded-lg p-4 pr-12 text-white font-mono placeholder-white/40 focus:border-neon-cyan focus:outline-none transition-colors"
         />
         <motion.button
@@ -208,7 +216,7 @@ const UserDashboard: React.FC<{ userData: UserData }> = ({ userData }) => {
           </div>
           <div className="flex-1">
             <h3 className="text-xl font-cyberpunk text-white mb-1">USER.PROFILE</h3>
-            <p className="text-neon-cyan font-mono text-sm">{formatUserId(userData.id)}</p>
+            <p className="text-neon-cyan font-mono text-sm">#{userData.id}</p>
             <p className="text-white/60 text-xs font-terminal">
               Address: {userData.address.slice(0, 6)}...{userData.address.slice(-4)}
             </p>
@@ -295,21 +303,29 @@ export const AccountLookup: React.FC<AccountLookupProps> = ({ className = '' }) 
   // Real blockchain data fetcher
   const fetchUserDataFromBlockchain = async (searchInput: string): Promise<UserData> => {
     let userAddress: string;
+    let displayId: string; // Store the display ID for showing to user
     
     // Determine if input is user ID or wallet address
     if (searchInput.startsWith('0x') && searchInput.length === 42) {
       // It's a wallet address
       userAddress = searchInput.toLowerCase();
     } else if (/^\d+$/.test(searchInput)) {
-      // It's a user ID, get address from contract
+      // It's a user ID, convert display ID to contract ID and get address
+      const contractId = parseDisplayId(searchInput);
+      displayId = searchInput; // Keep the original display ID for showing
       const contract = await getQpcContract(false); // Read-only
-      userAddress = await contract.usersAddressById(searchInput);
+      userAddress = await contract.usersAddressById(contractId);
       
       if (!userAddress || userAddress === '0x0000000000000000000000000000000000000000') {
         throw new Error('User ID not found in the system');
       }
     } else {
       throw new Error('Invalid format. Enter User ID (numeric) or Wallet Address (0x...)');
+    }
+
+    // If searching by wallet address, we need to calculate display ID
+    if (!displayId) {
+      displayId = formatUserId(id.toString());
     }
 
     const contract = await getQpcContract(false); // Read-only
@@ -330,7 +346,7 @@ export const AccountLookup: React.FC<AccountLookupProps> = ({ className = '' }) 
 
     // Convert BigInt values to numbers
     const userData: UserData = {
-      id: id.toString(),
+      id: displayId, // Use display ID instead of contract ID
       address: userAddress,
       joinDate: new Date(Number(registrationTimestamp) * 1000),
       referrals: Number(referrals),

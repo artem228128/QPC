@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { formatUserId } from '../../utils/format';
 import { motion } from 'framer-motion';
 import { Users, Copy, Share2, Calendar, TrendingUp, UserPlus } from 'lucide-react';
 import { GlassCard, GlassButton } from '../glass';
@@ -90,7 +91,7 @@ export const PartnerBonusTable: React.FC = () => {
   }, [walletState.address, contractInfo?.id]);
 
   // Calculate real statistics
-  const userReferralLink = contractInfo ? generateReferralLink(contractInfo.id.toString()) : '';
+  const userReferralLink = contractInfo ? generateReferralLink(formatUserId(contractInfo.id)) : '';
   const totalPartnerBonus = partnerBonuses.reduce((sum, bonus) => sum + bonus.bonusReceived, 0);
   const partnersCount = new Set(partnerBonuses.map(bonus => bonus.playerId)).size; // Unique partners from events
   const bonusTransactions = partnerBonuses.length;

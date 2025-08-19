@@ -1,4 +1,5 @@
 import React, { useCallback } from 'react';
+import { formatUserId } from '../utils/format';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
@@ -179,7 +180,7 @@ const DashboardPage: React.FC = () => {
   const [contractCopied, setContractCopied] = React.useState(false);
 
   const copyReferralLink = useCallback(async () => {
-    const userId = contractInfo?.id?.toString() || '1';
+    const userId = formatUserId(contractInfo?.id);
     const referralLink = generateReferralLink(userId);
     await navigator.clipboard.writeText(referralLink);
     setReferralCopied(true);
@@ -193,7 +194,7 @@ const DashboardPage: React.FC = () => {
   }, []);
 
   const shareReferralLink = useCallback(() => {
-    const userId = contractInfo?.id?.toString() || '1';
+    const userId = formatUserId(contractInfo?.id);
     const referralLink = generateReferralLink(userId);
     
     if (navigator.share) {
@@ -375,7 +376,7 @@ const DashboardPage: React.FC = () => {
                         <div className="flex justify-between items-center">
                           <span className="text-gray-400">User ID:</span>
                           <span className="text-cyan-400 font-bold">
-                            #{contractInfo?.id ?? '—'}
+                            #{formatUserId(contractInfo?.id)}
                           </span>
                         </div>
                       </div>
@@ -407,7 +408,7 @@ const DashboardPage: React.FC = () => {
 
                     <div className="space-y-3">
                       <div className="bg-black/30 rounded-lg p-3 font-mono text-sm text-white truncate border border-white/10">
-                        {generateReferralLink(contractInfo?.id?.toString() || '1')}
+                        {generateReferralLink(formatUserId(contractInfo?.id))}
                       </div>
                       <div className="flex gap-2">
                         <motion.button

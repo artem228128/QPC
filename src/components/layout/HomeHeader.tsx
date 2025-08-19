@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { formatUserId } from '../../utils/format';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Wallet, Copy, ExternalLink, Shield, Activity, ChevronDown } from 'lucide-react';
 import { useWallet } from '../../hooks/useWallet';
@@ -207,7 +208,7 @@ const WalletInfo: React.FC = () => {
                   <div className="flex items-center space-x-2">
                     <Shield className="w-4 h-4 text-green-400" />
                     <span className="text-green-400 font-medium">Registered</span>
-                    <span className="text-gray-400 text-sm">ID: #{contractInfo.id}</span>
+                    <span className="text-gray-400 text-sm">ID: #{formatUserId(contractInfo.id)}</span>
                   </div>
                 </div>
               )}

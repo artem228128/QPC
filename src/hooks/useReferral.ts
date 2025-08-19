@@ -2,6 +2,13 @@ import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { getQpcContract } from '../utils/contract';
 
+// Convert display ID (36145+) to real contract ID
+const parseDisplayId = (displayId: string): string => {
+  const numId = parseInt(displayId, 10);
+  if (isNaN(numId) || numId < 36146) return displayId; // Keep as is if not our format
+  return (numId - 36145).toString();
+};
+
 interface ReferrerInfo {
   id: string;
   address: string;
@@ -28,8 +35,12 @@ export const useReferral = () => {
         return null;
       }
 
+      // Convert display ID to real contract ID
+      const contractId = parseDisplayId(referrerId);
+      console.log(`DEBUG: Display ID ${referrerId} -> Contract ID ${contractId}`);
+
       // Try to get user address by ID
-      const userAddress = await contract.usersAddressById(referrerId);
+      const userAddress = await contract.usersAddressById(contractId);
       console.log(`DEBUG: ID ${referrerId} -> Address: ${userAddress}`);
       
       if (userAddress && userAddress !== '0x0000000000000000000000000000000000000000') {
