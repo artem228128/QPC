@@ -1,0 +1,1 @@
+cd "/Users/macbookair/Desktop/smart game/quantum-profit-chain/chain" && npx hardhat run test/referral-system-full.js | catwork localhost

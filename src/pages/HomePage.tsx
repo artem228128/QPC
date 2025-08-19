@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { LandingHeader, HomeHeader } from '../components/layout';
 import {
   HeroSection,
@@ -10,12 +10,17 @@ import {
 } from '../components/landing';
 import { AccountLookup } from '../components/landing/AccountLookup';
 import { useWallet } from '../hooks/useWallet';
+import { useReferral } from '../hooks/useReferral';
 import { NeuralBackground } from '../components/neural';
+import { GlassCard } from '../components/glass';
+import { Users, User, CheckCircle } from 'lucide-react';
 // Removed unused toast import
 
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { walletState, isUserRegistered } = useWallet();
+  const { referrerInfo, hasReferrer } = useReferral();
 
   // Wallet connection handler - currently unused but kept for future use
   // const _handleConnectWallet = useCallback(() => {
@@ -29,14 +34,18 @@ const HomePage: React.FC = () => {
       return;
     }
 
+    // Preserve referral parameter when navigating
+    const refParam = searchParams.get('ref');
+    const queryString = refParam ? `?ref=${refParam}` : '';
+
     // Check on-chain registration and route accordingly
     const registered = await isUserRegistered();
     if (registered) {
-      navigate('/dashboard');
+      navigate(`/dashboard${queryString}`);
     } else {
-      navigate('/activate');
+      navigate(`/activate${queryString}`);
     }
-  }, [navigate, walletState.isConnected, isUserRegistered]);
+  }, [navigate, searchParams, walletState.isConnected, isUserRegistered]);
 
   const handleHelpMe = useCallback(() => {
     const faqEl = document.getElementById('faq');
@@ -44,6 +53,8 @@ const HomePage: React.FC = () => {
       faqEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   }, []);
+
+  // Referral info is now integrated into HeroSection - old component removed
 
   return (
     <div className="min-h-screen">
@@ -53,11 +64,14 @@ const HomePage: React.FC = () => {
       {/* Neural Background */}
       <NeuralBackground intensity={0.8} particleCount={30} />
 
+      {/* Referral Information moved to Hero section */}
+
       {/* Hero Section */}
       <HeroSection
         onStartGame={handleStartGame}
         onEnterWithReferral={handleHelpMe}
         isWalletConnected={walletState.isConnected}
+        referrerInfo={hasReferrer ? referrerInfo : null}
       />
 
       {/* Stats Panel */}

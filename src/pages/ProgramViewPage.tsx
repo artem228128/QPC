@@ -11,12 +11,13 @@ import { useWallet } from '../hooks/useWallet';
 
 const ProgramViewPage: React.FC = () => {
   const navigate = useNavigate();
-  const { buyLevel, userLevels, walletState } = useWallet();
+  const { buyLevel, userLevels, walletState, isLoading } = useWallet();
   const [insufficientFundsError, setInsufficientFundsError] = React.useState<{
     show: boolean;
     level: number;
     requiredAmount: string;
   }>({ show: false, level: 0, requiredAmount: '0' });
+  const [matricesLoaded, setMatricesLoaded] = React.useState(false);
 
   const handleBack = () => {
     navigate('/dashboard');
@@ -100,24 +101,32 @@ const ProgramViewPage: React.FC = () => {
             </p>
           </motion.div>
 
-          {/* Program View Content - Full Width */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2, duration: 0.6 }}
-          >
-            <ProgramViewGrid onActivate={handleActivateLevel} userLevels={userLevels} />
-          </motion.div>
+          {/* Program View Content - render only when real data is ready */}
+          {userLevels?.active && userLevels.active.length > 0 ? (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1, duration: 0.4 }}
+            >
+              <ProgramViewGrid 
+              onActivate={handleActivateLevel} 
+              userLevels={userLevels} 
+              onDataLoaded={setMatricesLoaded}
+            />
+            </motion.div>
+          ) : null}
 
-          {/* Live Activations Table */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4, duration: 0.6 }}
-            className="mt-8"
-          >
-            <LiveActivationsTable />
-          </motion.div>
+          {/* Live Activations Table - show only after matrices are loaded */}
+          {matricesLoaded && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2, duration: 0.4 }}
+              className="mt-8"
+            >
+              <LiveActivationsTable />
+            </motion.div>
+          )}
         </div>
       </main>
 
