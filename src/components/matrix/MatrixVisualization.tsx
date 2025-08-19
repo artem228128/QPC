@@ -55,31 +55,46 @@ export const MatrixVisualization: React.FC<MatrixVisualizationProps> = ({
           </div>
         </div>
 
-        <div className="text-center py-4">
-          <div className="w-12 h-12 bg-cyan-600/20 rounded-full flex items-center justify-center mx-auto mb-3">
-            <Snowflake className="text-cyan-400" size={20} />
+        <div className="flex justify-between text-xs mb-3">
+          <span className="text-gray-400">Cycle: {matrixLevel.maxCycles || 2}/2</span>
+          <span className="text-cyan-300">Frozen</span>
+        </div>
+
+        {/* Frozen Progress Bar - same structure as active */}
+        <div className="mb-4">
+          <div className="flex justify-between text-xs mb-1">
+            <span className="text-gray-400">Completed</span>
+            <span className="text-cyan-400">100%</span>
           </div>
-          <div className="text-cyan-300 text-sm font-medium mb-1">Level Frozen</div>
-          <div className="text-gray-400 text-xs">
-            Received {matrixLevel.maxCycles} payouts. Level is temporarily frozen.
-          </div>
-          <div className="text-yellow-400 text-xs mt-1">
-            💡 Activate Level {matrixLevel.level + 1} to unfreeze and continue earning!
+          <div className="relative w-full bg-black/30 rounded-full h-2">
+            <motion.div
+              className="bg-gradient-to-r from-cyan-400 to-blue-400 h-2 rounded-full"
+              initial={{ width: 0 }}
+              animate={{ width: "100%" }}
+              transition={{ duration: 1, delay: 0.2 }}
+            />
           </div>
         </div>
 
-        <div className="space-y-2">
-          <div className="flex justify-between text-xs">
-            <span className="text-gray-400">Matrix</span>
-            <span className="text-cyan-400 font-mono">{formatBNB(matrixLevel.levelProfit)}</span>
+        {/* Compact Earnings - same as active */}
+        <div className="grid grid-cols-2 gap-2">
+          <div className="bg-black/20 rounded p-2">
+            <div className="flex items-center gap-1 mb-1">
+              <TrendingUp className="text-green-400" size={12} />
+              <span className="text-gray-400 text-xs">Matrix</span>
+            </div>
+            <div className="text-green-400 font-bold text-sm font-mono">
+              {formatBNB(matrixLevel.levelProfit)}
+            </div>
           </div>
-          <div className="flex justify-between text-xs">
-            <span className="text-gray-400">Bonus</span>
-            <span className="text-cyan-400 font-mono">{formatBNB(matrixLevel.partnerBonus)}</span>
-          </div>
-          <div className="flex justify-between text-xs">
-            <span className="text-gray-400">Status</span>
-            <span className="text-cyan-300">Frozen</span>
+          <div className="bg-black/20 rounded p-2">
+            <div className="flex items-center gap-1 mb-1">
+              <Users className="text-purple-400" size={12} />
+              <span className="text-gray-400 text-xs">Bonus</span>
+            </div>
+            <div className="text-purple-400 font-bold text-sm font-mono">
+              {formatBNB(matrixLevel.partnerBonus)}
+            </div>
           </div>
         </div>
       </GlassCard>
@@ -386,7 +401,8 @@ export const EarningsOverview: React.FC<{
 export const ProgramViewGrid: React.FC<{
   onActivate?: (level: number, priceBNB: number) => Promise<void> | void;
   userLevels?: ContractUserLevelsData | null;
-}> = ({ onActivate, userLevels }) => {
+  onDataLoaded?: (loaded: boolean) => void;
+}> = ({ onActivate, userLevels, onDataLoaded }) => {
   const { freezeUntil } = useProgramViewData(userLevels);
   const { walletState } = useWallet();
   const [activatingLevels, setActivatingLevels] = React.useState<Set<number>>(new Set());
@@ -394,6 +410,7 @@ export const ProgramViewGrid: React.FC<{
     Record<number, { place: number; total: number }>
   >({});
   const [levelFrozen, setLevelFrozen] = React.useState<Record<number, boolean>>({});
+  const [initialLoad, setInitialLoad] = React.useState(false);
 
   // Fetch queue positions for active levels
   React.useEffect(() => {
@@ -423,6 +440,8 @@ export const ProgramViewGrid: React.FC<{
         if (Object.keys(frozenMap).length) {
           setLevelFrozen((prev) => ({ ...prev, ...frozenMap }));
         }
+        setInitialLoad(true);
+        onDataLoaded?.(true);
       } catch {}
     };
 
@@ -577,11 +596,9 @@ export const ProgramViewGrid: React.FC<{
 
         // If we have precise queue data and level is NOT frozen, show progress until reward
         const qp = queuePositions[level];
-        if (qp && qp.total > 0 && !isFrozen) {
+        if (initialLoad && qp && qp.total > 0 && !isFrozen) {
           const total = Math.max(1, qp.total);
           const place = Math.max(1, qp.place || 1);
-
-
 
           // Progress показывает заполнение текущего цикла до выплаты
           // place=1 означает что выплата будет на следующем участнике -> 90%
@@ -597,9 +614,14 @@ export const ProgramViewGrid: React.FC<{
 
           // Убираем точку награды - теперь прогресс сам показывает близость к награде
           rewardPosition = undefined;
-        } else if (isFrozen || levelFrozen[level]) {
+        } else if (initialLoad && (isFrozen || levelFrozen[level])) {
           // For frozen levels, show 100% progress to indicate completion
           progress = 100;
+          nextCycleCount = 0;
+          rewardPosition = undefined;
+        } else if (!initialLoad && isActive) {
+          // Until data loads, show 0% for active levels
+          progress = 0;
           nextCycleCount = 0;
           rewardPosition = undefined;
         }

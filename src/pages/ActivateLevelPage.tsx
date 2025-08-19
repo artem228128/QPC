@@ -1,21 +1,26 @@
 import React, { useMemo, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CheckCircle, AlertTriangle, ArrowLeft, Shield, Zap } from 'lucide-react';
+import { CheckCircle, AlertTriangle, ArrowLeft, Shield, Zap, User, Edit3, Save, X } from 'lucide-react';
 import { useWallet } from '../hooks/useWallet';
+import { useReferral } from '../hooks/useReferral';
 import { LEVEL_PRICES, formatBNB } from '../utils/contract';
 import { NeuralBackground } from '../components/neural';
+import { GlassCard, GlassButton } from '../components/glass';
 
 const ALL_LEVELS = Array.from({ length: 16 }, (_, i) => i + 1);
 
 const ActivateLevelPage: React.FC = () => {
   const navigate = useNavigate();
   const { walletState, switchToBSC, contractInfo, isLoading, registerUser, buyLevel } = useWallet();
+  const { referrerInfo, isLoading: isRefLoading, customReferrerId, setReferrer, clearReferrer, getReferrerAddressForRegistration } = useReferral();
 
   const [selectedLevel, setSelectedLevel] = useState<number>(1);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [step, setStep] = useState<'form' | 'success'>('form');
   const [activationError, setActivationError] = useState<string | null>(null);
+  const [isEditingReferrer, setIsEditingReferrer] = useState<boolean>(false);
+  const [editReferrerId, setEditReferrerId] = useState<string>('');
 
   const levelPrice = useMemo(() => {
     return LEVEL_PRICES[selectedLevel] ?? 0;
@@ -30,7 +35,8 @@ const ActivateLevelPage: React.FC = () => {
 
   const hasSufficientBalance = (walletState.balance || 0) >= levelPrice;
   const isConnected = walletState.isConnected;
-  const canActivate = isConnected && isOnBSC && hasSufficientBalance;
+  // Disable activate while referrer validation/loading in progress to avoid race conditions
+  const canActivate = isConnected && isOnBSC && hasSufficientBalance && !isRefLoading;
 
   const handleSwitchNetwork = useCallback(async () => {
     await switchToBSC();
@@ -43,7 +49,12 @@ const ActivateLevelPage: React.FC = () => {
 
       // If not registered, register first
       if (!contractInfo) {
-        await registerUser();
+        const referrerAddress = await getReferrerAddressForRegistration();
+        if (referrerAddress) {
+          await registerUser(referrerAddress);
+        } else {
+          await registerUser();
+        }
       }
 
       // Real buy level call on selected network
@@ -129,26 +140,116 @@ const ActivateLevelPage: React.FC = () => {
         transition={{ duration: 0.5 }}
       >
         <div className="bg-black/40 backdrop-blur-sm rounded-2xl p-8 border border-white/10 shadow-xl shadow-black/30">
-          {/* Upline Info */}
+          {/* Upline Info with Edit Capability */}
           <div className="mb-6">
-            <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
-              <div className="w-2 h-2 bg-cyan-400 rounded-full"></div>
-              Upline Information
-            </h3>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between items-center p-2 bg-white/5 rounded-lg">
-                <span className="text-gray-400">Address:</span>
-                <span className="text-white font-mono text-xs">
-                  {contractInfo?.referrer
-                    ? `${contractInfo.referrer.slice(0, 6)}...${contractInfo.referrer.slice(-4)}`
-                    : 'Not specified'}
-                </span>
-              </div>
-              <div className="flex justify-between items-center p-2 bg-white/5 rounded-lg">
-                <span className="text-gray-400">ID:</span>
-                <span className="text-white">{contractInfo?.referrerId ?? 'Not specified'}</span>
-              </div>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+                <div className="w-2 h-2 bg-cyan-400 rounded-full"></div>
+                Upline Information
+              </h3>
+              {!contractInfo && (
+                <GlassButton
+                  variant="secondary"
+                  onClick={() => {
+                    setIsEditingReferrer(!isEditingReferrer);
+                    setEditReferrerId(customReferrerId);
+                  }}
+                  className="px-3 py-1 text-xs"
+                >
+                  <Edit3 size={12} className="mr-1" />
+                  {isEditingReferrer ? 'Cancel' : 'Edit'}
+                </GlassButton>
+              )}
             </div>
+
+            {/* Editing Mode */}
+            {isEditingReferrer && !contractInfo ? (
+              <div className="space-y-3">
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="Enter Referrer ID (e.g., 123)"
+                    value={editReferrerId}
+                    onChange={(e) => setEditReferrerId(e.target.value)}
+                    className="flex-1 p-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 transition-all"
+                  />
+                  <GlassButton
+                    variant="primary"
+                    onClick={async () => {
+                      await setReferrer(editReferrerId);
+                      setIsEditingReferrer(false);
+                    }}
+                    className="px-4"
+                  >
+                    <Save size={16} />
+                  </GlassButton>
+                </div>
+                <div className="text-xs text-gray-400">
+                  💡 Enter the ID of your referrer (the person who invited you)
+                </div>
+              </div>
+            ) : (
+              /* Display Mode */
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between items-center p-2 bg-white/5 rounded-lg">
+                  <span className="text-gray-400">Address:</span>
+                  <span className="text-white font-mono text-xs">
+                    {referrerInfo?.address
+                      ? `${referrerInfo.address.slice(0, 6)}...${referrerInfo.address.slice(-4)}`
+                      : contractInfo?.referrer
+                      ? `${contractInfo.referrer.slice(0, 6)}...${contractInfo.referrer.slice(-4)}`
+                      : 'Not specified'}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center p-2 bg-white/5 rounded-lg">
+                  <span className="text-gray-400">ID:</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-white">
+                      {referrerInfo?.id || contractInfo?.referrerId || 'Not specified'}
+                    </span>
+                    {referrerInfo?.isValid && (
+                      <CheckCircle size={14} className="text-green-400" />
+                    )}
+                    {referrerInfo && !referrerInfo.isValid && (
+                      <AlertTriangle size={14} className="text-red-400" />
+                    )}
+                  </div>
+                </div>
+
+                {/* Clear Referrer Button */}
+                {referrerInfo && !contractInfo && (
+                  <div className="pt-2">
+                    <GlassButton
+                      variant="secondary"
+                      onClick={clearReferrer}
+                      className="w-full text-xs py-2"
+                    >
+                      <X size={12} className="mr-1" />
+                      Clear Referrer
+                    </GlassButton>
+                  </div>
+                )}
+
+                {/* Status Messages */}
+                {referrerInfo?.isValid && (
+                  <div className="p-2 bg-green-500/10 border border-green-400/30 rounded-lg">
+                    <div className="text-green-400 text-xs flex items-center gap-1">
+                      <CheckCircle size={12} />
+                      Valid referrer found! Registration will use this referrer.
+                    </div>
+                  </div>
+                )}
+                
+                {referrerInfo && !referrerInfo.isValid && (
+                  <div className="p-2 bg-red-500/10 border border-red-400/30 rounded-lg">
+                    <div className="text-red-400 text-xs flex items-center gap-1">
+                      <AlertTriangle size={12} />
+                      Invalid referrer ID. Will fallback to contract owner.
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Level Selection */}
@@ -277,10 +378,10 @@ const ActivateLevelPage: React.FC = () => {
             whileTap={canActivate && !isSubmitting && !isLoading ? { scale: 0.98 } : {}}
           >
             <div className="flex items-center justify-center gap-2">
-              {isSubmitting || isLoading ? (
+              {isSubmitting || isLoading || isRefLoading ? (
                 <>
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  Activating...
+                  {isRefLoading ? 'Validating referrer...' : 'Activating...'}
                 </>
               ) : (
                 <>
