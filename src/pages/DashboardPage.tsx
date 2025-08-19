@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   Copy,
-  Check,
   Share2,
   ExternalLink,
   TrendingUp,
@@ -17,7 +16,6 @@ import { NeuralBackground } from '../components/neural';
 import { GlassCard, GlassButton } from '../components/glass';
 // Removed StatsPanel import - not needed in dashboard
 import { useWallet } from '../hooks/useWallet';
-import { useReferral } from '../hooks/useReferral';
 import { LEVEL_PRICES, formatBNB, CONTRACT_ADDRESS, getQpcContract } from '../utils/contract';
 import { RecentActivationsTable } from '../components';
 import { useState, useEffect } from 'react';
@@ -108,7 +106,6 @@ const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
   const { /* walletState, */ contractInfo, userLevels, getTodayStats, getGlobalStats } =
     useWallet();
-  const { generateReferralLink } = useReferral();
   const [todayStats, setTodayStats] = useState({
     todayEarnings: 0,
     todayReferrals: 0,
@@ -175,37 +172,22 @@ const DashboardPage: React.FC = () => {
     return arr.filter(Boolean).length;
   }, [userLevels?.active]);
 
-  const [referralCopied, setReferralCopied] = React.useState(false);
-  const [contractCopied, setContractCopied] = React.useState(false);
-
   const copyReferralLink = useCallback(async () => {
-    const userId = contractInfo?.id?.toString() || '1';
-    const referralLink = generateReferralLink(userId);
-    await navigator.clipboard.writeText(referralLink);
-    setReferralCopied(true);
-    setTimeout(() => setReferralCopied(false), 2000);
-  }, [contractInfo?.id, generateReferralLink]);
-
-  const copyContractAddress = useCallback(async () => {
-    await navigator.clipboard.writeText(CONTRACT_ADDRESS);
-    setContractCopied(true);
-    setTimeout(() => setContractCopied(false), 2000);
+    await navigator.clipboard.writeText(MOCK_USER_DATA.referralLink);
+    // Add toast notification here
   }, []);
 
   const shareReferralLink = useCallback(() => {
-    const userId = contractInfo?.id?.toString() || '1';
-    const referralLink = generateReferralLink(userId);
-    
     if (navigator.share) {
       navigator.share({
         title: 'Join Quantum Profit Chain',
         text: 'Join me on Quantum Profit Chain!',
-        url: referralLink,
+        url: MOCK_USER_DATA.referralLink,
       });
     } else {
       copyReferralLink();
     }
-  }, [contractInfo?.id, generateReferralLink, copyReferralLink]);
+  }, [copyReferralLink]);
 
   const renderLevelVisualization = () => {
     const levels = Array.from({ length: 16 }, (_, i) => i + 1);
@@ -407,70 +389,17 @@ const DashboardPage: React.FC = () => {
 
                     <div className="space-y-3">
                       <div className="bg-black/30 rounded-lg p-3 font-mono text-sm text-white truncate border border-white/10">
-                        {generateReferralLink(contractInfo?.id?.toString() || '1')}
+                        {MOCK_USER_DATA.referralLink}
                       </div>
                       <div className="flex gap-2">
-                        <motion.button
+                        <button
                           onClick={copyReferralLink}
-                          className={`flex-1 p-3 rounded-lg transition-all duration-300 border text-sm font-medium overflow-hidden relative ${
-                            referralCopied
-                              ? 'bg-green-500/20 border-green-400/30 text-green-400'
-                              : 'bg-cyan-500/20 hover:bg-cyan-500/30 border-cyan-400/30 text-cyan-400'
-                          }`}
-                          title={referralCopied ? "Copied!" : "Copy"}
-                          whileHover={{ scale: 1.02 }}
-                          whileTap={{ scale: 0.95 }}
+                          className="flex-1 p-3 bg-cyan-500/20 hover:bg-cyan-500/30 rounded-lg transition-colors border border-cyan-400/30 text-cyan-400 text-sm font-medium"
+                          title="Copy"
                         >
-                          {/* Success ripple effect */}
-                          <motion.div
-                            className="absolute inset-0 bg-green-400/20 rounded-lg"
-                            initial={{ scale: 0, opacity: 1 }}
-                            animate={referralCopied ? {
-                              scale: [0, 1.5],
-                              opacity: [1, 0],
-                              transition: { duration: 0.6, ease: "easeOut" }
-                            } : { scale: 0, opacity: 0 }}
-                          />
-                          
-                          <motion.div 
-                            className="inline-flex items-center relative z-10"
-                            initial={false}
-                            animate={referralCopied ? {
-                              y: [-20, 0],
-                              opacity: [0, 1],
-                              transition: { duration: 0.4, ease: "easeOut" }
-                            } : {
-                              y: 0,
-                              opacity: 1
-                            }}
-                          >
-                            <motion.div
-                              initial={false}
-                              animate={referralCopied ? {
-                                rotate: [0, -10, 10, 0],
-                                scale: [1, 1.2, 1],
-                                transition: { duration: 0.5, ease: "easeInOut" }
-                              } : {}}
-                              className="mr-2"
-                            >
-                              {referralCopied ? (
-                                <Check size={16} />
-                              ) : (
-                                <Copy size={16} />
-                              )}
-                            </motion.div>
-                            
-                            <motion.span
-                              initial={false}
-                              animate={referralCopied ? {
-                                scale: [1, 1.1, 1],
-                                transition: { duration: 0.3, delay: 0.1 }
-                              } : {}}
-                            >
-                              {referralCopied ? 'Copied!' : 'Copy'}
-                            </motion.span>
-                          </motion.div>
-                        </motion.button>
+                          <Copy size={16} className="inline mr-2" />
+                          Copy
+                        </button>
                         <button
                           onClick={shareReferralLink}
                           className="flex-1 p-3 bg-blue-500/20 hover:bg-blue-500/30 rounded-lg transition-colors border border-blue-400/30 text-blue-400 text-sm font-medium"
@@ -806,67 +735,14 @@ const DashboardPage: React.FC = () => {
                     </div>
 
                     <div className="flex gap-2">
-                      <motion.button
-                        onClick={copyContractAddress}
-                        className={`flex-1 p-2 rounded-lg transition-all duration-300 border text-xs font-medium overflow-hidden relative ${
-                          contractCopied
-                            ? 'bg-green-500/20 border-green-400/30 text-green-400'
-                            : 'bg-cyan-500/20 hover:bg-cyan-500/30 border-cyan-400/30 text-cyan-400'
-                        }`}
-                        title={contractCopied ? "Copied!" : "Copy Contract Address"}
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.95 }}
+                      <button
+                        onClick={() => navigator.clipboard.writeText(CONTRACT_ADDRESS)}
+                        className="flex-1 p-2 bg-cyan-500/20 hover:bg-cyan-500/30 rounded-lg transition-colors border border-cyan-400/30 text-cyan-400 text-xs font-medium"
+                        title="Copy Contract Address"
                       >
-                        {/* Success ripple effect */}
-                        <motion.div
-                          className="absolute inset-0 bg-green-400/20 rounded-lg"
-                          initial={{ scale: 0, opacity: 1 }}
-                          animate={contractCopied ? {
-                            scale: [0, 1.5],
-                            opacity: [1, 0],
-                            transition: { duration: 0.6, ease: "easeOut" }
-                          } : { scale: 0, opacity: 0 }}
-                        />
-                        
-                        <motion.div 
-                          className="inline-flex items-center relative z-10"
-                          initial={false}
-                          animate={contractCopied ? {
-                            y: [-15, 0],
-                            opacity: [0, 1],
-                            transition: { duration: 0.4, ease: "easeOut" }
-                          } : {
-                            y: 0,
-                            opacity: 1
-                          }}
-                        >
-                          <motion.div
-                            initial={false}
-                            animate={contractCopied ? {
-                              rotate: [0, -10, 10, 0],
-                              scale: [1, 1.2, 1],
-                              transition: { duration: 0.5, ease: "easeInOut" }
-                            } : {}}
-                            className="mr-1"
-                          >
-                            {contractCopied ? (
-                              <Check size={12} />
-                            ) : (
-                              <Copy size={12} />
-                            )}
-                          </motion.div>
-                          
-                          <motion.span
-                            initial={false}
-                            animate={contractCopied ? {
-                              scale: [1, 1.1, 1],
-                              transition: { duration: 0.3, delay: 0.1 }
-                            } : {}}
-                          >
-                            {contractCopied ? 'Copied!' : 'Copy'}
-                          </motion.span>
-                        </motion.div>
-                      </motion.button>
+                        <Copy size={12} className="inline mr-1" />
+                        Copy
+                      </button>
                       <button
                         onClick={() =>
                           window.open(`https://bscscan.com/address/${CONTRACT_ADDRESS}`, '_blank')

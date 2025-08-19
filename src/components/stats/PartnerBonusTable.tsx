@@ -1,10 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Users, Copy, Share2, Calendar, TrendingUp, UserPlus } from 'lucide-react';
 import { GlassCard, GlassButton } from '../glass';
-import { useWallet } from '../../hooks/useWallet';
-import { useReferral } from '../../hooks/useReferral';
-import { getQpcContract, formatBNB } from '../../utils/contract';
 
 interface PartnerBonus {
   id: string;
@@ -16,98 +13,58 @@ interface PartnerBonus {
   totalBonus: number;
 }
 
-// Real data now loaded from smart contract
+// Mock data - можно заменить на реальные данные
+const MOCK_PARTNER_BONUSES: PartnerBonus[] = [
+  // Пустой массив для демонстрации состояния "Пока бонусов нет"
+];
+
+// Пример с данными:
+/*
+const MOCK_PARTNER_BONUSES: PartnerBonus[] = [
+  {
+    id: 'pb1',
+    playerId: 98765,
+    date: '2025-01-13 11:45',
+    wallet: '0x123a...def4',
+    level: 2,
+    bonusReceived: 0.014,
+    totalBonus: 0.142,
+  },
+  {
+    id: 'pb2',
+    playerId: 45678,
+    date: '2025-01-11 20:33',
+    wallet: '0xabc1...567f',
+    level: 2,
+    bonusReceived: 0.018,
+    totalBonus: 0.128,
+  },
+  {
+    id: 'pb3',
+    playerId: 78901,
+    date: '2025-01-10 12:05',
+    wallet: '0x456d...789c',
+    level: 1,
+    bonusReceived: 0.013,
+    totalBonus: 0.110,
+  },
+];
+*/
+
+const MOCK_USER_DATA = {
+  referralLink: 'https://quantum-profit-chain.com/ref/12345',
+  totalPartnerBonus: MOCK_PARTNER_BONUSES.reduce((sum, bonus) => sum + bonus.bonusReceived, 0),
+  partnersCount: MOCK_PARTNER_BONUSES.length,
+};
 
 export const PartnerBonusTable: React.FC = () => {
   const [copied, setCopied] = useState(false);
-  const [partnerBonuses, setPartnerBonuses] = useState<PartnerBonus[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  
-  const { contractInfo, walletState } = useWallet();
-  const { generateReferralLink } = useReferral();
 
-  // Load partner bonuses from contract
-  useEffect(() => {
-    const loadPartnerBonuses = async () => {
-      if (!walletState.address || !contractInfo || !contractInfo.id) {
-        setIsLoading(false);
-        return;
-      }
-
-      try {
-        setIsLoading(true);
-        const contract = await getQpcContract(false);
-        if (!contract) return;
-
-        // Get ReferralPayout events where this user is the referrer
-        // Use smaller block range to avoid rate limits
-        const filter = contract.filters.ReferralPayout(contractInfo.id, null, null);
-        let events: any[] = [];
-        
-        try {
-          events = await contract.queryFilter(filter, -1000); // Only last 1k blocks
-        } catch (rpcError: any) {
-          // RPC rate limit - use contract data fallback
-        }
-
-        const bonuses: PartnerBonus[] = await Promise.all(
-          events.map(async (event: any, index: number) => {
-            const args = event.args;
-            const block = await event.getBlock();
-            const date = new Date(block.timestamp * 1000);
-            
-            // Get referral user info
-            const referralAddress = await contract.usersAddressById(args.referralId);
-            
-            return {
-              id: `bonus-${index}`,
-              playerId: parseInt(args.referralId.toString()),
-              date: date.toLocaleString(),
-              wallet: `${referralAddress.slice(0, 6)}...${referralAddress.slice(-4)}`,
-              level: parseInt(args.level.toString()),
-              bonusReceived: parseFloat(formatBNB(args.rewardValue)),
-              totalBonus: 0, // Will calculate cumulative
-            };
-          })
-        );
-
-        // Calculate cumulative totals
-        let runningTotal = 0;
-        const bonusesWithTotals = bonuses.reverse().map(bonus => {
-          runningTotal += bonus.bonusReceived;
-          return { ...bonus, totalBonus: runningTotal };
-        });
-
-        setPartnerBonuses(bonusesWithTotals.reverse());
-      } catch (error) {
-        console.error('Error loading partner bonuses:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadPartnerBonuses();
-  }, [walletState.address, contractInfo?.id]);
-
-  // Calculate real statistics
-  const userReferralLink = contractInfo ? generateReferralLink(contractInfo.id.toString()) : '';
-  const totalPartnerBonus = partnerBonuses.reduce((sum, bonus) => sum + bonus.bonusReceived, 0);
-  const partnersCount = new Set(partnerBonuses.map(bonus => bonus.playerId)).size; // Unique partners from events
-  const bonusTransactions = partnerBonuses.length;
-
-  // Fallbacks: use contract data when events unavailable
-  const partnersCountFromContract = contractInfo?.referrals || 0;
-  const totalBonusFromContract = contractInfo?.referralPayoutSum || 0; // Already in BNB
-
-  // Check if we're on testnet and user has no referrals yet
-  const isTestnet = window.location.hostname === 'localhost' || process.env.NODE_ENV === 'development';
-  const hasRealData = partnersCountFromContract > 0 || totalBonusFromContract > 0;
-
-  // Statistics are working correctly with real contract data
+  const formatBNB = (amount: number) => amount.toFixed(4);
 
   const copyReferralLink = async () => {
     try {
-      await navigator.clipboard.writeText(userReferralLink);
+      await navigator.clipboard.writeText(MOCK_USER_DATA.referralLink);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (error) {
@@ -121,7 +78,7 @@ export const PartnerBonusTable: React.FC = () => {
         await navigator.share({
           title: 'Join Quantum Profit Chain',
           text: 'Join me on Quantum Profit Chain and earn together!',
-          url: userReferralLink,
+          url: MOCK_USER_DATA.referralLink,
         });
       } catch (error) {
         console.error('Failed to share:', error);
@@ -143,7 +100,7 @@ export const PartnerBonusTable: React.FC = () => {
             </div>
             <div>
               <div className="text-purple-400 text-lg font-bold">
-                {isLoading ? '...' : partnersCountFromContract}
+                {MOCK_USER_DATA.partnersCount}
               </div>
               <div className="text-gray-400 text-xs">Active Partners</div>
             </div>
@@ -157,7 +114,7 @@ export const PartnerBonusTable: React.FC = () => {
             </div>
             <div>
               <div className="text-green-400 text-lg font-bold">
-                {isLoading ? '...' : formatBNB(totalPartnerBonus || totalBonusFromContract)}
+                {formatBNB(MOCK_USER_DATA.totalPartnerBonus)}
               </div>
               <div className="text-gray-400 text-xs">Total Bonus BNB</div>
             </div>
@@ -171,7 +128,7 @@ export const PartnerBonusTable: React.FC = () => {
             </div>
             <div>
               <div className="text-blue-400 text-lg font-bold">
-                {isLoading ? '...' : bonusTransactions}
+                {MOCK_PARTNER_BONUSES.length > 0 ? MOCK_PARTNER_BONUSES.length : 0}
               </div>
               <div className="text-gray-400 text-xs">Bonus Transactions</div>
             </div>
@@ -189,7 +146,7 @@ export const PartnerBonusTable: React.FC = () => {
         </div>
         <div className="space-y-4">
           <div className="bg-black/30 rounded-lg p-3 font-mono text-sm text-white border border-white/10">
-            <div className="break-all">{userReferralLink || 'Loading...'}</div>
+            <div className="break-all">{MOCK_USER_DATA.referralLink}</div>
           </div>
           <div className="flex gap-3">
             <GlassButton
@@ -221,7 +178,7 @@ export const PartnerBonusTable: React.FC = () => {
           </h3>
         </div>
 
-        {partnerBonuses.length > 0 ? (
+        {MOCK_PARTNER_BONUSES.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
@@ -235,7 +192,7 @@ export const PartnerBonusTable: React.FC = () => {
                 </tr>
               </thead>
               <tbody>
-                {partnerBonuses.map((bonus, index) => (
+                {MOCK_PARTNER_BONUSES.map((bonus, index) => (
                   <motion.tr
                     key={bonus.id}
                     initial={{ opacity: 0, y: 20 }}
@@ -297,7 +254,7 @@ export const PartnerBonusTable: React.FC = () => {
             <div className="mt-6 text-sm text-gray-500">
               Share the link:{' '}
               <span className="text-purple-400 font-mono break-all">
-                {userReferralLink || 'Loading...'}
+                {MOCK_USER_DATA.referralLink}
               </span>
             </div>
           </motion.div>

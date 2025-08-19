@@ -1,14 +1,8 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Wallet, HelpCircle, Play, Users, CheckCircle } from 'lucide-react';
+import { Wallet, HelpCircle, Play } from 'lucide-react';
 import { NeuralButton } from '../neural';
 import { GlassButton } from '../glass';
-
-interface ReferrerInfo {
-  id: string;
-  address: string;
-  isValid: boolean;
-}
 
 // ===========================================
 // 🎮 TYPE DEFINITIONS
@@ -19,7 +13,6 @@ interface HeroSectionProps {
   onStartGame?: () => void;
   onEnterWithReferral?: () => void;
   isWalletConnected?: boolean;
-  referrerInfo?: ReferrerInfo | null;
 }
 
 // ===========================================
@@ -31,7 +24,6 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
   onStartGame,
   onEnterWithReferral,
   isWalletConnected = false,
-  referrerInfo = null,
 }) => {
   return (
     <section
@@ -91,29 +83,6 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                   &gt; EARN.CRYPTO.REWARDS <br />
                   &gt; SMART.CONTRACT.POWERED
                 </motion.p>
-
-                {/* Referral Info - Compact */}
-                {referrerInfo?.isValid && (
-                  <motion.div
-                    className="mb-8 mx-4 p-3 rounded-lg border border-cyan-400/30 bg-cyan-400/5 backdrop-blur-sm"
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.5, duration: 0.4 }}
-                  >
-                    <div className="flex items-center justify-center gap-2 text-xs font-gaming">
-                      <Users size={14} className="text-cyan-400" />
-                      <span className="text-cyan-400 font-semibold">REFERRAL LINK DETECTED</span>
-                    </div>
-                    <div className="flex items-center justify-center gap-2 mt-1 text-xs">
-                      <span className="text-gray-300">Invited by</span>
-                      <span className="text-white font-mono">#{referrerInfo.id}</span>
-                      <span className="text-gray-400 font-mono text-[10px]">
-                        {`${referrerInfo.address.slice(0, 6)}...${referrerInfo.address.slice(-4)}`}
-                      </span>
-                      <CheckCircle size={12} className="text-green-400" />
-                    </div>
-                  </motion.div>
-                )}
 
                 {/* Action Buttons */}
                 <motion.div
@@ -211,24 +180,6 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                 <span className="xs:hidden">&gt; BSC.POWERED</span>
               </p>
 
-              {/* Mobile Referral Info - Compact */}
-              {referrerInfo?.isValid && (
-                <div className="mb-4 xs:mb-6 mx-2 p-2 xs:p-3 rounded-lg border border-cyan-400/30 bg-cyan-400/5 backdrop-blur-sm">
-                  <div className="flex items-center justify-center gap-1 xs:gap-2 text-[10px] xs:text-xs font-gaming">
-                    <Users size={12} className="text-cyan-400" />
-                    <span className="text-cyan-400 font-semibold">REFERRAL DETECTED</span>
-                  </div>
-                  <div className="flex items-center justify-center gap-1 xs:gap-2 mt-1 text-[10px] xs:text-xs">
-                    <span className="text-gray-300">By</span>
-                    <span className="text-white font-mono">#{referrerInfo.id}</span>
-                    <span className="text-gray-400 font-mono text-[9px] xs:text-[10px]">
-                      {`${referrerInfo.address.slice(0, 4)}...${referrerInfo.address.slice(-3)}`}
-                    </span>
-                    <CheckCircle size={10} className="text-green-400" />
-                  </div>
-                </div>
-              )}
-
               <div className="space-y-2 xs:space-y-3 mb-3 xs:mb-4">
                 <NeuralButton
                   size="md"
@@ -285,25 +236,23 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
         transition={{ duration: 4, repeat: Infinity, ease: 'linear' }}
       />
 
-      {/* Terminal Cursor - только если нет реферала */}
-      {!referrerInfo?.isValid && (
-        <motion.div
-          className="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-neon-green font-mono text-sm"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1.5, duration: 0.5 }}
-        >
-          <div className="flex items-center space-x-1">
-            <span>&gt; READY_FOR_MATRIX_ENTRY</span>
-            <motion.span
-              animate={{ opacity: [1, 0, 1] }}
-              transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-            >
-              █
-            </motion.span>
-          </div>
-        </motion.div>
-      )}
+      {/* Terminal Cursor */}
+      <motion.div
+        className="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-neon-green font-mono text-sm"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 1.5, duration: 0.5 }}
+      >
+        <div className="flex items-center space-x-1">
+          <span>&gt; READY_FOR_MATRIX_ENTRY</span>
+          <motion.span
+            animate={{ opacity: [1, 0, 1] }}
+            transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+          >
+            █
+          </motion.span>
+        </div>
+      </motion.div>
     </section>
   );
 };

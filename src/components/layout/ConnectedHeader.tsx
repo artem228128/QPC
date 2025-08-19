@@ -3,7 +3,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Wallet,
   Copy,
-  Check,
   ExternalLink,
   Bell,
   ChevronDown,
@@ -235,14 +234,12 @@ const MobileMenuButton: React.FC = () => {
 const WalletInfo: React.FC = () => {
   const { walletState, contractInfo, updateBalance } = useWallet();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [copied, setCopied] = useState(false);
 
   // Copy address to clipboard
   const copyAddress = async () => {
     if (walletState.address) {
       await navigator.clipboard.writeText(walletState.address);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000); // Reset after 2 seconds
+      // You could add a toast notification here
     }
   };
 
@@ -341,56 +338,13 @@ const WalletInfo: React.FC = () => {
                   </div>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <motion.button
+                  <button
                     onClick={copyAddress}
-                    className={`p-2 rounded-lg transition-all duration-300 overflow-hidden relative ${
-                      copied 
-                        ? 'bg-green-500/20 text-green-400' 
-                        : 'hover:bg-white/10 text-gray-400 hover:text-white'
-                    }`}
-                    title={copied ? "Copied!" : "Copy Address"}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
+                    className="p-2 hover:bg-white/10 rounded-lg transition-colors duration-200"
+                    title="Copy Address"
                   >
-                    {/* Success ripple effect */}
-                    <motion.div
-                      className="absolute inset-0 bg-green-400/20 rounded-lg"
-                      initial={{ scale: 0, opacity: 1 }}
-                      animate={copied ? {
-                        scale: [0, 2],
-                        opacity: [1, 0],
-                        transition: { duration: 0.6, ease: "easeOut" }
-                      } : { scale: 0, opacity: 0 }}
-                    />
-                    
-                    <motion.div
-                      className="relative z-10"
-                      initial={false}
-                      animate={copied ? {
-                        y: [-10, 0],
-                        opacity: [0, 1],
-                        transition: { duration: 0.4, ease: "easeOut" }
-                      } : {
-                        y: 0,
-                        opacity: 1
-                      }}
-                    >
-                      <motion.div
-                        initial={false}
-                        animate={copied ? {
-                          rotate: [0, -15, 15, 0],
-                          scale: [1, 1.3, 1],
-                          transition: { duration: 0.5, ease: "easeInOut" }
-                        } : {}}
-                      >
-                        {copied ? (
-                          <Check className="w-4 h-4" />
-                        ) : (
-                          <Copy className="w-4 h-4" />
-                        )}
-                      </motion.div>
-                    </motion.div>
-                  </motion.button>
+                    <Copy className="w-4 h-4 text-gray-400" />
+                  </button>
                   <button
                     onClick={() =>
                       window.open(`https://bscscan.com/address/${walletState.address}`, '_blank')
