@@ -989,7 +989,7 @@ const DashboardPage: React.FC = () => {
                       <div className="text-right bg-black/30 p-4 rounded-xl border border-white/20 backdrop-blur-sm">
                         <div className="text-gray-400 text-xs font-medium mb-1">TOTAL EARNINGS</div>
                         <div className="text-green-400 font-bold font-mono text-2xl">
-                            {formatBNB(contractInfo?.levelsRewardSum ?? 0)} BNB
+                            {formatBNB((contractInfo?.levelsRewardSum ?? 0) + (contractInfo?.referralPayoutSum ?? 0))} BNB
                         </div>
                       </div>
                     </div>
@@ -1010,7 +1010,7 @@ const DashboardPage: React.FC = () => {
                               })
                             : '—'}
                       </div>
-                    </div>
+                        </div>
 
                       <div className="group relative bg-black/40 rounded-xl p-4 border border-white/10 hover:border-white/20 transition-all duration-300 backdrop-blur-sm">
                         <div className="flex items-center gap-2 mb-2">
@@ -1021,7 +1021,7 @@ const DashboardPage: React.FC = () => {
                           {contractInfo?.referrerId && contractInfo.referrerId > 0
                             ? `#${formatUserId(contractInfo.referrerId)}`
                             : 'Direct Join'}
-                        </div>
+                    </div>
                       </div>
                       
                       <div className="group relative bg-black/40 rounded-xl p-4 border border-white/10 hover:border-green-400/30 transition-all duration-300 backdrop-blur-sm">
@@ -1040,7 +1040,7 @@ const DashboardPage: React.FC = () => {
                       <div className="flex items-center gap-3 mb-4">
                         <div className="p-2 bg-white/10 rounded-lg border border-white/20">
                           <Share2 className="text-white" size={18} />
-                        </div>
+                      </div>
                         <h4 className="text-white font-bold text-lg">
                           Your Referral Link
                         </h4>
@@ -1412,7 +1412,7 @@ const DashboardPage: React.FC = () => {
                 <GlassCard className="p-4 border border-purple-400/20 bg-gradient-to-br from-purple-500/5 to-indigo-500/5 rounded-xl">
                   <div className="mb-3">
                     <h3 className="text-base font-semibold text-white">Game Stats</h3>
-                  </div>
+                      </div>
                   <div className="space-y-3">
                     <div className="bg-black/20 rounded-lg p-3">
                       <div className="flex items-center gap-2 mb-1">
@@ -1433,17 +1433,17 @@ const DashboardPage: React.FC = () => {
                               ) : (
                                 '+0'
                               )}
-                            </span>
+                      </span>
                           </>
                         )}
-                      </div>
                     </div>
+                      </div>
 
                     <div className="bg-black/20 rounded-lg p-3">
                       <div className="flex items-center gap-2 mb-1">
                         <DollarSign className="text-green-400" size={14} />
                         <span className="text-gray-400 text-xs">Total Volume</span>
-                      </div>
+                    </div>
                       <div className="text-green-400 text-lg font-bold font-mono">
                         {isLoadingGlobalStats ? (
                           <div className="animate-pulse">...</div>
@@ -1469,7 +1469,7 @@ const DashboardPage: React.FC = () => {
                         <div className="flex items-center gap-1 mb-1">
                           <TrendingUp className="text-purple-400" size={12} />
                           <span className="text-gray-400 text-xs">Levels</span>
-                        </div>
+                      </div>
                         <div className="text-purple-400 text-sm font-bold">
                           {isLoadingGlobalStats ? '...' : `${globalStats.activeLevelsCount}/16`}
                         </div>

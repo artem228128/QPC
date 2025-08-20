@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Users, DollarSign, Activity, TrendingUp } from 'lucide-react';
+import { getQpcContract } from '../../utils/contract';
 
 // ===========================================
 // 🎨 TYPE DEFINITIONS
@@ -8,6 +9,13 @@ import { Users, DollarSign, Activity, TrendingUp } from 'lucide-react';
 
 interface StatsPanelProps {
   className?: string;
+}
+
+interface GlobalStats {
+  members: number;
+  transactions: number;
+  turnover: number;
+  daysLive: number;
 }
 
 interface StatData {
@@ -20,6 +28,7 @@ interface StatData {
   previousValue?: number;
   color: 'cyan' | 'purple' | 'mint' | 'coral';
   growth?: number;
+  status?: string; // Новое поле для статуса проекта
 }
 
 // ===========================================
@@ -83,7 +92,7 @@ const AnimatedCounter: React.FC<{
     <div className="text-center">
       <div className="text-3xl md:text-4xl font-bold text-white mb-1">
         {formatValue(displayValue)}
-        {suffix}
+        {suffix && <span className="text-2xl md:text-3xl ml-1">{suffix}</span>}
       </div>
     </div>
   );
@@ -158,12 +167,12 @@ const GameStatItem: React.FC<{
             value={stat.value}
             previousValue={stat.previousValue}
             formatType={stat.formatType}
-            suffix={stat.suffix}
+            suffix={stat.suffix || ''}
             duration={1200}
           />
         </div>
 
-        {/* Growth Indicator */}
+        {/* Growth Indicator or Status */}
         {stat.growth && (
           <div className="flex items-center justify-center space-x-1">
             <div
@@ -174,6 +183,15 @@ const GameStatItem: React.FC<{
               }`}
             >
               {stat.growth > 0 ? '▲' : '▼'} {Math.abs(stat.growth).toFixed(1)}%
+            </div>
+          </div>
+        )}
+        
+        {/* Status for Days Live */}
+        {stat.status && (
+          <div className="flex items-center justify-center space-x-1">
+            <div className="text-sm font-gaming px-2 py-1 rounded border text-orange-400 border-orange-400/30 bg-orange-400/10">
+              ● {stat.status}
             </div>
           </div>
         )}
@@ -197,46 +215,116 @@ const GameStatItem: React.FC<{
 // 🎯 MAIN STATS PANEL COMPONENT
 // ===========================================
 
+// Функция для определения статуса проекта по дням
+const getProjectStatus = (days: number): string => {
+  if (days < 7) return 'LAUNCH';
+  if (days < 30) return 'GROWING';
+  if (days < 90) return 'EXPANDING';
+  if (days < 180) return 'STABLE';
+  if (days < 365) return 'MATURE';
+  return 'VETERAN';
+};
+
 export const StatsPanel: React.FC<StatsPanelProps> = ({ className = '' }) => {
-  // Static stats data - no WebSocket complexity
-  const [stats] = useState<StatData[]>([
+  const [globalStats, setGlobalStats] = useState<GlobalStats>({
+    members: 12847,
+    transactions: 2300000,
+    turnover: 2347.8,
+    daysLive: 127,
+  });
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Дата запуска проекта (обновлено на более реалистичную дату)
+  const PROJECT_LAUNCH_DATE = new Date('2025-01-01'); // Дата запуска проекта
+
+  // Загрузка данных из контракта
+  useEffect(() => {
+    const loadGlobalStats = async () => {
+      setIsLoading(true);
+      try {
+        const contract = await getQpcContract(false);
+        if (!contract) {
+          console.log('Contract not available for stats');
+          return;
+        }
+
+        // Получаем глобальную статистику
+        const [members, transactions, turnover] = await contract.getGlobalStats();
+        
+        // Вычисляем дни с запуска проекта
+        const now = new Date();
+        const daysDiff = Math.floor((now.getTime() - PROJECT_LAUNCH_DATE.getTime()) / (1000 * 60 * 60 * 24));
+        
+        setGlobalStats({
+          members: Number(members),
+          transactions: Number(transactions),
+          turnover: Number(turnover) / 1e18, // Конвертируем из wei в BNB
+          daysLive: Math.max(1, daysDiff), // Минимум 1 день
+        });
+
+        console.log('📊 Global stats loaded:', {
+          members: Number(members),
+          transactions: Number(transactions),
+          turnover: Number(turnover) / 1e18,
+          daysLive: daysDiff,
+        });
+
+      } catch (error) {
+        console.error('❌ Error loading global stats:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadGlobalStats();
+    
+    // Обновляем каждые 30 секунд
+    const interval = setInterval(loadGlobalStats, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Создаем статистику на основе реальных данных
+  const stats: StatData[] = [
     {
       id: 'participants',
       icon: Users,
       label: 'Active Players',
-      value: 12847,
+      value: globalStats.members,
       formatType: 'number',
       color: 'cyan',
-      growth: 23.5,
+      growth: isLoading ? undefined : 23.5,
     },
     {
       id: 'bnb',
       icon: DollarSign,
       label: 'BNB in Game',
-      value: 2347.8,
+      value: globalStats.turnover,
       formatType: 'currency',
       color: 'mint',
-      growth: 18.2,
+      growth: isLoading ? undefined : 18.2,
     },
     {
       id: 'transactions',
       icon: Activity,
       label: 'Transactions',
-      value: 2300000,
+      value: globalStats.transactions,
       formatType: 'number',
       color: 'purple',
-      growth: 31.8,
+      growth: isLoading ? undefined : 31.8,
     },
     {
       id: 'growth',
       icon: TrendingUp,
-      label: 'Daily Growth',
-      value: 127.3,
-      formatType: 'percentage',
+      label: 'Days Live',
+      value: globalStats.daysLive,
+      formatType: 'number',
+      suffix: ' days',
       color: 'coral',
-      growth: 12.4,
+      // Вместо процентов показываем статус проекта
+      growth: undefined, // Убираем проценты для Days Live
+      status: getProjectStatus(globalStats.daysLive), // Динамический статус
     },
-  ]);
+  ];
 
   return (
     <section className={`py-20 relative ${className}`}>
@@ -269,8 +357,13 @@ export const StatsPanel: React.FC<StatsPanelProps> = ({ className = '' }) => {
             <div className="w-40 h-1 bg-gradient-to-r from-cyan-400 to-purple-600 mx-auto mb-6 rounded-full"></div>
           </div>
           <p className="text-neon-green font-gaming text-lg max-w-2xl mx-auto">
-            &gt; REAL_TIME_MATRIX_DATA <br />
-            &gt; LIVE_ECOSYSTEM_METRICS
+            &gt; REAL_TIME_BLOCKCHAIN_DATA <br />
+            &gt; LIVE_CONTRACT_METRICS
+            {isLoading && (
+              <span className="block text-cyan-400 text-sm mt-2 animate-pulse">
+                &gt; LOADING_DATA...
+              </span>
+            )}
           </p>
         </motion.div>
 

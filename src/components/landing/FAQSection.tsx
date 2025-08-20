@@ -453,7 +453,7 @@ export const FAQSection: React.FC<FAQSectionProps> = ({ className = '' }) => {
   };
 
   return (
-    <section id="faq" className={`py-16 ${className}`}>
+    <section id="faq" className={`pt-24 pb-16 ${className}`}>
       <div className="container mx-auto px-4">
         {/* Header */}
         <motion.div

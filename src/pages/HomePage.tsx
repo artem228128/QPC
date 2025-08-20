@@ -50,7 +50,15 @@ const HomePage: React.FC = () => {
   const handleHelpMe = useCallback(() => {
     const faqEl = document.getElementById('faq');
     if (faqEl) {
-      faqEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      // Scroll to FAQ section with offset to account for fixed header
+      const offset = 120; // Increased offset for fixed header (h-16 sm:h-20 = ~80px + padding)
+      const elementPosition = faqEl.getBoundingClientRect().top;
+      const offsetPosition = elementPosition + window.pageYOffset - offset;
+      
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: 'smooth'
+      });
     }
   }, []);
 
